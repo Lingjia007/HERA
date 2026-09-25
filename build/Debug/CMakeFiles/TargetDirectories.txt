@@ -1,0 +1,8 @@
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/build/Debug/CMakeFiles/STM32WB55XX-HERA.dir
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/build/Debug/CMakeFiles/edit_cache.dir
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/build/Debug/CMakeFiles/rebuild_cache.dir
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/build/Debug/cmake/stm32cubemx/CMakeFiles/STM32_Drivers.dir
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/build/Debug/cmake/stm32cubemx/CMakeFiles/Utilities.dir
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/build/Debug/cmake/stm32cubemx/CMakeFiles/STM32_WPAN.dir
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/build/Debug/cmake/stm32cubemx/CMakeFiles/edit_cache.dir
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/build/Debug/cmake/stm32cubemx/CMakeFiles/rebuild_cache.dir
