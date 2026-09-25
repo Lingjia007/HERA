@@ -115,16 +115,16 @@ int main(void)
     MX_APPE_Process();
 
     /* USER CODE BEGIN 3 */
-    HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
-    HAL_Delay(200);
-    HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
-    HAL_Delay(200);
-    HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
-    HAL_Delay(200);
-    HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
-    HAL_Delay(200);
-    HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
-    HAL_Delay(600);
+    // HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
+    // HAL_Delay(200);
+    // HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
+    // HAL_Delay(200);
+    // HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
+    // HAL_Delay(200);
+    // HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
+    // HAL_Delay(200);
+    // HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
+    // HAL_Delay(600);
   }
   /* USER CODE END 3 */
 }

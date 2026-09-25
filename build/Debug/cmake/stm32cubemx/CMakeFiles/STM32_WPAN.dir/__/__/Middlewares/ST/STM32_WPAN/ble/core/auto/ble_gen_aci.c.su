@@ -1,0 +1,4 @@
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/ST/STM32_WPAN/ble/core/auto/ble_gen_aci.c:20:12:aci_reset	312	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/ST/STM32_WPAN/ble/core/auto/ble_gen_aci.c:44:12:aci_get_information	80	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/ST/STM32_WPAN/ble/core/auto/ble_gen_aci.c:66:12:aci_write_config_data	312	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/ST/STM32_WPAN/ble/core/auto/ble_gen_aci.c:93:12:aci_read_config_data	568	static

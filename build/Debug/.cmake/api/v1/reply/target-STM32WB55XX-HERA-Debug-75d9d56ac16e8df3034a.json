@@ -12,6 +12,7 @@
 		[
 			"add_executable",
 			"target_link_libraries",
+			"target_include_directories",
 			"target_sources"
 		],
 		"files" : 
@@ -36,14 +37,26 @@
 			{
 				"command" : 1,
 				"file" : 1,
-				"line" : 143,
+				"line" : 145,
 				"parent" : 2
 			},
 			{
 				"command" : 2,
+				"file" : 0,
+				"line" : 53,
+				"parent" : 0
+			},
+			{
+				"command" : 3,
 				"file" : 1,
-				"line" : 137,
+				"line" : 139,
 				"parent" : 2
+			},
+			{
+				"command" : 3,
+				"file" : 0,
+				"line" : 46,
+				"parent" : 0
 			}
 		]
 	},
@@ -73,6 +86,10 @@
 			],
 			"includes" : 
 			[
+				{
+					"backtrace" : 4,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/BLEServices"
+				},
 				{
 					"backtrace" : 3,
 					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../Core/Inc"
@@ -176,7 +193,10 @@
 				12,
 				13,
 				14,
-				15
+				15,
+				16,
+				18,
+				19
 			]
 		},
 		{
@@ -203,6 +223,10 @@
 			],
 			"includes" : 
 			[
+				{
+					"backtrace" : 4,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/BLEServices"
+				},
 				{
 					"backtrace" : 3,
 					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../Core/Inc"
@@ -283,7 +307,7 @@
 			"language" : "ASM",
 			"sourceIndexes" : 
 			[
-				16
+				17
 			]
 		}
 	],
@@ -351,23 +375,23 @@
 				12,
 				13,
 				14,
-				15
+				15,
+				16,
+				18,
+				19
 			]
 		},
 		{
 			"name" : "",
 			"sourceIndexes" : 
 			[
-				16
+				17
 			]
 		},
 		{
 			"name" : "Object Libraries",
 			"sourceIndexes" : 
 			[
-				17,
-				18,
-				19,
 				20,
 				21,
 				22,
@@ -402,113 +426,135 @@
 				51,
 				52,
 				53,
-				54
+				54,
+				55,
+				56,
+				57,
+				58
 			]
 		}
 	],
 	"sources" : 
 	[
 		{
-			"backtrace" : 4,
+			"backtrace" : 5,
 			"compileGroupIndex" : 0,
 			"path" : "STM32_WPAN/Target/hw_ipcc.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 4,
+			"backtrace" : 5,
 			"compileGroupIndex" : 0,
 			"path" : "STM32_WPAN/App/app_ble.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 4,
+			"backtrace" : 5,
 			"compileGroupIndex" : 0,
-			"path" : "STM32_WPAN/App/p2p_server_app.c",
+			"path" : "STM32_WPAN/App/custom_stm.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 4,
+			"backtrace" : 5,
+			"compileGroupIndex" : 0,
+			"path" : "STM32_WPAN/App/custom_app.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 5,
 			"compileGroupIndex" : 0,
 			"path" : "Core/Src/main.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 4,
+			"backtrace" : 5,
 			"compileGroupIndex" : 0,
 			"path" : "Core/Src/gpio.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 4,
+			"backtrace" : 5,
 			"compileGroupIndex" : 0,
 			"path" : "Core/Src/ipcc.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 4,
+			"backtrace" : 5,
 			"compileGroupIndex" : 0,
 			"path" : "Core/Src/rf.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 4,
+			"backtrace" : 5,
 			"compileGroupIndex" : 0,
 			"path" : "Core/Src/rtc.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 4,
+			"backtrace" : 5,
 			"compileGroupIndex" : 0,
 			"path" : "Core/Src/app_entry.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 4,
+			"backtrace" : 5,
 			"compileGroupIndex" : 0,
 			"path" : "Core/Src/app_debug.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 4,
+			"backtrace" : 5,
 			"compileGroupIndex" : 0,
 			"path" : "Core/Src/hw_timerserver.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 4,
+			"backtrace" : 5,
 			"compileGroupIndex" : 0,
 			"path" : "Core/Src/stm32_lpm_if.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 4,
+			"backtrace" : 5,
 			"compileGroupIndex" : 0,
 			"path" : "Core/Src/stm32wbxx_it.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 4,
+			"backtrace" : 5,
 			"compileGroupIndex" : 0,
 			"path" : "Core/Src/stm32wbxx_hal_msp.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 4,
+			"backtrace" : 5,
 			"compileGroupIndex" : 0,
 			"path" : "Core/Src/sysmem.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 4,
+			"backtrace" : 5,
 			"compileGroupIndex" : 0,
 			"path" : "Core/Src/syscalls.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 4,
+			"backtrace" : 5,
 			"compileGroupIndex" : 1,
 			"path" : "startup_stm32wb55xx_cm4.s",
 			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 6,
+			"compileGroupIndex" : 0,
+			"path" : "BLEServices/Services.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 6,
+			"compileGroupIndex" : 0,
+			"path" : "BLEServices/svc_led.c",
+			"sourceGroupIndex" : 0
 		},
 		{
 			"backtrace" : 3,
@@ -675,6 +721,18 @@
 		{
 			"backtrace" : 3,
 			"isGenerated" : true,
+			"path" : "build/Debug/cmake/stm32cubemx/CMakeFiles/STM32_WPAN.dir/__/__/Middlewares/ST/STM32_WPAN/ble/core/auto/ble_events.c.obj",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 3,
+			"isGenerated" : true,
+			"path" : "build/Debug/cmake/stm32cubemx/CMakeFiles/STM32_WPAN.dir/__/__/Middlewares/ST/STM32_WPAN/ble/core/auto/ble_gen_aci.c.obj",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 3,
+			"isGenerated" : true,
 			"path" : "build/Debug/cmake/stm32cubemx/CMakeFiles/STM32_WPAN.dir/__/__/Middlewares/ST/STM32_WPAN/ble/core/auto/ble_gap_aci.c.obj",
 			"sourceGroupIndex" : 2
 		},
@@ -700,12 +758,6 @@
 			"backtrace" : 3,
 			"isGenerated" : true,
 			"path" : "build/Debug/cmake/stm32cubemx/CMakeFiles/STM32_WPAN.dir/__/__/Middlewares/ST/STM32_WPAN/ble/core/auto/ble_l2cap_aci.c.obj",
-			"sourceGroupIndex" : 2
-		},
-		{
-			"backtrace" : 3,
-			"isGenerated" : true,
-			"path" : "build/Debug/cmake/stm32cubemx/CMakeFiles/STM32_WPAN.dir/__/__/Middlewares/ST/STM32_WPAN/ble/svc/Src/p2p_stm.c.obj",
 			"sourceGroupIndex" : 2
 		},
 		{
