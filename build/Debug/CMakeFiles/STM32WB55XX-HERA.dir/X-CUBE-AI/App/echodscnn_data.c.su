@@ -1,0 +1,4 @@
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/X-CUBE-AI/App/echodscnn_data.c:42:11:ai_echodscnn_data_activations_buffer_get	72	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/X-CUBE-AI/App/echodscnn_data.c:60:11:ai_echodscnn_data_weights_buffer_get	72	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/X-CUBE-AI/App/echodscnn_data.c:78:11:ai_echodscnn_data_weights_get	4	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/X-CUBE-AI/App/echodscnn_data.c:91:9:ai_echodscnn_data_params_get	32	static

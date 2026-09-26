@@ -1,0 +1,4 @@
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Audio/App/audio_app.c:42:17:isqrt32	24	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Audio/App/audio_app.c:68:6:AudioApp_Init	8	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Audio/App/audio_app.c:77:6:AudioApp_Process	16	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Audio/App/audio_app.c:101:6:AudioApp_OnAudioBlock	88	static

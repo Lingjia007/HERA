@@ -40,7 +40,7 @@ typedef struct
 
   /* USER CODE END CUSTOM_APP_Context_t */
 
-  uint16_t ConnectionHandle;
+  uint16_t              ConnectionHandle;
 } Custom_App_Context_t;
 
 /* USER CODE BEGIN PTD */
@@ -98,18 +98,18 @@ void Custom_STM_App_Notification(Custom_STM_App_Notification_evt_t *pNotificatio
     break;
     /* USER CODE END CUSTOM_STM_App_Notification_Custom_Evt_Opcode */
 
-  /* mySVC */
-  case CUSTOM_STM_NOTIFICATION_COMPLETE_EVT:
-    /* USER CODE BEGIN CUSTOM_STM_NOTIFICATION_COMPLETE_EVT */
+    /* mySVC */
+    case CUSTOM_STM_NOTIFICATION_COMPLETE_EVT:
+      /* USER CODE BEGIN CUSTOM_STM_NOTIFICATION_COMPLETE_EVT */
 
-    /* USER CODE END CUSTOM_STM_NOTIFICATION_COMPLETE_EVT */
-    break;
+      /* USER CODE END CUSTOM_STM_NOTIFICATION_COMPLETE_EVT */
+      break;
 
-  default:
-    /* USER CODE BEGIN CUSTOM_STM_App_Notification_default */
+    default:
+      /* USER CODE BEGIN CUSTOM_STM_App_Notification_default */
 
-    /* USER CODE END CUSTOM_STM_App_Notification_default */
-    break;
+      /* USER CODE END CUSTOM_STM_App_Notification_default */
+      break;
   }
   /* USER CODE BEGIN CUSTOM_STM_App_Notification_2 */
 
@@ -125,26 +125,26 @@ void Custom_APP_Notification(Custom_App_ConnHandle_Not_evt_t *pNotification)
 
   switch (pNotification->Custom_Evt_Opcode)
   {
-  /* USER CODE BEGIN CUSTOM_APP_Notification_Custom_Evt_Opcode */
+    /* USER CODE BEGIN CUSTOM_APP_Notification_Custom_Evt_Opcode */
 
-  /* USER CODE END P2PS_CUSTOM_Notification_Custom_Evt_Opcode */
-  case CUSTOM_CONN_HANDLE_EVT:
-    /* USER CODE BEGIN CUSTOM_CONN_HANDLE_EVT */
+    /* USER CODE END P2PS_CUSTOM_Notification_Custom_Evt_Opcode */
+    case CUSTOM_CONN_HANDLE_EVT :
+      /* USER CODE BEGIN CUSTOM_CONN_HANDLE_EVT */
 
-    /* USER CODE END CUSTOM_CONN_HANDLE_EVT */
-    break;
+      /* USER CODE END CUSTOM_CONN_HANDLE_EVT */
+      break;
 
-  case CUSTOM_DISCON_HANDLE_EVT:
-    /* USER CODE BEGIN CUSTOM_DISCON_HANDLE_EVT */
+    case CUSTOM_DISCON_HANDLE_EVT :
+      /* USER CODE BEGIN CUSTOM_DISCON_HANDLE_EVT */
 
-    /* USER CODE END CUSTOM_DISCON_HANDLE_EVT */
-    break;
+      /* USER CODE END CUSTOM_DISCON_HANDLE_EVT */
+      break;
 
-  default:
-    /* USER CODE BEGIN CUSTOM_APP_Notification_default */
+    default:
+      /* USER CODE BEGIN CUSTOM_APP_Notification_default */
 
-    /* USER CODE END CUSTOM_APP_Notification_default */
-    break;
+      /* USER CODE END CUSTOM_APP_Notification_default */
+      break;
   }
 
   /* USER CODE BEGIN CUSTOM_APP_Notification_2 */

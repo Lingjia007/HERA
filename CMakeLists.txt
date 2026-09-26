@@ -47,12 +47,32 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
     BLEServices/Services.c
     BLEServices/svc_led.c
+    Audio/App/audio_capture_ring_buff.c
+    Audio/App/audio_stream.c
+    Audio/App/audio_app.c
+    Audio/Frontend/audio_frontend.c
+    VOFA+/VOFA.c
+    Drivers/CMSIS/DSP/Source/TransformFunctions/arm_rfft_init_q15.c
+    Drivers/CMSIS/DSP/Source/TransformFunctions/arm_rfft_q15.c
+    Drivers/CMSIS/DSP/Source/TransformFunctions/arm_cfft_init_q15.c
+    Drivers/CMSIS/DSP/Source/TransformFunctions/arm_cfft_q15.c
+    Drivers/CMSIS/DSP/Source/TransformFunctions/arm_cfft_radix4_q15.c
+    Drivers/CMSIS/DSP/Source/TransformFunctions/arm_bitreversal.c
+    Drivers/CMSIS/DSP/Source/TransformFunctions/arm_bitreversal2.c
+    Drivers/CMSIS/DSP/Source/CommonTables/arm_common_tables.c
+    Drivers/CMSIS/DSP/Source/CommonTables/arm_const_structs.c
+    Drivers/CMSIS/DSP/Source/StatisticsFunctions/arm_absmax_q15.c
+    Drivers/CMSIS/DSP/Source/BasicMathFunctions/arm_shift_q15.c
 )
 
 # Add include paths
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined include paths
     BLEServices
+    Audio/App
+    Audio/Frontend
+    VOFA+
+    Drivers/CMSIS/DSP/Include
 )
 
 # Add project symbols (macros)
