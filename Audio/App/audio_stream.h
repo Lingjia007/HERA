@@ -7,15 +7,17 @@
  *   - SAI1_Block_B master RX, I2S Philips, 32-bit slots, MONO mode, 16 kHz
  *   - DMA1_Channel1, circular, word (32-bit) alignment
  *
- * INMP441 sends a 24-bit two's-complement sample MSB-justified in a 32-bit
- * slot, so the DMA transfers one word per audio frame. SAI mono mode stores
- * only slot 0 data in the FIFO. INMP441 with L/R=GND outputs on the LEFT
- * channel, which is slot 0 in I2S Philips (WS=LOW). If the mic were wired for
- * the right channel, reconfigure the SAI slots in CubeMX (stereo) and
- * deinterleave here.
+ * SAI hardware MONO mode (RX, 2 slots): per RM0434 the hardware discards
+ * slot 1 and stores only slot 0 data in the FIFO -> the DMA sees exactly
+ * ONE 32-bit word per audio frame. INMP441 must have L/R=GND (outputs on
+ * the LEFT channel, WS=LOW = slot 0); if it were wired for the right
+ * channel the hardware mono mode would discard its data.
  *
- * Pipeline: DMA half/full IRQ -> per-block DC removal -> ring buffer.
- * Main loop consumes from the ring.
+ * The 24-bit two's-complement sample is MSB-justified in the 32-bit slot;
+ * keep the top 16 bits (sign-preserving) to feed the int16 mel frontend.
+ *
+ * Pipeline: DMA half/full IRQ -> keep top 16 bits -> per-block DC removal
+ * -> ring buffer. Main loop consumes from the ring.
  ******************************************************************************
  */
 #ifndef AUDIO_STREAM_H
@@ -32,10 +34,12 @@ extern "C"
 /* ---- Audio geometry ------------------------------------------------------ */
 #define AS_SAMPLE_RATE_HZ 16000
 
-/* 10 ms per DMA half-buffer = 160 mono samples.
- * DMA moves 1 word (32-bit) per audio frame: 160 words per half buffer. */
+/* 10 ms per DMA half-buffer = 160 audio frames.
+ * SAI hardware MONO mode (RX): slot 1 discarded by hardware -> DMA moves
+ * 1 word (32-bit slot 0) per audio frame -> 160 words per half buffer. */
 #define AS_DMA_HALF_FRAMES 160
-#define AS_DMA_BUF_WORDS (AS_DMA_HALF_FRAMES * 2) /* 320 words: double buffer */
+#define AS_DMA_HALFWORDS (AS_DMA_HALF_FRAMES)     /* 160 words: 1 per frame */
+#define AS_DMA_BUF_WORDS (AS_DMA_HALFWORDS * 2)   /* 320 words: double buffer */
 
 /* Ring buffer geometry: 4 frames x 3200 samples = 12800 samples (~800 ms) */
 #define AS_RING_NB_SAMPLES 3200

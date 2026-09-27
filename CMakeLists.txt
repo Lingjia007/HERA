@@ -51,6 +51,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     Audio/App/audio_stream.c
     Audio/App/audio_app.c
     Audio/Frontend/audio_frontend.c
+    Audio/kws/kws_postprocess.c
     VOFA+/VOFA.c
     Drivers/CMSIS/DSP/Source/TransformFunctions/arm_rfft_init_q15.c
     Drivers/CMSIS/DSP/Source/TransformFunctions/arm_rfft_q15.c
@@ -71,6 +72,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     BLEServices
     Audio/App
     Audio/Frontend
+    Audio/kws
     VOFA+
     Drivers/CMSIS/DSP/Include
 )
@@ -89,6 +91,9 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
 
     # Add user defined libraries
 )
+
+# Pull in float formatting for printf (nano.specs): KWS prints softmax %.1f
+target_link_options(${CMAKE_PROJECT_NAME} PRIVATE "-Wl,-u,_printf_float")
 
 # Generate binary and hex files from the ELF output
 set(ELF_FILE ${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}.elf)

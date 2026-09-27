@@ -75,7 +75,13 @@ void HAL_SAI_MspInit(SAI_HandleTypeDef* saiHandle)
   /** Initializes the peripherals clock
   */
     PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_SAI1;
-    PeriphClkInitStruct.PLLSAI1.PLLN = 8;
+    /* PLLSAI1 input = HSE/PLLM = 16 MHz. N=20 -> VCO 320 MHz, P=DIV2 ->
+     * SAI kernel 160 MHz -> HAL picks MCKDIV=78 -> fs = 16.026 kHz (+0.16%).
+     * (With the CubeMX default N=8/64 MHz kernel, fs = 15.625 kHz, -2.34% -
+     * too much pitch shift for the KWS model.)
+     * NOTE: this line lives outside USER CODE blocks -> re-apply after any
+     * CubeMX code regeneration. */
+    PeriphClkInitStruct.PLLSAI1.PLLN = 20;
     PeriphClkInitStruct.PLLSAI1.PLLP = RCC_PLLP_DIV2;
     PeriphClkInitStruct.PLLSAI1.PLLQ = RCC_PLLQ_DIV2;
     PeriphClkInitStruct.PLLSAI1.PLLR = RCC_PLLR_DIV2;

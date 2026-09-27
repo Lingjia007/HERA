@@ -2,7 +2,7 @@
   ******************************************************************************
   * @file    echodscnn_data.c
   * @author  AST Embedded Analytics Research Platform
-  * @date    2026-09-27T12:28:03+0800
+  * @date    2026-09-27T14:08:57+0800
   * @brief   AI Tool Automatic Code Generator for Embedded NN computing
   ******************************************************************************
   * @attention
@@ -21,13 +21,13 @@
 AI_API_DECLARE_BEGIN
 ai_buffer g_echodscnn_data_map_activations[AI_ECHODSCNN_DATA_ACTIVATIONS_COUNT] = {
   AI_BUFFER_INIT(AI_FLAG_NONE,  AI_BUFFER_FORMAT_U8,
-    AI_BUFFER_SHAPE_INIT(AI_SHAPE_BCWH, 4, 1, 25440, 1, 1),
-    25440, NULL, NULL),    /* heap_overlay_pool */
+    AI_BUFFER_SHAPE_INIT(AI_SHAPE_BCWH, 4, 1, 6176, 1, 1),
+    6176, NULL, NULL),    /* heap_overlay_pool */
   };
 ai_buffer g_echodscnn_data_map_weights[AI_ECHODSCNN_DATA_WEIGHTS_COUNT] = {
   AI_BUFFER_INIT(AI_FLAG_NONE,  AI_BUFFER_FORMAT_U8,
-    AI_BUFFER_SHAPE_INIT(AI_SHAPE_BCWH, 4, 1, 213640, 1, 1),
-    213640, NULL, s_echodscnn_weights_array_u64),   /* weights_array */
+    AI_BUFFER_SHAPE_INIT(AI_SHAPE_BCWH, 4, 1, 10528, 1, 1),
+    10528, NULL, s_echodscnn_weights_array_u64),   /* weights_array */
   };
 
 

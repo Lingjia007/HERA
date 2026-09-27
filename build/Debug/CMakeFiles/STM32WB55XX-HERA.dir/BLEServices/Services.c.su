@@ -1,5 +1,4 @@
-D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/BLEServices/Services.c:59:6:Services_BindGatt	64	static
-D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/BLEServices/Services.c:97:6:Services_OnRxData	32	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/BLEServices/Services.c:59:6:Services_BindGatt	56	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/BLEServices/Services.c:97:6:Services_OnRxData	48	static
 D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/BLEServices/Services.c:152:12:Services_Send	32	static
-D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/BLEServices/Services.c:188:12:Services_SendText	32	static
-D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/BLEServices/Services.c:214:13:Services_OnTextData	56	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/BLEServices/Services.c:188:12:Services_SendText	24	static

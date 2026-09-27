@@ -2,7 +2,7 @@
   ******************************************************************************
   * @file    echodscnn_data.h
   * @author  AST Embedded Analytics Research Platform
-  * @date    2026-09-27T12:28:03+0800
+  * @date    2026-09-27T14:08:57+0800
   * @brief   AI Tool Automatic Code Generator for Embedded NN computing
   ******************************************************************************
   * Copyright (c) 2026 STMicroelectronics.
@@ -32,7 +32,7 @@ AI_DEPRECATED
 AI_API_DECLARE_BEGIN
 
 
-extern const ai_u64 s_echodscnn_weights_array_u64[26705];
+extern const ai_u64 s_echodscnn_weights_array_u64[1316];
 
 
 

@@ -1,10 +1,5 @@
-D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/BLEServices/svc_led.c:55:16:Led_GetState	8	static
-D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/BLEServices/svc_led.c:64:13:Led_Apply	16	static
-D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/BLEServices/svc_led.c:70:13:Led_On	8	static
-D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/BLEServices/svc_led.c:75:13:Led_Off	8	static
 D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/BLEServices/svc_led.c:80:13:Led_Toggle	8	static
-D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/BLEServices/svc_led.c:88:25:Led_FindByCode	24	static
-D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/BLEServices/svc_led.c:104:25:Led_FindByName	32	static
-D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/BLEServices/svc_led.c:133:13:Led_ExecAndReply	48	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/BLEServices/svc_led.c:75:13:Led_Off	0	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/BLEServices/svc_led.c:70:13:Led_On	0	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/BLEServices/svc_led.c:186:13:SvcLed_OnText	56	static
 D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/BLEServices/svc_led.c:168:13:SvcLed_OnRx	24	static
-D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/BLEServices/svc_led.c:186:13:SvcLed_OnText	24	static
