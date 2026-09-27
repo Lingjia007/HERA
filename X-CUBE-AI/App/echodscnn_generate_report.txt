@@ -1,6 +1,6 @@
 ST Edge AI Core v2.2.0-20266 2adc00962
-Created date          : 2026-09-26 11:57:58
-Parameters            : generate --target stm32wb --name echodscnn -m D:/edgedownload/STM32F407VGT6_TensorFlow-Lite-Micro/stm32f4_tflm_project/examples/micro_speech/models/models_cmsis/model.tflite --compression none --verbosity 1 --workspace C:/Users/31254/AppData/Local/Temp/mxAI_workspace40281538036004654472125289720305 --output C:/Users/31254/.stm32cubemx/network_output
+Created date          : 2026-09-27 12:28:05
+Parameters            : generate --target stm32wb --name echodscnn -m D:/edgedownload/STM32F407VGT6_TensorFlow-Lite-Micro/stm32f4_tflm_project/examples/micro_speech/models/models_cmsis/model.tflite --compression none --verbosity 1 --workspace C:/Users/31254/AppData/Local/Temp/mxAI_workspace4990772030006470210818799006373 --output C:/Users/31254/.stm32cubemx/echodscnn_output
 
 Exec/report summary (generate)
 ---------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -11,8 +11,8 @@ compression        :   none
 options            :   allocate-inputs, allocate-outputs                                                                                                 
 optimization       :   balanced                                                                                                                          
 target/series      :   stm32wb                                                                                                                           
-workspace dir      :   C:\Users\31254\AppData\Local\Temp\mxAI_workspace40281538036004654472125289720305                                                  
-output dir         :   C:\Users\31254\.stm32cubemx\network_output                                                                                        
+workspace dir      :   C:\Users\31254\AppData\Local\Temp\mxAI_workspace4990772030006470210818799006373                                                   
+output dir         :   C:\Users\31254\.stm32cubemx\echodscnn_output                                                                                      
 model_fmt          :   ss/sa per channel                                                                                                                 
 model_name         :   model                                                                                                                             
 model_hash         :   0x7bb1442336eac2f3eb182810d97e2ef2                                                                                                
@@ -476,11 +476,11 @@ macc=6,542,926 weights=213,640 act=25,440 ram_io=0
 
 
 Generated files (7)
--------------------------------------------------------------------- 
-C:\Users\31254\.stm32cubemx\network_output\echodscnn_data_params.h   
-C:\Users\31254\.stm32cubemx\network_output\echodscnn_data_params.c   
-C:\Users\31254\.stm32cubemx\network_output\echodscnn_data.h          
-C:\Users\31254\.stm32cubemx\network_output\echodscnn_data.c          
-C:\Users\31254\.stm32cubemx\network_output\echodscnn_config.h        
-C:\Users\31254\.stm32cubemx\network_output\echodscnn.h               
-C:\Users\31254\.stm32cubemx\network_output\echodscnn.c               
+---------------------------------------------------------------------- 
+C:\Users\31254\.stm32cubemx\echodscnn_output\echodscnn_data_params.h   
+C:\Users\31254\.stm32cubemx\echodscnn_output\echodscnn_data_params.c   
+C:\Users\31254\.stm32cubemx\echodscnn_output\echodscnn_data.h          
+C:\Users\31254\.stm32cubemx\echodscnn_output\echodscnn_data.c          
+C:\Users\31254\.stm32cubemx\echodscnn_output\echodscnn_config.h        
+C:\Users\31254\.stm32cubemx\echodscnn_output\echodscnn.h               
+C:\Users\31254\.stm32cubemx\echodscnn_output\echodscnn.c               

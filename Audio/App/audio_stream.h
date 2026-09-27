@@ -4,11 +4,12 @@
  * @brief   Real-time audio capture via SAI1 Block B DMA ping-pong for INMP441.
  *
  * Hardware assumptions (matching CubeMX-generated sai.c):
- *   - SAI1_Block_B master RX, I2S Philips, 16-bit data, MONO mode, 16 kHz
- *   - DMA1_Channel1, circular, halfword alignment
+ *   - SAI1_Block_B master RX, I2S Philips, 32-bit slots, MONO mode, 16 kHz
+ *   - DMA1_Channel1, circular, word (32-bit) alignment
  *
- * SAI mono mode stores only slot 0 data in the FIFO, so the DMA buffer holds
- * 1 halfword per audio frame. INMP441 with L/R=GND outputs on the LEFT
+ * INMP441 sends a 24-bit two's-complement sample MSB-justified in a 32-bit
+ * slot, so the DMA transfers one word per audio frame. SAI mono mode stores
+ * only slot 0 data in the FIFO. INMP441 with L/R=GND outputs on the LEFT
  * channel, which is slot 0 in I2S Philips (WS=LOW). If the mic were wired for
  * the right channel, reconfigure the SAI slots in CubeMX (stereo) and
  * deinterleave here.
@@ -31,9 +32,10 @@ extern "C"
 /* ---- Audio geometry ------------------------------------------------------ */
 #define AS_SAMPLE_RATE_HZ 16000
 
-/* 10 ms per DMA half-buffer = 160 mono samples (1 halfword per frame, mono) */
+/* 10 ms per DMA half-buffer = 160 mono samples.
+ * DMA moves 1 word (32-bit) per audio frame: 160 words per half buffer. */
 #define AS_DMA_HALF_FRAMES 160
-#define AS_DMA_BUF_HALFWORDS (AS_DMA_HALF_FRAMES * 2) /* 320 halfwords: double buffer */
+#define AS_DMA_BUF_WORDS (AS_DMA_HALF_FRAMES * 2) /* 320 words: double buffer */
 
 /* Ring buffer geometry: 4 frames x 3200 samples = 12800 samples (~800 ms) */
 #define AS_RING_NB_SAMPLES 3200

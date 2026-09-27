@@ -13,8 +13,9 @@
 #include <stdio.h>
 #include <inttypes.h>
 
-/* DMA double buffer (circular, halfword-aligned). */
-static uint16_t s_dma_buf[AS_DMA_BUF_HALFWORDS];
+/* DMA double buffer (circular, word-aligned). One 32-bit word per frame:
+ * INMP441 24-bit sample MSB-justified in a 32-bit slot. */
+static uint32_t s_dma_buf[AS_DMA_BUF_WORDS];
 
 /* Ring buffer backing store (CPU-only access). */
 static int16_t s_ring_backing[AS_RING_NB_SAMPLES * AS_RING_NB_FRAMES];
@@ -37,26 +38,28 @@ void AudioStream_init(void)
 
 void AudioStream_start(void)
 {
-  /* Circular DMA gives half + full transfer callbacks. Size counts halfwords
-   * (mono 16-bit: 1 halfword per audio frame). */
+  /* Circular DMA gives half + full transfer callbacks. Size counts memory
+   * data units (words: 1 word per audio frame, mono slot 0). */
   HAL_StatusTypeDef st = HAL_SAI_Receive_DMA(&hsai_BlockB1, (uint8_t *)s_dma_buf,
-                                             AS_DMA_BUF_HALFWORDS);
+                                             AS_DMA_BUF_WORDS);
   if (st != HAL_OK)
   {
     printf("SAI DMA FAIL=%" PRId32 "\r\n", (int32_t)st);
   }
 }
 
-/* Remove DC offset from one DMA half-block and push to ring.
+/* Convert one DMA half-block to int16 and push to ring.
  * half_id = 0 -> first half of s_dma_buf, 1 -> second half. */
 static void AudioStream_process_half(uint8_t half_id)
 {
-  const uint16_t *src = s_dma_buf + half_id * AS_DMA_HALF_FRAMES;
+  const uint32_t *src = s_dma_buf + half_id * AS_DMA_HALF_FRAMES;
 
   int32_t sum = 0;
   for (uint32_t i = 0; i < AS_DMA_HALF_FRAMES; i++)
   {
-    int16_t v = (int16_t)src[i];
+    /* INMP441: 24-bit two's complement, MSB-justified -> keep top 16 bits
+     * (sign-preserving) for the int16 display/frontend pipeline. */
+    int16_t v = (int16_t)(src[i] >> 16);
     s_mono[i] = v;
     sum += v;
   }

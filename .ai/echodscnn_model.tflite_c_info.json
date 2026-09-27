@@ -5005,44 +5005,44 @@
   ],
   "environment": {
     "generated_model": {
-      "generated_time": "2026-09-26T11:57:56+0800",
+      "generated_time": "2026-09-27T12:28:03+0800",
       "model_files": [
         {
           "name": "echodscnn_data_params.h",
-          "signature": "0xc28ff23214cce506e135677e527ad115"
+          "signature": "0xebeb0f2dd84b215b506ca3aa64967b84"
         },
         {
           "name": "echodscnn_data_params.c",
-          "signature": "0x574eac4732f14bec0874fe9d373fc911"
+          "signature": "0xee0ab0ec5a28e86c6d439454dc23e634"
         },
         {
           "name": "echodscnn_data.h",
-          "signature": "0xbbc7dfe88d47ed6a52132b798884f384"
+          "signature": "0x18a93b6ed265800004c4784723fb1b55"
         },
         {
           "name": "echodscnn_data.c",
-          "signature": "0xa69dcc37cdae32d1553787cfd5d5f2ba"
+          "signature": "0x6d5b11155409db21e8a467c20acb4c0e"
         },
         {
           "name": "echodscnn_config.h",
-          "signature": "0x80869f0d72713ec0e54e67b3205a52da"
+          "signature": "0x2c22448bc1e60398db7b5817bac4b606"
         },
         {
           "name": "echodscnn.h",
-          "signature": "0x8caf25367fa644dbc120aa0ac51a0226"
+          "signature": "0x73761cdbe4f512875e5ee43807e06cf8"
         },
         {
           "name": "echodscnn.c",
-          "signature": "0xe2a83bd00d9fee206d636a8ce2512954"
+          "signature": "0x209be983ffc25b4df160d4d9d91cf16c"
         }
       ],
       "name": "echodscnn"
     },
-    "network_signature": "0x81fa17403cb4cb13",
+    "network_signature": "0xf42327e1e52a9093",
     "test_name": "",
     "tools": [
       {
-        "arguments": "generate --target stm32wb --name echodscnn -m D:/edgedownload/STM32F407VGT6_TensorFlow-Lite-Micro/stm32f4_tflm_project/examples/micro_speech/models/models_cmsis/model.tflite --compression none --verbosity 1 --workspace C:/Users/31254/AppData/Local/Temp/mxAI_workspace40281538036004654472125289720305 --output C:/Users/31254/.stm32cubemx/network_output",
+        "arguments": "generate --target stm32wb --name echodscnn -m D:/edgedownload/STM32F407VGT6_TensorFlow-Lite-Micro/stm32f4_tflm_project/examples/micro_speech/models/models_cmsis/model.tflite --compression none --verbosity 1 --workspace C:/Users/31254/AppData/Local/Temp/mxAI_workspace4990772030006470210818799006373 --output C:/Users/31254/.stm32cubemx/echodscnn_output",
         "environment": [
           "STATS_TYPE=X-CUBE-AI"
         ],
