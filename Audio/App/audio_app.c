@@ -41,6 +41,10 @@
  * classes, argmax in [0,13]. Must match AI_ECHODSCNN_OUT_1_SIZE (14). */
 #define NUM_LABELS 14
 
+/* 1 = 输出原始 logits 裸值（不合并防抖/冷却/阈值），便于观察模型原始输出；
+ * 0 = 恢复 kws_postprocess 后处理。 */
+#define KWS_RAW_OUTPUT 1
+
 static const char *const kLabelNames[NUM_LABELS] = {
     "_silence_", "_unknown_",
     "yes", "no",
@@ -82,7 +86,7 @@ static int ai_boostrap(void)
 {
   ai_error err;
 
-  err = ai_echodscnn_create_and_init(&s_net, (ai_handle[]) {pool0}, NULL);
+  err = ai_echodscnn_create_and_init(&s_net, (ai_handle[]){pool0}, NULL);
   if (err.type != AI_ERROR_NONE)
   {
     ai_log_err(err, "ai_echodscnn_create_and_init");
@@ -139,7 +143,19 @@ static int post_process(ai_i8 *data[])
 {
   const int8_t *out = (const int8_t *)data[0];
 
+#if KWS_RAW_OUTPUT
+  /* 裸值模式：只给出 200ms 推理结果（argmax + 分数），不打印 logits。
+   * 0=_silence_, 1=_unknown_（安静/噪声）不输出。 */
+  int max_idx = 0;
+  for (int i = 1; i < NUM_LABELS; i++)
+    if (out[i] > out[max_idx])
+      max_idx = i;
+
+  if (max_idx > 1)
+    printf("[RAW] %s score=%d\r\n", kLabelNames[max_idx], out[max_idx]);
+#else
   (void)kws_postprocess_feed(&s_kws, out, NUM_LABELS, kLabelNames);
+#endif
 
   return 0;
 }
