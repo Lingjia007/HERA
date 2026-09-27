@@ -3,7 +3,7 @@
   ******************************************************************************
   * @file    echodscnn_config.h
   * @author  AST Embedded Analytics Research Platform
-  * @date    2026-09-27T15:34:01+0800
+  * @date    2026-09-27T17:34:27+0800
   * @brief   AI Tool Automatic Code Generator for Custom Layers Implementation
   ******************************************************************************
   * @attention

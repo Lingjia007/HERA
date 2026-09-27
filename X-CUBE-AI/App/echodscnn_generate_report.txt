@@ -1,6 +1,6 @@
 ST Edge AI Core v2.2.0-20266 2adc00962
-Created date          : 2026-09-27 15:34:02
-Parameters            : generate --target stm32wb --name echodscnn -m D:/edgedownload/STM32WB55XX-HERA/model-t.tflite --compression none --verbosity 1 --workspace C:/Users/31254/AppData/Local/Temp/mxAI_workspace116520183195009900482329603247577 --output C:/Users/31254/.stm32cubemx/echodscnn_output
+Created date          : 2026-09-27 17:34:30
+Parameters            : generate --target stm32wb --name echodscnn -m D:/edgedownload/STM32WB55XX-HERA/model-t.tflite --compression none --verbosity 1 --workspace C:/Users/31254/AppData/Local/Temp/mxAI_workspace1887836244650017672407586086898939 --output C:/Users/31254/.stm32cubemx/echodscnn_output
 
 Exec/report summary (generate)
 ----------------------------------------------------------------------------------------------------------------------------
@@ -11,7 +11,7 @@ compression        :   none
 options            :   allocate-inputs, allocate-outputs                                                                    
 optimization       :   balanced                                                                                             
 target/series      :   stm32wb                                                                                              
-workspace dir      :   C:\Users\31254\AppData\Local\Temp\mxAI_workspace116520183195009900482329603247577                    
+workspace dir      :   C:\Users\31254\AppData\Local\Temp\mxAI_workspace1887836244650017672407586086898939                   
 output dir         :   C:\Users\31254\.stm32cubemx\echodscnn_output                                                         
 model_fmt          :   ss/sa per channel                                                                                    
 model_name         :   modelt                                                                                               

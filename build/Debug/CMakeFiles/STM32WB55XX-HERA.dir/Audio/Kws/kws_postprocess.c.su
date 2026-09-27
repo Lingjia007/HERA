@@ -1,2 +1,3 @@
-D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Audio/Kws/kws_postprocess.c:12:6:kws_postprocess_init	0	static
-D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Audio/Kws/kws_postprocess.c:21:5:kws_postprocess_feed	336	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Audio/Kws/kws_postprocess.c:65:12:kws_finalize	56	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Audio/Kws/kws_postprocess.c:11:6:kws_postprocess_init	0	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Audio/Kws/kws_postprocess.c:120:5:kws_postprocess_feed	24	static

@@ -8,7 +8,7 @@
  * Data flow (16 kHz, mono, int16), ported 1:1 from the F407 project
  * (STM32F407VGT6_TensorFlow-Lite-Micro, X-CUBE-AI/App/app_x-cube-ai.c):
  *   SAI1_B DMA (10 ms half-blocks, IRQ) -> ring buffer (800 ms)
- *   -> main loop: consume 3200 samples (200 ms slide) -> 1 s sliding mel
+ *   -> main loop: consume 2560 samples (160 ms slide) -> 1 s sliding mel
  *      frontend (49x40 features) -> echodscnn inference (int8 1960 in,
  *      14 logits out) -> kws_postprocess_feed (argmax + debounce +
  *      cooldown + softmax print).
@@ -41,9 +41,9 @@
  * classes, argmax in [0,13]. Must match AI_ECHODSCNN_OUT_1_SIZE (14). */
 #define NUM_LABELS 14
 
-/* 1 = 输出原始 logits 裸值（不合并防抖/冷却/阈值），便于观察模型原始输出；
- * 0 = 恢复 kws_postprocess 后处理。 */
-#define KWS_RAW_OUTPUT 1
+/* 1 = 输出原始推理结果裸值（不经过判决算法），便于观察模型原始输出；
+ * 0 = 启用 kws_postprocess 分段多数投票判决。 */
+#define KWS_RAW_OUTPUT 0
 
 static const char *const kLabelNames[NUM_LABELS] = {
     "_silence_", "_unknown_",
@@ -138,7 +138,7 @@ static int acquire_and_process_data(ai_i8 *data[])
   return 0;
 }
 
-/* KWS debounce + cooldown + softmax print (identical to F407). */
+/* KWS decision: segment majority vote, one printout per utterance. */
 static int post_process(ai_i8 *data[])
 {
   const int8_t *out = (const int8_t *)data[0];

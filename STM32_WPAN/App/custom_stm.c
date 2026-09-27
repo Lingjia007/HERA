@@ -27,14 +27,15 @@
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
-typedef struct{
-  uint16_t  CustomMysvcHdle;                    /**< mySVC handle */
-  uint16_t  CustomMycharwriteHdle;                  /**< myCharWrite handle */
-/* USER CODE BEGIN Context */
+typedef struct
+{
+  uint16_t CustomMysvcHdle;       /**< mySVC handle */
+  uint16_t CustomMycharwriteHdle; /**< myCharWrite handle */
+  /* USER CODE BEGIN Context */
   /* Place holder for Characteristic Descriptors Handle*/
 
-/* USER CODE END Context */
-}CustomContext_t;
+  /* USER CODE END Context */
+} CustomContext_t;
 
 extern uint16_t Connection_Handle;
 /* USER CODE BEGIN PTD */
@@ -42,29 +43,29 @@ extern uint16_t Connection_Handle;
 /* USER CODE END PTD */
 
 /* Private defines -----------------------------------------------------------*/
-#define UUID_128_SUPPORTED  1
+#define UUID_128_SUPPORTED 1
 
 #if (UUID_128_SUPPORTED == 1)
-#define BM_UUID_LENGTH  UUID_TYPE_128
+#define BM_UUID_LENGTH UUID_TYPE_128
 #else
-#define BM_UUID_LENGTH  UUID_TYPE_16
+#define BM_UUID_LENGTH UUID_TYPE_16
 #endif
 
-#define BM_REQ_CHAR_SIZE    (3)
+#define BM_REQ_CHAR_SIZE (3)
 
 /* USER CODE BEGIN PD */
 
 /* USER CODE END PD */
 
 /* Private macros ------------------------------------------------------------*/
-#define CHARACTERISTIC_DESCRIPTOR_ATTRIBUTE_OFFSET         2
-#define CHARACTERISTIC_VALUE_ATTRIBUTE_OFFSET              1
+#define CHARACTERISTIC_DESCRIPTOR_ATTRIBUTE_OFFSET 2
+#define CHARACTERISTIC_VALUE_ATTRIBUTE_OFFSET 1
 /* USER CODE BEGIN PM */
 
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-uint16_t SizeMycharwrite = 1;
+uint16_t SizeMycharwrite = 20; /* NOTE: CubeMX重新生成会回退成1, 需手工恢复 */
 
 /**
  * START of Section BLE_DRIVER_CONTEXT
@@ -96,15 +97,28 @@ static tBleStatus Generic_STM_App_Update_Char_Ext(uint16_t ConnectionHandle, uin
 /* Private functions ----------------------------------------------------------*/
 
 #define COPY_UUID_128(uuid_struct, uuid_15, uuid_14, uuid_13, uuid_12, uuid_11, uuid_10, uuid_9, uuid_8, uuid_7, uuid_6, uuid_5, uuid_4, uuid_3, uuid_2, uuid_1, uuid_0) \
-do {\
-    uuid_struct[0] = uuid_0; uuid_struct[1] = uuid_1; uuid_struct[2] = uuid_2; uuid_struct[3] = uuid_3; \
-    uuid_struct[4] = uuid_4; uuid_struct[5] = uuid_5; uuid_struct[6] = uuid_6; uuid_struct[7] = uuid_7; \
-    uuid_struct[8] = uuid_8; uuid_struct[9] = uuid_9; uuid_struct[10] = uuid_10; uuid_struct[11] = uuid_11; \
-    uuid_struct[12] = uuid_12; uuid_struct[13] = uuid_13; uuid_struct[14] = uuid_14; uuid_struct[15] = uuid_15; \
-}while(0)
+  do                                                                                                                                                                     \
+  {                                                                                                                                                                      \
+    uuid_struct[0] = uuid_0;                                                                                                                                             \
+    uuid_struct[1] = uuid_1;                                                                                                                                             \
+    uuid_struct[2] = uuid_2;                                                                                                                                             \
+    uuid_struct[3] = uuid_3;                                                                                                                                             \
+    uuid_struct[4] = uuid_4;                                                                                                                                             \
+    uuid_struct[5] = uuid_5;                                                                                                                                             \
+    uuid_struct[6] = uuid_6;                                                                                                                                             \
+    uuid_struct[7] = uuid_7;                                                                                                                                             \
+    uuid_struct[8] = uuid_8;                                                                                                                                             \
+    uuid_struct[9] = uuid_9;                                                                                                                                             \
+    uuid_struct[10] = uuid_10;                                                                                                                                           \
+    uuid_struct[11] = uuid_11;                                                                                                                                           \
+    uuid_struct[12] = uuid_12;                                                                                                                                           \
+    uuid_struct[13] = uuid_13;                                                                                                                                           \
+    uuid_struct[14] = uuid_14;                                                                                                                                           \
+    uuid_struct[15] = uuid_15;                                                                                                                                           \
+  } while (0)
 
-#define COPY_MYSVC_UUID(uuid_struct)          COPY_UUID_128(uuid_struct,0x00,0x00,0x00,0x00,0xcc,0x7a,0x48,0x2a,0x98,0x4a,0x7f,0x2e,0xd5,0xb3,0xe5,0x8f)
-#define COPY_MYCHARWRITE_UUID(uuid_struct)    COPY_UUID_128(uuid_struct,0x00,0x00,0x00,0x00,0x8e,0x22,0x45,0x41,0x9d,0x4c,0x21,0xed,0xae,0x82,0xed,0x19)
+#define COPY_MYSVC_UUID(uuid_struct) COPY_UUID_128(uuid_struct, 0x00, 0x00, 0x00, 0x00, 0xcc, 0x7a, 0x48, 0x2a, 0x98, 0x4a, 0x7f, 0x2e, 0xd5, 0xb3, 0xe5, 0x8f)
+#define COPY_MYCHARWRITE_UUID(uuid_struct) COPY_UUID_128(uuid_struct, 0x00, 0x00, 0x00, 0x00, 0x8e, 0x22, 0x45, 0x41, 0x9d, 0x4c, 0x21, 0xed, 0xae, 0x82, 0xed, 0x19)
 
 /* USER CODE BEGIN PF */
 
@@ -120,23 +134,23 @@ static SVCCTL_EvtAckStatus_t Custom_STM_Event_Handler(void *Event)
   SVCCTL_EvtAckStatus_t return_value;
   hci_event_pckt *event_pckt;
   evt_blecore_aci *blecore_evt;
-  aci_gatt_notification_complete_event_rp0    *notification_complete;
-  Custom_STM_App_Notification_evt_t     Notification;
+  aci_gatt_notification_complete_event_rp0 *notification_complete;
+  Custom_STM_App_Notification_evt_t Notification;
   /* USER CODE BEGIN Custom_STM_Event_Handler_1 */
 
   /* USER CODE END Custom_STM_Event_Handler_1 */
 
   return_value = SVCCTL_EvtNotAck;
-  event_pckt = (hci_event_pckt *)(((hci_uart_pckt*)Event)->data);
+  event_pckt = (hci_event_pckt *)(((hci_uart_pckt *)Event)->data);
 
   switch (event_pckt->evt)
   {
-    case HCI_VENDOR_SPECIFIC_DEBUG_EVT_CODE:
-      blecore_evt = (evt_blecore_aci*)event_pckt->data;
-      switch (blecore_evt->ecode)
-      {
-        case ACI_GATT_ATTRIBUTE_MODIFIED_VSEVT_CODE:
-          /* USER CODE BEGIN EVT_BLUE_GATT_ATTRIBUTE_MODIFIED_BEGIN */
+  case HCI_VENDOR_SPECIFIC_DEBUG_EVT_CODE:
+    blecore_evt = (evt_blecore_aci *)event_pckt->data;
+    switch (blecore_evt->ecode)
+    {
+    case ACI_GATT_ATTRIBUTE_MODIFIED_VSEVT_CODE:
+      /* USER CODE BEGIN EVT_BLUE_GATT_ATTRIBUTE_MODIFIED_BEGIN */
       {
         aci_gatt_attribute_modified_event_rp0 *attribute_modified = (aci_gatt_attribute_modified_event_rp0 *)blecore_evt->data;
         if (attribute_modified->Attr_Handle == (CustomContext.CustomMycharwriteHdle + CHARACTERISTIC_VALUE_ATTRIBUTE_OFFSET))
@@ -149,23 +163,23 @@ static SVCCTL_EvtAckStatus_t Custom_STM_Event_Handler(void *Event)
           Custom_STM_App_Notification(&Notification);
         }
       }
-          /* USER CODE END EVT_BLUE_GATT_ATTRIBUTE_MODIFIED_BEGIN */
-          /* USER CODE BEGIN EVT_BLUE_GATT_ATTRIBUTE_MODIFIED_END */
+      /* USER CODE END EVT_BLUE_GATT_ATTRIBUTE_MODIFIED_BEGIN */
+      /* USER CODE BEGIN EVT_BLUE_GATT_ATTRIBUTE_MODIFIED_END */
 
-          /* USER CODE END EVT_BLUE_GATT_ATTRIBUTE_MODIFIED_END */
-          break;
+      /* USER CODE END EVT_BLUE_GATT_ATTRIBUTE_MODIFIED_END */
+      break;
 
-        case ACI_GATT_READ_PERMIT_REQ_VSEVT_CODE :
-          /* USER CODE BEGIN EVT_BLUE_GATT_READ_PERMIT_REQ_BEGIN */
+    case ACI_GATT_READ_PERMIT_REQ_VSEVT_CODE:
+      /* USER CODE BEGIN EVT_BLUE_GATT_READ_PERMIT_REQ_BEGIN */
 
-          /* USER CODE END EVT_BLUE_GATT_READ_PERMIT_REQ_BEGIN */
-          /* USER CODE BEGIN EVT_BLUE_GATT_READ_PERMIT_REQ_END */
+      /* USER CODE END EVT_BLUE_GATT_READ_PERMIT_REQ_BEGIN */
+      /* USER CODE BEGIN EVT_BLUE_GATT_READ_PERMIT_REQ_END */
 
-          /* USER CODE END EVT_BLUE_GATT_READ_PERMIT_REQ_END */
-          break;
+      /* USER CODE END EVT_BLUE_GATT_READ_PERMIT_REQ_END */
+      break;
 
-        case ACI_GATT_WRITE_PERMIT_REQ_VSEVT_CODE:
-          /* USER CODE BEGIN EVT_BLUE_GATT_WRITE_PERMIT_REQ_BEGIN */
+    case ACI_GATT_WRITE_PERMIT_REQ_VSEVT_CODE:
+      /* USER CODE BEGIN EVT_BLUE_GATT_WRITE_PERMIT_REQ_BEGIN */
       {
         /* 兜底: 生成区掩码含WAIT_FOR_APPL_RESP, 带响应写会等应用许可,
            此处直接放行(写完成后仍会触发ATTRIBUTE_MODIFIED分发),
@@ -178,58 +192,58 @@ static SVCCTL_EvtAckStatus_t Custom_STM_Event_Handler(void *Event)
                                     permit_req->Data_Length,
                                     permit_req->Data);
       }
-          /* USER CODE END EVT_BLUE_GATT_WRITE_PERMIT_REQ_BEGIN */
-          /* USER CODE BEGIN EVT_BLUE_GATT_WRITE_PERMIT_REQ_END */
+      /* USER CODE END EVT_BLUE_GATT_WRITE_PERMIT_REQ_BEGIN */
+      /* USER CODE BEGIN EVT_BLUE_GATT_WRITE_PERMIT_REQ_END */
 
-          /* USER CODE END EVT_BLUE_GATT_WRITE_PERMIT_REQ_END */
-          break;
-
-		case ACI_GATT_NOTIFICATION_COMPLETE_VSEVT_CODE:
-        {
-          /* USER CODE BEGIN EVT_BLUE_GATT_NOTIFICATION_COMPLETE_BEGIN */
-
-          /* USER CODE END EVT_BLUE_GATT_NOTIFICATION_COMPLETE_BEGIN */
-          notification_complete = (aci_gatt_notification_complete_event_rp0*)blecore_evt->data;
-          Notification.Custom_Evt_Opcode = CUSTOM_STM_NOTIFICATION_COMPLETE_EVT;
-          Notification.AttrHandle = notification_complete->Attr_Handle;
-          Custom_STM_App_Notification(&Notification);
-          /* USER CODE BEGIN EVT_BLUE_GATT_NOTIFICATION_COMPLETE_END */
-
-          /* USER CODE END EVT_BLUE_GATT_NOTIFICATION_COMPLETE_END */
-          break;
-        }
-
-        /* USER CODE BEGIN BLECORE_EVT */
-
-        /* USER CODE END BLECORE_EVT */
-        default:
-          /* USER CODE BEGIN EVT_DEFAULT */
-
-          /* USER CODE END EVT_DEFAULT */
-          break;
-      }
-      /* USER CODE BEGIN EVT_VENDOR*/
-
-      /* USER CODE END EVT_VENDOR*/
-      break; /* HCI_VENDOR_SPECIFIC_DEBUG_EVT_CODE */
-
-      /* USER CODE BEGIN EVENT_PCKT_CASES*/
-
-      /* USER CODE END EVENT_PCKT_CASES*/
-
-    default:
-      /* USER CODE BEGIN EVENT_PCKT*/
-
-      /* USER CODE END EVENT_PCKT*/
+      /* USER CODE END EVT_BLUE_GATT_WRITE_PERMIT_REQ_END */
       break;
+
+    case ACI_GATT_NOTIFICATION_COMPLETE_VSEVT_CODE:
+    {
+      /* USER CODE BEGIN EVT_BLUE_GATT_NOTIFICATION_COMPLETE_BEGIN */
+
+      /* USER CODE END EVT_BLUE_GATT_NOTIFICATION_COMPLETE_BEGIN */
+      notification_complete = (aci_gatt_notification_complete_event_rp0 *)blecore_evt->data;
+      Notification.Custom_Evt_Opcode = CUSTOM_STM_NOTIFICATION_COMPLETE_EVT;
+      Notification.AttrHandle = notification_complete->Attr_Handle;
+      Custom_STM_App_Notification(&Notification);
+      /* USER CODE BEGIN EVT_BLUE_GATT_NOTIFICATION_COMPLETE_END */
+
+      /* USER CODE END EVT_BLUE_GATT_NOTIFICATION_COMPLETE_END */
+      break;
+    }
+
+    /* USER CODE BEGIN BLECORE_EVT */
+
+    /* USER CODE END BLECORE_EVT */
+    default:
+      /* USER CODE BEGIN EVT_DEFAULT */
+
+      /* USER CODE END EVT_DEFAULT */
+      break;
+    }
+    /* USER CODE BEGIN EVT_VENDOR*/
+
+    /* USER CODE END EVT_VENDOR*/
+    break; /* HCI_VENDOR_SPECIFIC_DEBUG_EVT_CODE */
+
+    /* USER CODE BEGIN EVENT_PCKT_CASES*/
+
+    /* USER CODE END EVENT_PCKT_CASES*/
+
+  default:
+    /* USER CODE BEGIN EVENT_PCKT*/
+
+    /* USER CODE END EVENT_PCKT*/
+    break;
   }
 
   /* USER CODE BEGIN Custom_STM_Event_Handler_2 */
 
   /* USER CODE END Custom_STM_Event_Handler_2 */
 
-  return(return_value);
-}/* end Custom_STM_Event_Handler */
+  return (return_value);
+} /* end Custom_STM_Event_Handler */
 
 /* Public functions ----------------------------------------------------------*/
 
@@ -241,7 +255,7 @@ static SVCCTL_EvtAckStatus_t Custom_STM_Event_Handler(void *Event)
 void SVCCTL_InitCustomSvc(void)
 {
 
-  Char_UUID_t  uuid;
+  Char_UUID_t uuid;
   tBleStatus ret = BLE_STATUS_INVALID_PARAMS;
   uint8_t max_attr_record;
 
@@ -275,7 +289,7 @@ void SVCCTL_InitCustomSvc(void)
 
   COPY_MYSVC_UUID(uuid.Char_UUID_128);
   ret = aci_gatt_add_service(UUID_TYPE_128,
-                             (Service_UUID_t *) &uuid,
+                             (Service_UUID_t *)&uuid,
                              PRIMARY_SERVICE,
                              max_attr_record,
                              &(CustomContext.CustomMysvcHdle));
@@ -292,14 +306,15 @@ void SVCCTL_InitCustomSvc(void)
    *  myCharWrite
    */
   COPY_MYCHARWRITE_UUID(uuid.Char_UUID_128);
+  /* NOTE: 以下属性CubeMX重新生成会回退(NONE/1字节/定长), 需手工恢复为可写/20字节/变长 */
   ret = aci_gatt_add_char(CustomContext.CustomMysvcHdle,
                           UUID_TYPE_128, &uuid,
                           SizeMycharwrite,
-                          CHAR_PROP_NONE,
+                          CHAR_PROP_WRITE | CHAR_PROP_WRITE_WITHOUT_RESP,
                           ATTR_PERMISSION_NONE,
                           GATT_NOTIFY_ATTRIBUTE_WRITE | GATT_NOTIFY_WRITE_REQ_AND_WAIT_FOR_APPL_RESP | GATT_NOTIFY_READ_REQ_AND_WAIT_FOR_APPL_RESP,
                           0x10,
-                          CHAR_VALUE_LEN_CONSTANT,
+                          CHAR_VALUE_LEN_VARIABLE,
                           &(CustomContext.CustomMycharwriteHdle));
   if (ret != BLE_STATUS_SUCCESS)
   {
@@ -338,27 +353,27 @@ tBleStatus Custom_STM_App_Update_Char(Custom_STM_Char_Opcode_t CharOpcode, uint8
   switch (CharOpcode)
   {
 
-    case CUSTOM_STM_MYCHARWRITE:
-      ret = aci_gatt_update_char_value(CustomContext.CustomMysvcHdle,
-                                       CustomContext.CustomMycharwriteHdle,
-                                       0, /* charValOffset */
-                                       SizeMycharwrite, /* charValueLen */
-                                       (uint8_t *)  pPayload);
-      if (ret != BLE_STATUS_SUCCESS)
-      {
-        APP_DBG_MSG("  Fail   : aci_gatt_update_char_value MYCHARWRITE command, result : 0x%x \n\r", ret);
-      }
-      else
-      {
-        APP_DBG_MSG("  Success: aci_gatt_update_char_value MYCHARWRITE command\n\r");
-      }
-      /* USER CODE BEGIN CUSTOM_STM_App_Update_Service_1_Char_1*/
+  case CUSTOM_STM_MYCHARWRITE:
+    ret = aci_gatt_update_char_value(CustomContext.CustomMysvcHdle,
+                                     CustomContext.CustomMycharwriteHdle,
+                                     0,               /* charValOffset */
+                                     SizeMycharwrite, /* charValueLen */
+                                     (uint8_t *)pPayload);
+    if (ret != BLE_STATUS_SUCCESS)
+    {
+      APP_DBG_MSG("  Fail   : aci_gatt_update_char_value MYCHARWRITE command, result : 0x%x \n\r", ret);
+    }
+    else
+    {
+      APP_DBG_MSG("  Success: aci_gatt_update_char_value MYCHARWRITE command\n\r");
+    }
+    /* USER CODE BEGIN CUSTOM_STM_App_Update_Service_1_Char_1*/
 
-      /* USER CODE END CUSTOM_STM_App_Update_Service_1_Char_1*/
-      break;
+    /* USER CODE END CUSTOM_STM_App_Update_Service_1_Char_1*/
+    break;
 
-    default:
-      break;
+  default:
+    break;
   }
 
   /* USER CODE BEGIN Custom_STM_App_Update_Char_2 */
@@ -385,27 +400,27 @@ tBleStatus Custom_STM_App_Update_Char_Variable_Length(Custom_STM_Char_Opcode_t C
   switch (CharOpcode)
   {
 
-    case CUSTOM_STM_MYCHARWRITE:
-      ret = aci_gatt_update_char_value(CustomContext.CustomMysvcHdle,
-                                       CustomContext.CustomMycharwriteHdle,
-                                       0, /* charValOffset */
-                                       size, /* charValueLen */
-                                       (uint8_t *)  pPayload);
-      if (ret != BLE_STATUS_SUCCESS)
-      {
-        APP_DBG_MSG("  Fail   : aci_gatt_update_char_value MYCHARWRITE command, result : 0x%x \n\r", ret);
-      }
-      else
-      {
-        APP_DBG_MSG("  Success: aci_gatt_update_char_value MYCHARWRITE command\n\r");
-      }
-      /* USER CODE BEGIN Custom_STM_App_Update_Char_Variable_Length_Service_1_Char_1*/
+  case CUSTOM_STM_MYCHARWRITE:
+    ret = aci_gatt_update_char_value(CustomContext.CustomMysvcHdle,
+                                     CustomContext.CustomMycharwriteHdle,
+                                     0,    /* charValOffset */
+                                     size, /* charValueLen */
+                                     (uint8_t *)pPayload);
+    if (ret != BLE_STATUS_SUCCESS)
+    {
+      APP_DBG_MSG("  Fail   : aci_gatt_update_char_value MYCHARWRITE command, result : 0x%x \n\r", ret);
+    }
+    else
+    {
+      APP_DBG_MSG("  Success: aci_gatt_update_char_value MYCHARWRITE command\n\r");
+    }
+    /* USER CODE BEGIN Custom_STM_App_Update_Char_Variable_Length_Service_1_Char_1*/
 
-      /* USER CODE END Custom_STM_App_Update_Char_Variable_Length_Service_1_Char_1*/
-      break;
+    /* USER CODE END Custom_STM_App_Update_Char_Variable_Length_Service_1_Char_1*/
+    break;
 
-    default:
-      break;
+  default:
+    break;
   }
 
   /* USER CODE BEGIN Custom_STM_App_Update_Char_Variable_Length_2 */
@@ -432,24 +447,24 @@ tBleStatus Custom_STM_App_Update_Char_Ext(uint16_t Connection_Handle, Custom_STM
   switch (CharOpcode)
   {
 
-    case CUSTOM_STM_MYCHARWRITE:
-      /* USER CODE BEGIN Updated_Length_Service_1_Char_1*/
+  case CUSTOM_STM_MYCHARWRITE:
+    /* USER CODE BEGIN Updated_Length_Service_1_Char_1*/
 
-      /* USER CODE END Updated_Length_Service_1_Char_1*/
-      ret = Generic_STM_App_Update_Char_Ext(Connection_Handle, CustomContext.CustomMysvcHdle, CustomContext.CustomMycharwriteHdle, SizeMycharwrite, pPayload);
+    /* USER CODE END Updated_Length_Service_1_Char_1*/
+    ret = Generic_STM_App_Update_Char_Ext(Connection_Handle, CustomContext.CustomMysvcHdle, CustomContext.CustomMycharwriteHdle, SizeMycharwrite, pPayload);
 
-      if (ret != BLE_STATUS_SUCCESS)
-      {
-        APP_DBG_MSG("  Fail   : Generic_STM_App_Update_Char_Ext command, result : 0x%x \n\r", ret);
-      }
-      else
-      {
-        APP_DBG_MSG("  Success: Generic_STM_App_Update_Char_Ext command\n\r");
-      }
-      break;
+    if (ret != BLE_STATUS_SUCCESS)
+    {
+      APP_DBG_MSG("  Fail   : Generic_STM_App_Update_Char_Ext command, result : 0x%x \n\r", ret);
+    }
+    else
+    {
+      APP_DBG_MSG("  Success: Generic_STM_App_Update_Char_Ext command\n\r");
+    }
+    break;
 
-    default:
-      break;
+  default:
+    break;
   }
 
   /* USER CODE BEGIN Custom_STM_App_Update_Char_Ext_2 */
@@ -466,11 +481,11 @@ static tBleStatus Generic_STM_App_Update_Char_Ext(uint16_t ConnectionHandle, uin
   ret = aci_gatt_update_char_value_ext(ConnectionHandle,
                                        ServiceHandle,
                                        CharHandle,
-                                       0, /* update type:0 do not notify, 1 notify, 2 indicate */
+                                       0,            /* update type:0 do not notify, 1 notify, 2 indicate */
                                        CharValueLen, /* charValueLen */
-                                       0, /* value offset */
-                                       243, /* value length */
-                                       (uint8_t *)  pPayload);
+                                       0,            /* value offset */
+                                       243,          /* value length */
+                                       (uint8_t *)pPayload);
   if (ret != BLE_STATUS_SUCCESS)
   {
     APP_DBG_MSG("  Fail   : aci_gatt_update_char_value_ext command, part 1, result : 0x%x \n\r", ret);
@@ -481,16 +496,16 @@ static tBleStatus Generic_STM_App_Update_Char_Ext(uint16_t ConnectionHandle, uin
   }
   /* USER CODE BEGIN Custom_STM_App_Update_Char_Ext_Service_1_Char_1*/
 
-  if (CharValueLen-243<=243)
+  if (CharValueLen - 243 <= 243)
   {
     ret = aci_gatt_update_char_value_ext(ConnectionHandle,
                                          ServiceHandle,
                                          CharHandle,
-                                         1, /* update type:0 do not notify, 1 notify, 2 indicate */
-                                         CharValueLen, /* charValueLen */
-                                         243, /* value offset */
-                                         CharValueLen-243, /* value length */
-                                         (uint8_t *)  ((pPayload)+243));
+                                         1,                  /* update type:0 do not notify, 1 notify, 2 indicate */
+                                         CharValueLen,       /* charValueLen */
+                                         243,                /* value offset */
+                                         CharValueLen - 243, /* value length */
+                                         (uint8_t *)((pPayload) + 243));
     if (ret != BLE_STATUS_SUCCESS)
     {
       APP_DBG_MSG("  Fail   : aci_gatt_update_char_value_ext command, part 2, result : 0x%x \n\r", ret);
@@ -505,11 +520,11 @@ static tBleStatus Generic_STM_App_Update_Char_Ext(uint16_t ConnectionHandle, uin
     ret = aci_gatt_update_char_value_ext(ConnectionHandle,
                                          ServiceHandle,
                                          CharHandle,
-                                         0, /* update type:0 do not notify, 1 notify, 2 indicate */
+                                         0,            /* update type:0 do not notify, 1 notify, 2 indicate */
                                          CharValueLen, /* charValueLen */
-                                         243, /* value offset */
-                                         243, /* value length */
-                                         (uint8_t *)  ((pPayload)+243));
+                                         243,          /* value offset */
+                                         243,          /* value length */
+                                         (uint8_t *)((pPayload) + 243));
     if (ret != BLE_STATUS_SUCCESS)
     {
       APP_DBG_MSG("  Fail   : aci_gatt_update_char_value_ext command, part 3, result : 0x%x \n\r", ret);
@@ -521,11 +536,11 @@ static tBleStatus Generic_STM_App_Update_Char_Ext(uint16_t ConnectionHandle, uin
     ret = aci_gatt_update_char_value_ext(ConnectionHandle,
                                          ServiceHandle,
                                          CharHandle,
-                                         1, /* update type:0 do not notify, 1 notify, 2 indicate */
-                                         CharValueLen, /* charValueLen */
-                                         243+243, /* value offset */
-                                         CharValueLen-243-243, /* value length */
-                                         (uint8_t *)  ((pPayload)+243+243));
+                                         1,                        /* update type:0 do not notify, 1 notify, 2 indicate */
+                                         CharValueLen,             /* charValueLen */
+                                         243 + 243,                /* value offset */
+                                         CharValueLen - 243 - 243, /* value length */
+                                         (uint8_t *)((pPayload) + 243 + 243));
     if (ret != BLE_STATUS_SUCCESS)
     {
       APP_DBG_MSG("  Fail   : aci_gatt_update_char_value_ext command, part 4, result : 0x%x \n\r", ret);
@@ -537,4 +552,3 @@ static tBleStatus Generic_STM_App_Update_Char_Ext(uint16_t ConnectionHandle, uin
   }
   return ret;
 }
-
