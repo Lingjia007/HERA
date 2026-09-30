@@ -19,8 +19,11 @@ static int32_t most_significant_bit_64(uint64_t x) {
 static uint32_t sqrt_32(uint32_t num) {
     if (num == 0) return 0;
     uint32_t res = 0;
-    uint32_t bit = 1u << 30;
-    while (bit > num) bit >>= 2;
+    /* Start directly at the highest even bit <= num (clz-based, same
+     * approach as sqrt_64) instead of linearly scanning down from 1<<30. */
+    int32_t max_bit_number = 32 - most_significant_bit_32(num);
+    max_bit_number |= 1;
+    uint32_t bit = 1u << (31 - max_bit_number);
     while (bit != 0) {
         if (num >= res + bit) {
             num -= res + bit;
@@ -96,9 +99,8 @@ void audio_frontend_reset(AudioFrontend* fe) {
 }
 
 /* Large scratch buffers made static to avoid stack overflow: this function
- * is called 49x per inference from the main loop (not reentrant, not in IRQ),
- * so static BSS storage is safe and saves ~2.7 KB of stack per call. */
-static int16_t  s_windowed[FRAME_LEN];
+ * is called per spectrogram column from the main loop (not reentrant, not in
+ * IRQ), so static BSS storage is safe and saves ~2.7 KB of stack per call. */
 static uint32_t s_energy[NUM_SPECTRAL_BINS];
 static uint64_t s_filterbank_output[NUM_CHANNELS + 1];
 static uint32_t s_sqrt_output[NUM_CHANNELS + 1];
@@ -108,39 +110,45 @@ static int16_t  s_log_output[NUM_CHANNELS];
 void audio_frontend_process_frame(AudioFrontend* fe, const int16_t* audio_frame, int8_t* features) {
     int32_t i;
 
-    // Step 1: Hann windowing
+    // Step 1: Hann windowing directly into the FFT input buffer.
     // Manual loop: (a * b) >> WINDOW_SCALING_BITS
-    // arm_mult_q15 does (a * b) >> 15 (Q15 scaling), which is wrong here
+    // arm_mult_q15 does (a * b) >> 15 (Q15 scaling), which is wrong here.
+    // Zero-padding to FFT_LENGTH is folded in to avoid a second pass.
     for (i = 0; i < FRAME_LEN; i++) {
         int32_t val = ((int32_t)audio_frame[i] * HANN_WINDOW[i]) >> WINDOW_SCALING_BITS;
-        s_windowed[i] = (int16_t)val;
+        fe->fft_buffer[i] = (int16_t)val;
+    }
+    for (; i < FFT_LENGTH; i++) {
+        fe->fft_buffer[i] = 0;
     }
 
     // Step 2: FFT auto-scale — arm_absmax_q15 + arm_shift_q15
     int16_t max_val;
     uint32_t max_idx;
-    arm_absmax_q15(s_windowed, FRAME_LEN, &max_val, &max_idx);
+    arm_absmax_q15(fe->fft_buffer, FRAME_LEN, &max_val, &max_idx);
     int32_t scale_bits = 0;
     if (max_val > 0) {
         scale_bits = 16 - most_significant_bit_32((uint32_t)max_val) - 1;
         if (scale_bits < 0) scale_bits = 0;
     }
     if (scale_bits > 0) {
-        arm_shift_q15(s_windowed, scale_bits, s_windowed, FRAME_LEN);
+        arm_shift_q15(fe->fft_buffer, scale_bits, fe->fft_buffer, FRAME_LEN);
     }
 
-    // Step 3: Zero-pad to FFT_LENGTH and RFFT — arm_rfft_q15
-    memcpy(fe->fft_buffer, s_windowed, FRAME_LEN * sizeof(int16_t));
-    memset(fe->fft_buffer + FRAME_LEN, 0, (FFT_LENGTH - FRAME_LEN) * sizeof(int16_t));
+    // Step 3: RFFT — arm_rfft_q15 (buffer already prepared in place)
     arm_rfft_q15(&fe->rfft_inst, fe->fft_buffer, fe->rfft_output);
 
     // Step 4: Spectral energy (uint32 precision, no CMSIS-DSP primitive)
-    // arm_cmplx_mag_squared_q15 outputs Q15, we need full uint32 range
-    memset(s_energy, 0, sizeof(s_energy));
+    // arm_cmplx_mag_squared_q15 outputs Q15, we need full uint32 range.
+    // Only the [START, END) band is consumed by the filterbank; zero just the
+    // tail so the (i == NUM_CHANNELS) wrap-around entry reads a clean 0.
     for (i = SPECTRAL_START_INDEX; i < SPECTRAL_END_INDEX; i++) {
         int32_t re = fe->rfft_output[2 * i];
         int32_t im = fe->rfft_output[2 * i + 1];
         s_energy[i] = (uint32_t)((re * re + im * im) & 0xFFFFFFFF);
+    }
+    for (i = SPECTRAL_END_INDEX; i < NUM_SPECTRAL_BINS; i++) {
+        s_energy[i] = 0;
     }
 
     // Step 5: Mel filterbank accumulation (no CMSIS-DSP primitive for sparse uint64)
@@ -151,11 +159,9 @@ void audio_frontend_process_frame(AudioFrontend* fe, const int16_t* audio_frame,
         int32_t width = CHANNEL_WIDTHS[i];
         for (int32_t j = 0; j < width; j++) {
             int32_t idx = freq_start + j;
-            if (idx < NUM_SPECTRAL_BINS) {
-                uint64_t val = (uint64_t)s_energy[idx];
-                weight_accum += (uint64_t)(uint16_t)MEL_WEIGHTS[weight_start + j] * val;
-                unweight_accum += (uint64_t)(uint16_t)MEL_UNWEIGHTS[weight_start + j] * val;
-            }
+            uint64_t val = (uint64_t)s_energy[idx];
+            weight_accum += (uint64_t)(uint16_t)MEL_WEIGHTS[weight_start + j] * val;
+            unweight_accum += (uint64_t)(uint16_t)MEL_UNWEIGHTS[weight_start + j] * val;
         }
         s_filterbank_output[i] = weight_accum;
         weight_accum = unweight_accum;
@@ -261,9 +267,38 @@ int32_t audio_frontend_stream_push(AudioFrontendStream* s, const int16_t* sample
     memcpy(s->audio_window + (DESIRED_SAMPLES - n), samples,
            (size_t)n * sizeof(int16_t));
 
-    /* Recompute the full 49-column spectrogram (noise_estimate persists). */
-    audio_frontend_process_clip(&s->fe, s->audio_window, DESIRED_SAMPLES,
-                                s->features);
+    /* Incremental update (streaming-style): keep the spectrogram columns that
+     * are still fully covered by the window and compute only the new ones.
+     * Column f covers samples [f*STRIDE, f*STRIDE + FRAME_LEN); after sliding
+     * by n, old column (k + n/STRIDE) becomes new column k. This path applies
+     * only when n is an exact multiple of the frame stride and the number of
+     * new columns fits the spectrogram; otherwise fall back to a full
+     * recompute. */
+    if ((n % WINDOW_STRIDE) == 0) {
+        int32_t cols_shifted = n / WINDOW_STRIDE;
+        if (cols_shifted <= 0) cols_shifted = SPECTROGRAM_LENGTH;
+        if (cols_shifted > SPECTROGRAM_LENGTH) cols_shifted = SPECTROGRAM_LENGTH;
+
+        int32_t cols_kept = SPECTROGRAM_LENGTH - cols_shifted;
+        memmove(s->features,
+                s->features + cols_shifted * NUM_CHANNELS,
+                (size_t)cols_kept * NUM_CHANNELS);
+
+        /* First new column index = cols_kept; its frame starts at
+         * cols_kept * WINDOW_STRIDE within the window (same layout as
+         * audio_frontend_process_clip: col f starts at f * WINDOW_STRIDE). */
+        const int16_t* frame = s->audio_window + cols_kept * WINDOW_STRIDE;
+        int8_t* out = s->features + cols_kept * NUM_CHANNELS;
+        for (int32_t k = 0; k < cols_shifted; k++) {
+            audio_frontend_process_frame(&s->fe, frame, out);
+            frame += WINDOW_STRIDE;
+            out += NUM_CHANNELS;
+        }
+    } else {
+        /* Recompute the full 49-column spectrogram (noise_estimate persists). */
+        audio_frontend_process_clip(&s->fe, s->audio_window, DESIRED_SAMPLES,
+                                    s->features);
+    }
     return 1;
 }
 

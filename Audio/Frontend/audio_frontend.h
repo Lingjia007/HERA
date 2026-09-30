@@ -19,8 +19,10 @@ void audio_frontend_process_clip(AudioFrontend* fe, const int16_t* audio, int32_
 
 /* ---- Streaming API ------------------------------------------------------- */
 /* Sliding 1-second window with persistent noise estimate. Each push slides
- * the window by the number of new samples and recomputes the full 49-column
- * spectrogram. The first inference fires once the window is full. */
+ * the window by the number of new samples; when n is a multiple of
+ * WINDOW_STRIDE only the newly entered spectrogram columns are computed
+ * (older columns are shifted left), otherwise the full 49-column spectrogram
+ * is recomputed. The first inference fires once the window is full. */
 typedef struct {
     AudioFrontend fe;                                       /* noise_estimate persists  */
     int16_t       audio_window[DESIRED_SAMPLES];            /* 1-second sliding window  */

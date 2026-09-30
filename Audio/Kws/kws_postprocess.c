@@ -1,9 +1,9 @@
 /**
-  ******************************************************************************
-  * @file    kws_postprocess.c
-  * @brief   Implementation of KWS decision (segment majority voting).
-  ******************************************************************************
-  */
+ ******************************************************************************
+ * @file    kws_postprocess.c
+ * @brief   Implementation of KWS decision (segment majority voting).
+ ******************************************************************************
+ */
 #include "kws_postprocess.h"
 
 #include <stdio.h>
@@ -52,15 +52,18 @@ static void kws_seg_prior(const kws_state_t *s, int8_t label,
   *peak = p;
 }
 
-/* Close the current segment. Dump the whole block: one line per slide with
- * its raw result, then the verdict with the actually computed metrics.
+/* Close the current segment. Segments with votes >= KWS_MIN_VOTES dump the
+ * whole block: one line per slide with its raw result, then the verdict
+ * with the actually computed metrics. Junk segments (votes < KWS_MIN_VOTES)
+ * can never confirm and only get a one-line ">> drop" summary.
  *
  * Two acceptance paths (score is the hard evidence, votes add robustness):
- *   A) votes >= KWS_MIN_VOTES && peak >= KWS_PEAK_MIN   (several consistent
- *      frames, even if each is only moderately confident)
- *   B) peak >= KWS_STRONG_SCORE                          (a single very
- *      confident frame is valid on its own - e.g. "zero 47"; low-score
- *      isolated frames like "seven 34" are still rejected)
+ *   A) votes >= KWS_MIN_VOTES && peak >= KWS_PEAK_MIN && avg >= KWS_AVG_MIN
+ *      (several consistent frames; the average gate rejects noise segments
+ *      that luck into one peak of ~35 but cannot sustain a high average)
+ *   B) votes >= KWS_MIN_VOTES && peak >= KWS_STRONG_SCORE
+ *      (an established segment with a very confident peak skips only the
+ *      avg requirement - low-score junk like "seven 30" is still rejected)
  */
 static int kws_finalize(kws_state_t *s,
                         const char *const *label_names,
@@ -79,34 +82,45 @@ static int kws_finalize(kws_state_t *s,
     avg = total / s->votes;
 
   confirmed = (s->label > 1 &&
-               ((s->votes >= KWS_MIN_VOTES && s->peak >= KWS_PEAK_MIN) ||
+               s->votes >= KWS_MIN_VOTES &&
+               ((s->peak >= KWS_PEAK_MIN && avg >= KWS_AVG_MIN) ||
                 s->peak >= KWS_STRONG_SCORE));
 
-  printf("========================================\r\n");
-  for (uint8_t i = 0; i < s->seg_n; i++)
+  if (!confirmed && s->votes < KWS_MIN_VOTES)
   {
-    int lb = s->seg_label[i];
-    const char *nm = (lb >= 0 && lb < (int)num_labels) ? label_names[lb] : "?";
-    /* '*' marks the frames counted for the final candidate. */
-    const char *mark = (lb == s->label) ? " *" : "";
-    printf("  %2u: %-9s %4d%s\r\n", i, nm, s->seg_score[i], mark);
-  }
-
-  if (confirmed)
-  {
-    printf(">> RESULT: %s | votes=%u peak=%d total=%d avg=%d | OK\r\n",
-           label_names[s->label], s->votes, s->peak, total, avg);
-    s->trigger_cnt++;
-    s->cooldown = KWS_TAIL_COOLDOWN;
-    hit = 1;
+    /* Junk segment: below KWS_MIN_VOTES votes it can never confirm, so
+     * skip the per-frame block dump (log spam) and drop one compact line. */
+    printf(">> drop: %s | votes=%u peak=%d\r\n",
+           (s->label > 1) ? label_names[s->label] : "-", s->votes, s->peak);
   }
   else
   {
-    printf(">> RESULT: %s | votes=%u peak=%d total=%d avg=%d | REJECT\r\n",
-           (s->label > 1) ? label_names[s->label] : "-",
-           s->votes, s->peak, total, avg);
+    printf("========================================\r\n");
+    for (uint8_t i = 0; i < s->seg_n; i++)
+    {
+      int lb = s->seg_label[i];
+      const char *nm = (lb >= 0 && lb < (int)num_labels) ? label_names[lb] : "?";
+      /* '*' marks the frames counted for the final candidate. */
+      const char *mark = (lb == s->label) ? " *" : "";
+      printf("  %2u: %-9s %4d%s\r\n", i, nm, s->seg_score[i], mark);
+    }
+
+    if (confirmed)
+    {
+      printf(">> RESULT: %s | votes=%u peak=%d total=%d avg=%d | OK\r\n",
+             label_names[s->label], s->votes, s->peak, total, avg);
+      s->trigger_cnt++;
+      s->cooldown = KWS_TAIL_COOLDOWN;
+      hit = 1;
+    }
+    else
+    {
+      printf(">> RESULT: %s | votes=%u peak=%d total=%d avg=%d | REJECT\r\n",
+             (s->label > 1) ? label_names[s->label] : "-",
+             s->votes, s->peak, total, avg);
+    }
+    printf("========================================\r\n");
   }
-  printf("========================================\r\n");
 
   s->label = -1;
   s->votes = 0;
@@ -180,9 +194,13 @@ int kws_postprocess_feed(kws_state_t *s,
       return kws_finalize(s, label_names, num_labels);
     s->len++;
   }
-  else if (max_idx > 1)
+  else if (max_idx > 1 && max_val >= KWS_OPEN_MIN)
   {
-    /* 2d) Idle and a keyword frame arrives: open a new candidate segment. */
+    /* 2d) Idle and a keyword frame arrives: open a new candidate segment.
+     *     Frames below KWS_OPEN_MIN never open one: noise murmur scores
+     *     20-27 and would otherwise create junk segments that lock the
+     *     state machine for KWS_MAX_LEN frames; a real word's rising edge
+     *     crosses the gate within 1-2 frames, so it still opens on time. */
     kws_seg_log(s, (int8_t)max_idx, max_val);
     s->label = (int8_t)max_idx;
     s->votes = 1;
@@ -190,7 +208,7 @@ int kws_postprocess_feed(kws_state_t *s,
     s->other_run = 0;
     s->len = 1;
   }
-  /* else: idle + silence/_unknown_ -> ignore. */
+  /* else: idle + silence/_unknown_/weak frame -> ignore. */
 
   /* 3) Segment length cap: force a decision during continuous speech. */
   if (s->label >= 0 && s->len >= KWS_MAX_LEN)

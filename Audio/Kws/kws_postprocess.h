@@ -7,8 +7,10 @@
  * keyword event per utterance, using segment-based majority voting instead
  * of an N-consecutive-frame debounce:
  *
- *   1) A keyword frame (argmax not _silence_/_unknown_) opens or extends a
- *      candidate segment for its label (votes++, peak = max score).
+ *   1) A keyword frame (argmax not _silence_/_unknown_) scoring at least
+ *      KWS_OPEN_MIN opens a candidate segment; further keyword frames
+ *      extend it (votes++, peak = max score). Weak frames below
+ *      KWS_OPEN_MIN never open a segment (noise murmur suppression).
  *   2) A DIFFERENT label takes over the candidate only if the candidate is
  *      NOT yet established (votes < KWS_MIN_VOTES) and is at least as
  *      strong (handles mislabeled onset/offset frames, e.g. "four 54"
@@ -18,22 +20,27 @@
  *   3) The segment ends after KWS_SEG_END consecutive non-candidate frames
  *      (silence, _unknown_, or weaker other labels).
  *   4) At segment end the word is confirmed iff
- *         (votes >= KWS_MIN_VOTES && peak >= KWS_PEAK_MIN)
- *           || peak >= KWS_STRONG_SCORE
- *      and printed exactly once, then KWS_TAIL_COOLDOWN frame(s) are
- *      swallowed to prevent a second trigger from the same utterance.
- *      Isolated frames are judged by score, not discarded: a lone frame
- *      scoring >= KWS_STRONG_SCORE is a valid detection (e.g. "zero 47"),
- *      while a low-score one (e.g. "seven 34") is rejected.
- *   5) EVERY segment (confirmed or not) is dumped as a "====" delimited
- *      block: one line per slide with its raw argmax + score (including
- *      intruder/gap frames), then the verdict line with the actually
- *      computed votes / peak / score total / average for tuning.
+ *         votes >= KWS_MIN_VOTES
+ *         && ((peak >= KWS_PEAK_MIN && avg >= KWS_AVG_MIN)
+ *             || peak >= KWS_STRONG_SCORE)
+ *      Segments with fewer than KWS_MIN_VOTES votes can never confirm:
+ *      they are noise fragments (e.g. single-frame "zero 34" / "seven 30")
+ *      and are dropped with one compact ">> drop" line instead of a full
+ *      block dump.
+ *      A confirmed word is printed exactly once, then KWS_TAIL_COOLDOWN
+ *      frame(s) are swallowed to prevent a second trigger from the same
+ *      utterance.
+ *   5) Every segment that could possibly confirm (votes >= KWS_MIN_VOTES)
+ *      is dumped as a "====" delimited block: one line per slide with its
+ *      raw argmax + score (including intruder/gap frames), then the verdict
+ *      line with the actually computed votes / peak / score total / average
+ *      for tuning. Junk segments (votes < KWS_MIN_VOTES) only get the
+ *      one-line ">> drop" summary.
  *
  * Empirical basis (on-device 200 ms slide log): a spoken word spans 4-6
  * frames with peak scores 47-78; edge frames score 19-45 and are often
- * mislabeled; isolated frames are kept or dropped by score ("zero 47"
- * confirms, "seven 34" does not).
+ * mislabeled; noise fragments stay in single-frame segments with peak
+ * 27-34 and are discarded by the KWS_MIN_VOTES gate.
  ******************************************************************************
  */
 #ifndef KWS_POSTPROCESS_H
@@ -47,17 +54,35 @@ extern "C"
 #endif
 
 /* Decision parameters (tuned on on-device logs, see brief above).
- *   KWS_MIN_VOTES     : same-label frames required for the multi-frame path
+ *   KWS_MIN_VOTES     : same-label frames required to confirm at all -
+ *                       segments below this are junk and get a one-line
+ *                       ">> drop" summary instead of a full block dump.
+ *                       Real words span 4-6 frames at the 200 ms cadence,
+ *                       so 5 still admits normal utterances; lower to 4
+ *                       only if short words start being missed.
  *   KWS_PEAK_MIN      : peak int8 score required for the multi-frame path
- *   KWS_STRONG_SCORE  : peak that confirms a segment on its own (single
- *                       high-confidence frame is valid, low score is not)
+ *   KWS_AVG_MIN       : average score of the candidate's frames required for
+ *                       the multi-frame path - noise segments can luck into a
+ *                       single peak of 34-35 but keep avg <= 30, real words
+ *                       sustain avg >= 36, so the average is a second,
+ *                       largely independent barrier
+ *   KWS_OPEN_MIN      : minimum score for a frame to OPEN a new segment.
+ *                       Noise murmur scores 20-27 and would otherwise open
+ *                       junk segments that lock the state machine for ~2 s;
+ *                       a real word's rising edge crosses 28 within 1-2
+ *                       frames, so its segment still opens on time
+ *   KWS_STRONG_SCORE  : peak that replaces the avg requirement for an
+ *                       already-established segment (still needs
+ *                       KWS_MIN_VOTES votes)
  *   KWS_SWITCH_MARGIN : score advantage needed to take over an established
  *                       candidate (votes >= KWS_MIN_VOTES)
  *   KWS_SEG_END       : consecutive non-candidate frames that close a segment
  *   KWS_MAX_LEN       : force segment close after this many frames (~2 s)
  *   KWS_TAIL_COOLDOWN : frames swallowed right after a confirmed trigger    */
-#define KWS_MIN_VOTES 3
+#define KWS_MIN_VOTES 5
 #define KWS_PEAK_MIN 35
+#define KWS_AVG_MIN 32
+#define KWS_OPEN_MIN 28
 #define KWS_STRONG_SCORE 45
 #define KWS_SWITCH_MARGIN 10
 #define KWS_SEG_END 2

@@ -54,16 +54,19 @@ void AudioStream_start(void)
 static void AudioStream_process_half(uint8_t half_id)
 {
   const uint32_t *src = s_dma_buf + half_id * AS_DMA_HALFWORDS;
+  uint32_t *dst = (uint32_t *)s_mono;
 
   /* Hardware mono mode: each word IS slot 0 (left, WS=LOW: INMP441 L/R=GND).
    * The 24-bit two's-complement sample is MSB-justified in the 32-bit slot
-   * -> keep the top 16 bits (sign-preserving) for the int16 frontend. */
+   * -> keep the top 16 bits (sign-preserving) for the int16 frontend.
+   * Pack two int16 samples per 32-bit store: halves the store count. */
   int32_t sum = 0;
-  for (uint32_t i = 0; i < AS_DMA_HALF_FRAMES; i++)
+  for (uint32_t i = 0; i < AS_DMA_HALF_FRAMES; i += 2)
   {
-    int16_t v = (int16_t)(src[i] >> 16);
-    s_mono[i] = v;
-    sum += v;
+    int16_t v0 = (int16_t)(src[i] >> 16);
+    int16_t v1 = (int16_t)(src[i + 1] >> 16);
+    dst[i / 2] = (uint32_t)(uint16_t)v0 | ((uint32_t)(uint16_t)v1 << 16);
+    sum += v0 + v1;
   }
 
   /* DC removal: subtract block mean. */

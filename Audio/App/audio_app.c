@@ -66,7 +66,8 @@ static ai_i8 *s_data_outs[AI_ECHODSCNN_OUT_NUM];
 /* Streaming frontend context (1-sec window + features). */
 static AudioFrontendStream s_stream;
 
-/* Scratch buffer for one slide worth of samples consumed from the ring. */
+/* Scratch buffer for the (never-taken with current geometry) wrap fallback
+ * when consume_no_cpy returns NULL. */
 static int16_t s_slide_buf[SLIDE_SAMPLES];
 
 /* KWS post-processing state (logic lives in Audio/kws/). */
@@ -127,9 +128,17 @@ static int acquire_and_process_data(ai_i8 *data[])
   if ((int32_t)ring->availableSamples < (int32_t)SLIDE_SAMPLES)
     return -2;
 
-  AudioCaptureRingBuff_consume((uint8_t *)s_slide_buf, ring, SLIDE_SAMPLES);
+  /* Zero-copy fast path: read the slide straight out of the ring buffer.
+   * Falls back to the copy variant when the region wraps past the ring end
+   * (with the current geometry: 12800 % 2560 == 0, this never happens). */
+  const int16_t *slide = (const int16_t *)AudioCaptureRingBuff_consume_no_cpy(ring, SLIDE_SAMPLES);
+  if (slide == NULL)
+  {
+    AudioCaptureRingBuff_consume((uint8_t *)s_slide_buf, ring, SLIDE_SAMPLES);
+    slide = s_slide_buf;
+  }
 
-  int ready = audio_frontend_stream_push(&s_stream, s_slide_buf, SLIDE_SAMPLES);
+  int ready = audio_frontend_stream_push(&s_stream, slide, SLIDE_SAMPLES);
   if (!ready)
     return -2; /* initial 1-second window not yet filled */
 

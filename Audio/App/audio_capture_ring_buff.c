@@ -44,6 +44,12 @@ void AudioCaptureRingBuff_feed(AudioCaptureRingBuff_t *pHdle,
     return;
 
   uint32_t u32_n = (uint32_t)nbSamples;
+
+  /* Overrun guard: never overwrite unread data. If the consumer is late,
+   * drop the incoming block instead of corrupting the ring. */
+  if ((pHdle->availableSamples + u32_n) > (pHdle->nbSamples * pHdle->nbFrames))
+    return;
+
   uint32_t bps = pHdle->nbBytesPerSample;
   uint32_t idx = pHdle->writeSampleIndex;
   uint32_t idxMax = pHdle->nbSamples * pHdle->nbFrames;
@@ -68,8 +74,9 @@ uint8_t *AudioCaptureRingBuff_consume(uint8_t *pData,
   int32_t s32_n = (int32_t)nbSamples;
   uint32_t u32_n = (uint32_t)nbSamples;
 
-  /* Consumer runs in main loop; brief IRQ masking keeps indices consistent. */
-  __disable_irq();
+  /* Lock-free: the feed() overrun guard guarantees the producer never
+   * overwrites unread data, and availableSamples is updated atomically,
+   * so no __disable_irq() is needed here. */
   if (pHdle->availableSamples >= s32_n)
   {
     uint32_t bps = pHdle->nbBytesPerSample;
@@ -88,6 +95,28 @@ uint8_t *AudioCaptureRingBuff_consume(uint8_t *pData,
     }
     atomic_add(&pHdle->availableSamples, -s32_n);
   }
-  __enable_irq();
   return pData;
+}
+
+uint8_t *AudioCaptureRingBuff_consume_no_cpy(AudioCaptureRingBuff_t *pHdle,
+                                             uint32_t nbSamples)
+{
+  int32_t s32_n = (int32_t)nbSamples;
+  uint32_t idxMax = pHdle->nbSamples * pHdle->nbFrames;
+
+  /* Zero-copy variant: return a pointer into the ring and skip the memcpy.
+   * Returns NULL if not enough samples OR if the region would wrap past the
+   * end of the backing store (caller should fall back to the copy variant).
+   * The feed() overrun guard guarantees the returned region stays valid
+   * until the producer wraps around to it. */
+  if ((pHdle->availableSamples >= s32_n) &&
+      (pHdle->readSampleIndex + nbSamples <= idxMax))
+  {
+    uint8_t *pDestData = pHdle->pData +
+        ((uint32_t)pHdle->nbBytesPerSample * pHdle->readSampleIndex);
+    pHdle->readSampleIndex = (pHdle->readSampleIndex + nbSamples) % idxMax;
+    atomic_add(&pHdle->availableSamples, -s32_n);
+    return pDestData;
+  }
+  return NULL;
 }

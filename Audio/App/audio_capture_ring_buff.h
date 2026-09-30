@@ -45,6 +45,12 @@ uint8_t *AudioCaptureRingBuff_consume(uint8_t *pData,
                                       AudioCaptureRingBuff_t *pHdle,
                                       uint32_t nbSamples);
 
+/* Consumer (zero-copy): return a direct pointer into the ring buffer and
+ * skip the memcpy. The caller must finish reading the returned data before
+ * the producer can wrap around to it. Returns NULL if not enough samples. */
+uint8_t *AudioCaptureRingBuff_consume_no_cpy(AudioCaptureRingBuff_t *pHdle,
+                                             uint32_t nbSamples);
+
 #ifdef __cplusplus
 }
 #endif
