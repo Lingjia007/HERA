@@ -15,7 +15,7 @@ void kws_postprocess_init(kws_state_t *s)
   s->peak = 0;
   s->other_run = 0;
   s->len = 0;
-  s->cooldown = 0;
+  s->rearm = 0;
   s->trigger_cnt = 0;
   s->seg_n = 0;
 }
@@ -52,10 +52,33 @@ static void kws_seg_prior(const kws_state_t *s, int8_t label,
   *peak = p;
 }
 
-/* Close the current segment. Segments with votes >= KWS_MIN_VOTES dump the
- * whole block: one line per slide with its raw result, then the verdict
- * with the actually computed metrics. Junk segments (votes < KWS_MIN_VOTES)
- * can never confirm and only get a one-line ">> drop" summary.
+/* Score total / average over the candidate label's frames in this segment. */
+static void kws_metrics(const kws_state_t *s, int *total, int *avg)
+{
+  int t = 0;
+  for (uint8_t i = 0; i < s->seg_n; i++)
+    if (s->seg_label[i] == s->label)
+      t += s->seg_score[i];
+  *total = t;
+  *avg = (s->votes > 0) ? t / (int)s->votes : 0;
+}
+
+/* Confirmation gates. Evaluated after EVERY vote (early confirm): the
+ * accept set is identical to a close-time check (same thresholds), the
+ * result just lands as soon as the word has gathered enough evidence
+ * instead of after the KWS_SEG_END close-wait (~0.4 s saved). */
+static int kws_confirmed(const kws_state_t *s, int avg)
+{
+  return (s->label > 1 && s->votes >= KWS_MIN_VOTES &&
+          ((s->peak >= KWS_PEAK_MIN && avg >= KWS_AVG_MIN) ||
+           s->peak >= KWS_STRONG_SCORE));
+}
+
+/* Close the current segment (or confirm it early). Segments with
+ * votes >= KWS_MIN_VOTES dump the whole block: one line per slide with its
+ * raw result, then the verdict with the actually computed metrics. Junk
+ * segments (votes < KWS_MIN_VOTES) can never confirm and only get a
+ * one-line ">> drop" summary.
  *
  * Two acceptance paths (score is the hard evidence, votes add robustness):
  *   A) votes >= KWS_MIN_VOTES && peak >= KWS_PEAK_MIN && avg >= KWS_AVG_MIN
@@ -70,21 +93,10 @@ static int kws_finalize(kws_state_t *s,
                         uint8_t num_labels)
 {
   int hit = 0;
-  int total = 0;
-  int avg = 0;
-  int confirmed;
+  int total, avg;
 
-  /* Weighted total: sum of the winning label's scores in this segment. */
-  for (uint8_t i = 0; i < s->seg_n; i++)
-    if (s->seg_label[i] == s->label)
-      total += s->seg_score[i];
-  if (s->votes > 0)
-    avg = total / s->votes;
-
-  confirmed = (s->label > 1 &&
-               s->votes >= KWS_MIN_VOTES &&
-               ((s->peak >= KWS_PEAK_MIN && avg >= KWS_AVG_MIN) ||
-                s->peak >= KWS_STRONG_SCORE));
+  kws_metrics(s, &total, &avg);
+  int confirmed = kws_confirmed(s, avg);
 
   if (!confirmed && s->votes < KWS_MIN_VOTES)
   {
@@ -110,7 +122,11 @@ static int kws_finalize(kws_state_t *s,
       printf(">> RESULT: %s | votes=%u peak=%d total=%d avg=%d | OK\r\n",
              label_names[s->label], s->votes, s->peak, total, avg);
       s->trigger_cnt++;
-      s->cooldown = KWS_TAIL_COOLDOWN;
+      /* Silence-run re-arm: the utterance tail keeps winning for several
+       * frames as the word slides out of the 1 s window; requiring
+       * KWS_REARM_SILENCE quiet frames before the next segment prevents a
+       * double trigger of the same word. */
+      s->rearm = KWS_REARM_SILENCE;
       hit = 1;
     }
     else
@@ -136,13 +152,6 @@ int kws_postprocess_feed(kws_state_t *s,
                          uint8_t num_labels,
                          const char *const *label_names)
 {
-  /* 0) Swallow tail frame(s) right after a confirmed trigger. */
-  if (s->cooldown > 0)
-  {
-    s->cooldown--;
-    return 0;
-  }
-
   /* 1) argmax over all labels. */
   int max_idx = 0;
   int8_t max_val = logits[0];
@@ -155,15 +164,35 @@ int kws_postprocess_feed(kws_state_t *s,
     }
   }
 
+  /* 2) Silence-run re-arm after a confirmed trigger: a keyword frame
+   *    (still the utterance tail sliding out of the window) restarts the
+   *    wait; KWS_REARM_SILENCE consecutive non-keyword frames re-arm the
+   *    state machine. Prevents a double trigger of the same word. */
+  if (s->rearm > 0)
+  {
+    if (max_idx > 1 && max_val >= KWS_OPEN_MIN)
+      s->rearm = KWS_REARM_SILENCE;
+    else
+      s->rearm--;
+    return 0;
+  }
+
   if (s->label >= 0 && max_idx == s->label)
   {
-    /* 2a) Matches the candidate: accumulate vote, refresh peak. */
+    /* 3a) Matches the candidate: accumulate vote, refresh peak, then check
+     *     the gates immediately (early confirm: result lands as soon as
+     *     enough evidence exists, not after the SEG_END close-wait). */
     kws_seg_log(s, (int8_t)max_idx, max_val);
     s->votes++;
     if (max_val > s->peak)
       s->peak = max_val;
     s->other_run = 0;
     s->len++;
+
+    int total, avg;
+    kws_metrics(s, &total, &avg);
+    if (kws_confirmed(s, avg))
+      return kws_finalize(s, label_names, num_labels);
   }
   else if (max_idx > 1 && s->label >= 0 &&
            ((s->votes < KWS_MIN_VOTES && max_val >= s->peak) ||
@@ -184,6 +213,11 @@ int kws_postprocess_feed(kws_state_t *s,
     s->peak = (max_val > pp) ? max_val : pp;
     s->other_run = 0;
     s->len++;
+
+    int total, avg;
+    kws_metrics(s, &total, &avg);
+    if (kws_confirmed(s, avg))
+      return kws_finalize(s, label_names, num_labels);
   }
   else if (s->label >= 0)
   {

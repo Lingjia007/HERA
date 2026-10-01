@@ -19,17 +19,25 @@
  *      (e.g. "seven 36" stealing a locked "eight" at peak 35).
  *   3) The segment ends after KWS_SEG_END consecutive non-candidate frames
  *      (silence, _unknown_, or weaker other labels).
- *   4) At segment end the word is confirmed iff
+ *   4) The word is confirmed THE MOMENT its gates are met (early confirm,
+ *      checked after every vote instead of only at segment close):
  *         votes >= KWS_MIN_VOTES
  *         && ((peak >= KWS_PEAK_MIN && avg >= KWS_AVG_MIN)
  *             || peak >= KWS_STRONG_SCORE)
+ *      The accept set is identical to a close-time check (same gates) but
+ *      saves the KWS_SEG_END close-wait (~0.4 s): the result lands right
+ *      when the word finishes instead of ~1 s later. A side benefit: weak
+ *      tail frames can no longer drag the average down and flip a clear
+ *      hit into a late REJECT.
  *      Segments with fewer than KWS_MIN_VOTES votes can never confirm:
  *      they are noise fragments (e.g. single-frame "zero 34" / "seven 30")
  *      and are dropped with one compact ">> drop" line instead of a full
  *      block dump.
- *      A confirmed word is printed exactly once, then KWS_TAIL_COOLDOWN
- *      frame(s) are swallowed to prevent a second trigger from the same
- *      utterance.
+ *      After a confirmed trigger the state machine waits for
+ *      KWS_REARM_SILENCE consecutive non-keyword frames before accepting a
+ *      new segment (silence-run re-arm): the utterance tail keeps winning
+ *      for several frames as the word slides out of the 1 s window, and a
+ *      fixed frame count would risk a double trigger of the same word.
  *   5) Every segment that could possibly confirm (votes >= KWS_MIN_VOTES)
  *      is dumped as a "====" delimited block: one line per slide with its
  *      raw argmax + score (including intruder/gap frames), then the verdict
@@ -78,7 +86,8 @@ extern "C"
  *                       candidate (votes >= KWS_MIN_VOTES)
  *   KWS_SEG_END       : consecutive non-candidate frames that close a segment
  *   KWS_MAX_LEN       : force segment close after this many frames (~2 s)
- *   KWS_TAIL_COOLDOWN : frames swallowed right after a confirmed trigger    */
+ *   KWS_REARM_SILENCE : consecutive non-keyword frames required after a
+ *                       confirmed trigger before a new segment may open     */
 #define KWS_MIN_VOTES 5
 #define KWS_PEAK_MIN 35
 #define KWS_AVG_MIN 32
@@ -87,7 +96,7 @@ extern "C"
 #define KWS_SWITCH_MARGIN 10
 #define KWS_SEG_END 2
 #define KWS_MAX_LEN 10
-#define KWS_TAIL_COOLDOWN 1
+#define KWS_REARM_SILENCE 2
 
   typedef struct
   {
@@ -96,7 +105,7 @@ extern "C"
     int8_t peak;                       /* highest score seen for the candidate label    */
     uint8_t other_run;                 /* consecutive non-candidate frames (incl. gap)  */
     uint8_t len;                       /* total frames in the current segment           */
-    uint8_t cooldown;                  /* frames to swallow right after a trigger       */
+    uint8_t rearm;                     /* silent frames still required before re-arming */
     uint32_t trigger_cnt;              /* number of confirmed keywords so far           */
     uint8_t seg_n;                     /* frames logged for the finalize dump           */
     int8_t seg_label[KWS_MAX_LEN + 1]; /* per-frame argmax label           */
