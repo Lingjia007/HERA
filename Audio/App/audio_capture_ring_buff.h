@@ -26,6 +26,7 @@ typedef struct
   uint32_t      readSampleIndex;   /* Next sample to consume                        */
   uint32_t      writeSampleIndex;  /* Next sample to produce                        */
   volatile uint32_t availableSamples; /* Shared ISR/main: samples available to consume */
+  volatile uint32_t droppedSamples;  /* Shared ISR/main: samples dropped on overrun (diagnostics) */
 } AudioCaptureRingBuff_t;
 
 /* Bind a caller-provided backing buffer and configure geometry. */

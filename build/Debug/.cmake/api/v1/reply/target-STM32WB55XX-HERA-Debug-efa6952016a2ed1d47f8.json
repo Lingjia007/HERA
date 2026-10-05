@@ -752,6 +752,12 @@
 		{
 			"backtrace" : 8,
 			"compileGroupIndex" : 0,
+			"path" : "Audio/App/audio_vad.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 8,
+			"compileGroupIndex" : 0,
 			"path" : "Audio/App/audio_app.c",
 			"sourceGroupIndex" : 0
 		},
@@ -759,12 +765,6 @@
 			"backtrace" : 8,
 			"compileGroupIndex" : 0,
 			"path" : "Audio/Frontend/audio_frontend.c",
-			"sourceGroupIndex" : 0
-		},
-		{
-			"backtrace" : 8,
-			"compileGroupIndex" : 0,
-			"path" : "Audio/Kws/kws_postprocess.c",
 			"sourceGroupIndex" : 0
 		},
 		{

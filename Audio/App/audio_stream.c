@@ -7,6 +7,7 @@
  ******************************************************************************
  */
 #include "audio_stream.h"
+#include "audio_vad.h"
 #include "sai.h"
 #include "main.h"
 #include <string.h>
@@ -28,6 +29,14 @@ static int16_t s_mono[AS_DMA_HALF_FRAMES];
 
 AudioCaptureRingBuff_t *AudioStream_get_ring(void) { return &s_ring; }
 
+/* Last SAI error code recorded by HAL_SAI_ErrorCallback (0 = none). The HAL
+ * aborts the DMA on error and calls the (default empty) weak callback - the
+ * stream then dies SILENTLY; the watchdog in audio_app restarts the pipeline
+ * when blocks stop arriving. */
+static volatile uint32_t s_sai_error;
+
+uint32_t AudioStream_get_sai_error(void) { return s_sai_error; }
+
 void AudioStream_init(void)
 {
   AudioCaptureRingBuff_reset(&s_ring,
@@ -35,6 +44,8 @@ void AudioStream_init(void)
                              AS_RING_NB_SAMPLES,
                              AS_RING_NB_FRAMES,
                              sizeof(int16_t));
+  s_sai_error = 0;
+  audio_vad_init();
 }
 
 void AudioStream_start(void)
@@ -69,10 +80,22 @@ static void AudioStream_process_half(uint8_t half_id)
     sum += v0 + v1;
   }
 
-  /* DC removal: subtract block mean. */
+  /* DC removal: subtract block mean, then apply the x2 input gain with
+   * int16 saturation. Everything downstream (VAD, ring, model input) works
+   * in this amplified domain. */
   int16_t dc = (int16_t)(sum / (int32_t)AS_DMA_HALF_FRAMES);
   for (uint32_t i = 0; i < AS_DMA_HALF_FRAMES; i++)
-    s_mono[i] = (int16_t)(s_mono[i] - dc);
+  {
+    int32_t v = (int32_t)(s_mono[i] - dc) * 2;
+    if (v > 32767)
+      v = 32767;
+    else if (v < -32768)
+      v = -32768;
+    s_mono[i] = (int16_t)v;
+  }
+
+  /* Raw-input energy VAD (producer side, pre-consumer). */
+  audio_vad_feed_block(s_mono, AS_DMA_HALF_FRAMES);
 
   AudioCaptureRingBuff_feed(&s_ring, (const uint8_t *)s_mono,
                             (uint16_t)AS_DMA_HALF_FRAMES);
@@ -89,4 +112,14 @@ void HAL_SAI_RxCpltCallback(SAI_HandleTypeDef *hsai)
 {
   if (hsai->Instance == SAI1_Block_B)
     AudioStream_process_half(1);
+}
+
+/* On a SAI error the HAL aborts the DMA and calls this weak callback; the
+ * default implementation is EMPTY, so without this override the stream dies
+ * silently. Only record the code - no printf from IRQ context. The stall
+ * watchdog in audio_app detects the stopped blocks and restarts. */
+void HAL_SAI_ErrorCallback(SAI_HandleTypeDef *hsai)
+{
+  if (hsai->Instance == SAI1_Block_B)
+    s_sai_error = hsai->ErrorCode;
 }

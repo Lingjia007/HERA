@@ -17,9 +17,10 @@
  * keep the top 16 bits (sign-preserving) to feed the int16 mel frontend.
  *
  * Pipeline: DMA half/full IRQ -> keep top 16 bits -> per-block DC removal
- * -> ring buffer. Main loop consumes from the ring.
- ******************************************************************************
- */
+ * -> x2 input gain (int16 saturation) -> energy VAD -> ring buffer. The VAD
+ * and everything downstream work in the amplified domain. Main loop consumes
+ * from the ring.
+ *******************************************************************************/
 #ifndef AUDIO_STREAM_H
 #define AUDIO_STREAM_H
 
@@ -53,6 +54,11 @@ extern "C"
 
   /* Access the ring buffer handle (consumer side). */
   AudioCaptureRingBuff_t *AudioStream_get_ring(void);
+
+  /* Last SAI error code recorded by the HAL error callback (0 = none).
+   * Bits (hal_sai.h): 0x01 OVR, 0x02 UDR, 0x04 AFSDET, 0x08 LFSDET,
+   * 0x10 CNRDY, 0x20 WCKCFG, 0x80 DMA. */
+  uint32_t AudioStream_get_sai_error(void);
 
 #ifdef __cplusplus
 }

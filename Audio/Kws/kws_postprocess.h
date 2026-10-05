@@ -68,6 +68,7 @@ extern "C"
  *                       Real words span 4-6 frames at the 200 ms cadence,
  *                       so 5 still admits normal utterances; lower to 4
  *                       only if short words start being missed.
+ *                       only if short words start being missed.
  *   KWS_PEAK_MIN      : peak int8 score required for the multi-frame path
  *   KWS_AVG_MIN       : average score of the candidate's frames required for
  *                       the multi-frame path - noise segments can luck into a
@@ -80,20 +81,7 @@ extern "C"
  *                       a real word's rising edge crosses 28 within 1-2
  *                       frames, so its segment still opens on time
  *   KWS_STRONG_SCORE  : peak that replaces the avg requirement for an
- *                       already-established segment (still needs
  *                       KWS_MIN_VOTES votes)
- *   KWS_SWITCH_MARGIN : score advantage needed to take over an established
- *                       candidate (votes >= KWS_MIN_VOTES)
- *   KWS_SEG_END       : consecutive non-candidate frames that close a segment
- *   KWS_MAX_LEN       : force segment close after this many frames (~2 s)
- *   KWS_REARM_SILENCE : consecutive non-keyword frames required after a
- *                       confirmed trigger before a new segment may open     */
-#define KWS_MIN_VOTES 5
-#define KWS_PEAK_MIN 35
-#define KWS_AVG_MIN 32
-#define KWS_OPEN_MIN 28
-#define KWS_STRONG_SCORE 45
-#define KWS_SWITCH_MARGIN 10
 #define KWS_SEG_END 2
 #define KWS_MAX_LEN 10
 #define KWS_REARM_SILENCE 2
@@ -105,11 +93,8 @@ extern "C"
     int8_t peak;                       /* highest score seen for the candidate label    */
     uint8_t other_run;                 /* consecutive non-candidate frames (incl. gap)  */
     uint8_t len;                       /* total frames in the current segment           */
-    uint8_t rearm;                     /* silent frames still required before re-arming */
-    uint32_t trigger_cnt;              /* number of confirmed keywords so far           */
-    uint8_t seg_n;                     /* frames logged for the finalize dump           */
     int8_t seg_label[KWS_MAX_LEN + 1]; /* per-frame argmax label           */
-    int8_t seg_score[KWS_MAX_LEN + 1]; /* per-frame int8 score             */
+#define KWS_SEG_END 2
   } kws_state_t;
 
   /* Zero-init the state. Call once before the first kws_postprocess_feed(). */
@@ -118,7 +103,6 @@ extern "C"
   /* Feed one inference's int8 logits.
    *
    *   s           : post-processing state (caller-owned)
-   *   logits      : int8 classifier output, length num_labels
    *   num_labels  : number of labels in logits / label_names
    *   label_names : array of label name strings (size num_labels)
    *

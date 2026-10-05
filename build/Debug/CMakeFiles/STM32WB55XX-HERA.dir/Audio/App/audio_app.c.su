@@ -1,2 +1,2 @@
-D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Audio/App/audio_app.c:172:6:AudioApp_Init	24	static
-D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Audio/App/audio_app.c:188:6:AudioApp_Process	16	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Audio/App/audio_app.c:304:6:AudioApp_Init	24	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Audio/App/audio_app.c:326:6:AudioApp_Process	136	static

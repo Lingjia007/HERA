@@ -13,7 +13,6 @@ void kws_postprocess_init(kws_state_t *s)
   s->label = -1;
   s->votes = 0;
   s->peak = 0;
-  s->other_run = 0;
   s->len = 0;
   s->rearm = 0;
   s->trigger_cnt = 0;
@@ -64,22 +63,12 @@ static void kws_metrics(const kws_state_t *s, int *total, int *avg)
 }
 
 /* Confirmation gates. Evaluated after EVERY vote (early confirm): the
+/* Confirmation gates. Evaluated after EVERY vote (early confirm): the
  * accept set is identical to a close-time check (same thresholds), the
  * result just lands as soon as the word has gathered enough evidence
  * instead of after the KWS_SEG_END close-wait (~0.4 s saved). */
-static int kws_confirmed(const kws_state_t *s, int avg)
-{
-  return (s->label > 1 && s->votes >= KWS_MIN_VOTES &&
-          ((s->peak >= KWS_PEAK_MIN && avg >= KWS_AVG_MIN) ||
-           s->peak >= KWS_STRONG_SCORE));
-}
-
 /* Close the current segment (or confirm it early). Segments with
  * votes >= KWS_MIN_VOTES dump the whole block: one line per slide with its
- * raw result, then the verdict with the actually computed metrics. Junk
- * segments (votes < KWS_MIN_VOTES) can never confirm and only get a
- * one-line ">> drop" summary.
- *
  * Two acceptance paths (score is the hard evidence, votes add robustness):
  *   A) votes >= KWS_MIN_VOTES && peak >= KWS_PEAK_MIN && avg >= KWS_AVG_MIN
  *      (several consistent frames; the average gate rejects noise segments
@@ -109,14 +98,12 @@ static int kws_finalize(kws_state_t *s,
   {
     printf("========================================\r\n");
     for (uint8_t i = 0; i < s->seg_n; i++)
-    {
+  if (!confirmed && s->votes < KWS_MIN_VOTES)
       int lb = s->seg_label[i];
-      const char *nm = (lb >= 0 && lb < (int)num_labels) ? label_names[lb] : "?";
-      /* '*' marks the frames counted for the final candidate. */
-      const char *mark = (lb == s->label) ? " *" : "";
-      printf("  %2u: %-9s %4d%s\r\n", i, nm, s->seg_score[i], mark);
-    }
-
+    /* Junk segment: below KWS_MIN_VOTES votes it can never confirm, so
+     * skip the per-frame block dump (log spam) and drop one compact line. */
+    printf(">> drop: %s | votes=%u peak=%d\r\n",
+           (s->label > 1) ? label_names[s->label] : "-", s->votes, s->peak);
     if (confirmed)
     {
       printf(">> RESULT: %s | votes=%u peak=%d total=%d avg=%d | OK\r\n",
@@ -132,9 +119,8 @@ static int kws_finalize(kws_state_t *s,
     else
     {
       printf(">> RESULT: %s | votes=%u peak=%d total=%d avg=%d | REJECT\r\n",
-             (s->label > 1) ? label_names[s->label] : "-",
-             s->votes, s->peak, total, avg);
-    }
+      printf(">> RESULT: %s | votes=%u peak=%d total=%d avg=%d | OK\r\n",
+             label_names[s->label], s->votes, s->peak, total, avg);
     printf("========================================\r\n");
   }
 
@@ -145,9 +131,9 @@ static int kws_finalize(kws_state_t *s,
   s->len = 0;
   s->seg_n = 0;
   return hit;
-}
+      printf(">> RESULT: %s | votes=%u peak=%d total=%d avg=%d | REJECT\r\n",
 
-int kws_postprocess_feed(kws_state_t *s,
+             s->votes, s->peak, total, avg);
                          const int8_t *logits,
                          uint8_t num_labels,
                          const char *const *label_names)
@@ -166,35 +152,25 @@ int kws_postprocess_feed(kws_state_t *s,
 
   /* 2) Silence-run re-arm after a confirmed trigger: a keyword frame
    *    (still the utterance tail sliding out of the window) restarts the
-   *    wait; KWS_REARM_SILENCE consecutive non-keyword frames re-arm the
-   *    state machine. Prevents a double trigger of the same word. */
+  /* 1) argmax over all labels. */
   if (s->rearm > 0)
   {
-    if (max_idx > 1 && max_val >= KWS_OPEN_MIN)
       s->rearm = KWS_REARM_SILENCE;
     else
       s->rearm--;
     return 0;
-  }
 
   if (s->label >= 0 && max_idx == s->label)
   {
-    /* 3a) Matches the candidate: accumulate vote, refresh peak, then check
-     *     the gates immediately (early confirm: result lands as soon as
-     *     enough evidence exists, not after the SEG_END close-wait). */
-    kws_seg_log(s, (int8_t)max_idx, max_val);
     s->votes++;
-    if (max_val > s->peak)
       s->peak = max_val;
-    s->other_run = 0;
+  /* 2) Silence-run re-arm after a confirmed trigger: a keyword frame
     s->len++;
 
-    int total, avg;
-    kws_metrics(s, &total, &avg);
-    if (kws_confirmed(s, avg))
+   *    state machine. Prevents a double trigger of the same word. */
       return kws_finalize(s, label_names, num_labels);
   }
-  else if (max_idx > 1 && s->label >= 0 &&
+    if (max_idx > 1 && max_val >= KWS_OPEN_MIN)
            ((s->votes < KWS_MIN_VOTES && max_val >= s->peak) ||
             max_val >= s->peak + KWS_SWITCH_MARGIN))
   {
@@ -219,17 +195,15 @@ int kws_postprocess_feed(kws_state_t *s,
     if (kws_confirmed(s, avg))
       return kws_finalize(s, label_names, num_labels);
   }
-  else if (s->label >= 0)
-  {
+           ((s->votes < KWS_MIN_VOTES && max_val >= s->peak) ||
     /* 2c) Non-candidate frame (silence/_unknown_ or a weaker other label):
      *     KWS_SEG_END consecutive ones close the segment. */
     kws_seg_log(s, (int8_t)max_idx, max_val);
-    if (++s->other_run >= KWS_SEG_END)
-      return kws_finalize(s, label_names, num_labels);
-    s->len++;
-  }
-  else if (max_idx > 1 && max_val >= KWS_OPEN_MIN)
-  {
+     *     KWS_MIN_VOTES) is replaced by a different label at least as
+     *     strong (mislabeled onset/offset frames); an ESTABLISHED one only
+     *     by a newcomer stronger by KWS_SWITCH_MARGIN - a 1-point tail
+     *     blip must not steal the accumulated votes. Votes/peak carry over
+     *     the frames the new label already had earlier in the segment. */
     /* 2d) Idle and a keyword frame arrives: open a new candidate segment.
      *     Frames below KWS_OPEN_MIN never open one: noise murmur scores
      *     20-27 and would otherwise create junk segments that lock the

@@ -49,9 +49,9 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     BLEServices/svc_led.c
     Audio/App/audio_capture_ring_buff.c
     Audio/App/audio_stream.c
+    Audio/App/audio_vad.c
     Audio/App/audio_app.c
     Audio/Frontend/audio_frontend.c
-    Audio/kws/kws_postprocess.c
     VOFA+/VOFA.c
     Drivers/CMSIS/DSP/Source/TransformFunctions/arm_rfft_init_q15.c
     Drivers/CMSIS/DSP/Source/TransformFunctions/arm_rfft_q15.c

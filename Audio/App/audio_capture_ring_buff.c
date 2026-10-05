@@ -46,9 +46,13 @@ void AudioCaptureRingBuff_feed(AudioCaptureRingBuff_t *pHdle,
   uint32_t u32_n = (uint32_t)nbSamples;
 
   /* Overrun guard: never overwrite unread data. If the consumer is late,
-   * drop the incoming block instead of corrupting the ring. */
+   * drop the incoming block instead of corrupting the ring. Count it so
+   * the app can report how much audio was lost (e.g. during inference). */
   if ((pHdle->availableSamples + u32_n) > (pHdle->nbSamples * pHdle->nbFrames))
+  {
+    atomic_add(&pHdle->droppedSamples, (int32_t)u32_n);
     return;
+  }
 
   uint32_t bps = pHdle->nbBytesPerSample;
   uint32_t idx = pHdle->writeSampleIndex;
