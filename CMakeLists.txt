@@ -52,6 +52,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     Audio/App/audio_vad.c
     Audio/App/audio_app.c
     Audio/Frontend/audio_frontend.c
+    VM3011/vm3011.c
     VOFA+/VOFA.c
     Drivers/CMSIS/DSP/Source/TransformFunctions/arm_rfft_init_q15.c
     Drivers/CMSIS/DSP/Source/TransformFunctions/arm_rfft_q15.c
@@ -73,6 +74,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     Audio/App
     Audio/Frontend
     Audio/kws
+    VM3011
     VOFA+
     Drivers/CMSIS/DSP/Include
 )

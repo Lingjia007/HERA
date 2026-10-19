@@ -64,28 +64,28 @@
 				{
 					"directoryIndex" : 0,
 					"id" : "STM32WB55XX-HERA::@6890427a1f51a3e7e1df",
-					"jsonFile" : "target-STM32WB55XX-HERA-Debug-efa6952016a2ed1d47f8.json",
+					"jsonFile" : "target-STM32WB55XX-HERA-Debug-1a06cadc1a948ce40244.json",
 					"name" : "STM32WB55XX-HERA",
 					"projectIndex" : 0
 				},
 				{
 					"directoryIndex" : 1,
 					"id" : "STM32_Drivers::@768a070a0fe75716b479",
-					"jsonFile" : "target-STM32_Drivers-Debug-c81392d1979244934200.json",
+					"jsonFile" : "target-STM32_Drivers-Debug-1c55d62785507162b42e.json",
 					"name" : "STM32_Drivers",
 					"projectIndex" : 0
 				},
 				{
 					"directoryIndex" : 1,
 					"id" : "STM32_WPAN::@768a070a0fe75716b479",
-					"jsonFile" : "target-STM32_WPAN-Debug-07a64790e50289f6139c.json",
+					"jsonFile" : "target-STM32_WPAN-Debug-9bb37810b82d64cd4964.json",
 					"name" : "STM32_WPAN",
 					"projectIndex" : 0
 				},
 				{
 					"directoryIndex" : 1,
 					"id" : "Utilities::@768a070a0fe75716b479",
-					"jsonFile" : "target-Utilities-Debug-aea4c5fcc0a28ddd46fd.json",
+					"jsonFile" : "target-Utilities-Debug-e66b3b7214df1b0d3859.json",
 					"name" : "Utilities",
 					"projectIndex" : 0
 				}
