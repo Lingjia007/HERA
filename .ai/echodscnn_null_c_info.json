@@ -5341,44 +5341,44 @@
   ],
   "environment": {
     "generated_model": {
-      "generated_time": "2026-10-19T20:28:42+0800",
+      "generated_time": "2026-10-20T15:46:08+0800",
       "model_files": [
         {
           "name": "echodscnn_data_params.h",
-          "signature": "0xa78a355ed0be7ae55b84d0a8d4647dd9"
+          "signature": "0x38797cc14bcec2a478ab9194219925ba"
         },
         {
           "name": "echodscnn_data_params.c",
-          "signature": "0x2120d72ab7afffb17a52056a4d2b0c22"
+          "signature": "0x7d74f45edd38d305edbea22474090ad5"
         },
         {
           "name": "echodscnn_data.h",
-          "signature": "0x31d14b46cd3a8f92ab1bc6706be46284"
+          "signature": "0x2212c39607eb2bb93d3a76514ffc3113"
         },
         {
           "name": "echodscnn_data.c",
-          "signature": "0x8d025099d916b17c9f8be93d68bec7ee"
+          "signature": "0x96f1874e23bb11dfd161c8d0b3a5790d"
         },
         {
           "name": "echodscnn_config.h",
-          "signature": "0xec01fc55980d90df51ad4d15f08eb174"
+          "signature": "0x541cf4cd439e5924e2f0d85f900aa0e4"
         },
         {
           "name": "echodscnn.h",
-          "signature": "0x9f025eced8bb4a11918e64ef629b9313"
+          "signature": "0xbaad404b8842d862789d23d1f1af9aac"
         },
         {
           "name": "echodscnn.c",
-          "signature": "0xc64126f011215a372b231daaab4e78b2"
+          "signature": "0x1803aae2eab871c7ef1acef4a863bd36"
         }
       ],
       "name": "echodscnn"
     },
-    "network_signature": "0xb685622a24f66b2e",
+    "network_signature": "0x2d9e8712ef83b6d5",
     "test_name": "",
     "tools": [
       {
-        "arguments": "generate --target stm32wb --name echodscnn -m D:/edgedownload/STM32WB55XX-HERA/16k/model.tflite --compression none --verbosity 1 --workspace C:/Users/31254/AppData/Local/Temp/mxAI_workspace435664854671005743420621034951713 --output C:/Users/31254/.stm32cubemx/echodscnn_output",
+        "arguments": "generate --target stm32wb --name echodscnn -m D:/edgedownload/STM32WB55XX-HERA/16k/model.tflite --compression none --verbosity 1 --workspace C:/Users/31254/AppData/Local/Temp/mxAI_workspace265343533984004985444354902248222 --output C:/Users/31254/.stm32cubemx/echodscnn_output",
         "environment": [
           "STATS_TYPE=X-CUBE-AI"
         ],

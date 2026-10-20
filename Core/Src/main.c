@@ -32,6 +32,7 @@
 #include <stdio.h>
 #include "audio_app.h"
 #include "vm3011.h"
+#include "stm32_lpm_if.h" /* PWR_EnterStopMode/PWR_ExitStopMode (same STOP2 sequence as BLE-TEST) */
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -41,7 +42,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+#define ZPL_LP_ENTER_DELAY_MS 3000U /* park in STOP2 this long after boot (ms) */
+#define ZPL_LP_REARM_DELAY_MS 3000U /* re-enter STOP2 this long after a ZPL wake (ms) */
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -53,6 +55,7 @@
 
 /* USER CODE BEGIN PV */
 static VM3011_Dev_t s_vm;
+static volatile uint8_t s_zpl_evt; /* 1 = ZPL (PA0) edge pending; also the STOP2 wake flag */
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -211,6 +214,58 @@ int main(void)
         }
       }
     }
+
+    /* ZPL (PA0) edge event: flagged by EXTI callback, printed from main context
+     * (no printf in ISR: right after STOP2 wake the ISR runs on HSI -> wrong baud).
+     * While parked in STOP2 below, the same flag is the wake trigger. */
+    if (s_zpl_evt != 0U)
+    {
+      s_zpl_evt = 0U;
+      printf("[ZPL] DOUT(PA0) %s\r\n",
+             (HAL_GPIO_ReadPin(ZPL_GPIO_Port, ZPL_Pin) != GPIO_PIN_RESET) ? "HIGH" : "LOW");
+    }
+
+    /* ---- STOP2 park: ZPL pin (PA0 rising edge) wakes the MCU ---- */
+    {
+      static uint8_t s_lp_armed = 0U;
+      static uint32_t s_lp_next = 0U;
+
+      if (s_lp_armed == 0U)
+      {
+        s_lp_armed = 1U;
+        s_lp_next = HAL_GetTick() + ZPL_LP_ENTER_DELAY_MS;
+      }
+      else if ((int32_t)(HAL_GetTick() - s_lp_next) >= 0)
+      {
+        printf("[LP] entering STOP2 (ZPL PA0 rising edge wakes MCU)\r\n");
+        /* printf is blocking (HAL_UART_Transmit) -> TX is complete here.
+         * Clear the DOUT latch so PA0 is LOW: the next detection produces
+         * the rising edge that wakes the MCU. */
+        (void)VM3011_ClearDout(&s_vm);
+
+        /* PWR_EnterStopMode(): same sequence as BLE-TEST stm32_lpm_if.c
+         * (HSEM handshake with CPU2, switch sysclk to HSI, STOP2, WFI).
+         * Re-park when woken by another source (CPU2/IPCC/RTC): only ZPL
+         * (EXTI flag or latched-high DOUT) leaves the park loop. */
+        do
+        {
+          __HAL_GPIO_EXTI_CLEAR_IT(ZPL_Pin);
+          s_zpl_evt = 0U;
+          PWR_EnterStopMode(); /* blocks in WFI until a CPU1 wake event */
+        } while ((s_zpl_evt == 0U) &&
+                 (HAL_GPIO_ReadPin(ZPL_GPIO_Port, ZPL_Pin) == GPIO_PIN_RESET));
+
+        PWR_ExitStopMode(); /* release ENTRY_STOP_MODE semaphore + resume tick */
+        if (__HAL_RCC_GET_SYSCLK_SOURCE() == RCC_SYSCLKSOURCE_STATUS_HSI)
+        {
+          SystemClock_Config(); /* restore 64 MHz PLL (UART baud + flash latency) */
+        }
+        printf("[ZPL] woken from STOP2, DOUT(PA0)=%d\r\n",
+               (int)HAL_GPIO_ReadPin(ZPL_GPIO_Port, ZPL_Pin));
+        s_zpl_evt = 0U; /* consumed by the wake print above */
+        s_lp_next = HAL_GetTick() + ZPL_LP_REARM_DELAY_MS;
+      }
+    }
     // HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
     // HAL_Delay(200);
     // HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
@@ -291,7 +346,7 @@ void PeriphCommonClock_Config(void)
    */
   PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_SMPS | RCC_PERIPHCLK_RFWAKEUP;
   PeriphClkInitStruct.RFWakeUpClockSelection = RCC_RFWKPCLKSOURCE_HSE_DIV1024;
-  PeriphClkInitStruct.SmpsClockSelection = RCC_SMPSCLKSOURCE_HSI;
+  PeriphClkInitStruct.SmpsClockSelection = RCC_SMPSCLKSOURCE_HSE;
   PeriphClkInitStruct.SmpsDivSelection = RCC_SMPSCLKDIV_RANGE1;
 
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
@@ -314,10 +369,11 @@ void EXTI0_IRQHandler(void)
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
-  if (GPIO_Pin == GPIO_PIN_0)
+  if (GPIO_Pin == ZPL_Pin)
   {
-    printf("[VM3011] DOUT(PA0) %s\r\n",
-           (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0) != GPIO_PIN_RESET) ? "HIGH" : "LOW");
+    /* Just flag it: also serves as the STOP2 wake flag. Printing is done
+     * from the main loop (correct clock/baud there, even after STOP2 wake). */
+    s_zpl_evt = 1U;
   }
 }
 /* USER CODE END 4 */
