@@ -67,7 +67,30 @@ void PeriphCommonClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+/* RTC time converted to real milliseconds. The RTC (LSE) keeps running in
+ * STOP2, unlike HAL_GetTick whose systick is suspended -> use it to time the
+ * park cycle.
+ * CAUTION: the WPAN timer server configures a non-1Hz calendar
+ * (app_conf.h: ASYNCH=0x0F, SYNCH=0x7FFF, "does not support 1Hz calendar"):
+ * 1 calendar "second" = (16*32768)/32768 = 16 real seconds. Scale the raw
+ * reading by that factor to get REAL ms. */
+static uint32_t LP_rtc_ms(void)
+{
+  RTC_TimeTypeDef t = {0};
+  RTC_DateTypeDef d = {0};
+  uint32_t pseudo_ms;
+  const uint32_t sec_per_cal_sec =
+      ((CFG_RTC_ASYNCH_PRESCALER + 1UL) * (CFG_RTC_SYNCH_PRESCALER + 1UL)) / 32768UL;
 
+  /* GetTime must be followed by GetDate to unlock the shadow registers */
+  HAL_RTC_GetTime(&hrtc, &t, RTC_FORMAT_BIN);
+  HAL_RTC_GetDate(&hrtc, &d, RTC_FORMAT_BIN);
+
+  pseudo_ms = (uint32_t)t.Hours * 3600000UL + (uint32_t)t.Minutes * 60000UL +
+              (uint32_t)t.Seconds * 1000UL +
+              ((uint32_t)(t.SecondFraction - t.SubSeconds) * 1000UL) / (t.SecondFraction + 1UL);
+  return pseudo_ms * sec_per_cal_sec;
+}
 /* USER CODE END 0 */
 
 /**
@@ -229,15 +252,27 @@ int main(void)
     {
       static uint8_t s_lp_armed = 0U;
       static uint32_t s_lp_next = 0U;
+      static uint32_t s_lp_cycle = 0U;     /* park/wake cycle counter */
+      static uint32_t s_lp_wake_tick = 0U; /* tick of boot / last ZPL wake */
+      static uint32_t s_lp_rtc_boot = 0U;  /* real time (RTC) at boot */
 
       if (s_lp_armed == 0U)
       {
         s_lp_armed = 1U;
+        s_lp_wake_tick = HAL_GetTick();
+        s_lp_rtc_boot = LP_rtc_ms();
         s_lp_next = HAL_GetTick() + ZPL_LP_ENTER_DELAY_MS;
       }
       else if ((int32_t)(HAL_GetTick() - s_lp_next) >= 0)
       {
-        printf("[LP] entering STOP2 (ZPL PA0 rising edge wakes MCU)\r\n");
+        uint32_t tick_park = HAL_GetTick();
+        uint32_t rtc_park = LP_rtc_ms();
+
+        s_lp_cycle++;
+        printf("[LP] #%lu -> STOP2, awake %lums, up %lums\r\n",
+               (unsigned long)s_lp_cycle,
+               (unsigned long)(tick_park - s_lp_wake_tick),
+               (unsigned long)(rtc_park - s_lp_rtc_boot));
         /* printf is blocking (HAL_UART_Transmit) -> TX is complete here.
          * Clear the DOUT latch so PA0 is LOW: the next detection produces
          * the rising edge that wakes the MCU. */
@@ -260,9 +295,17 @@ int main(void)
         {
           SystemClock_Config(); /* restore 64 MHz PLL (UART baud + flash latency) */
         }
-        printf("[ZPL] woken from STOP2, DOUT(PA0)=%d\r\n",
-               (int)HAL_GPIO_ReadPin(ZPL_GPIO_Port, ZPL_Pin));
+        {
+          uint32_t slept = LP_rtc_ms() - rtc_park;       /* real time: RTC ran through STOP2 */
+          uint32_t tick_gap = HAL_GetTick() - tick_park; /* frozen: systick stopped in STOP2 */
+          printf("[LP] #%lu <- ZPL wake, slept %lums (RTC), tick +%lums, DOUT=%d\r\n",
+                 (unsigned long)s_lp_cycle,
+                 (unsigned long)slept,
+                 (unsigned long)tick_gap,
+                 (int)HAL_GPIO_ReadPin(ZPL_GPIO_Port, ZPL_Pin));
+        }
         s_zpl_evt = 0U; /* consumed by the wake print above */
+        s_lp_wake_tick = HAL_GetTick();
         s_lp_next = HAL_GetTick() + ZPL_LP_REARM_DELAY_MS;
       }
     }
