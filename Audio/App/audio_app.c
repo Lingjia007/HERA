@@ -1,13 +1,13 @@
 /**
  ******************************************************************************
  * @file    audio_app.c
- * @brief   VAD-gated single-shot KWS: SAI capture (x2 input gain applied in
- *          the SAI IRQ) -> ring buffer -> energy VAD -> 1 s utterance
+ * @brief   VAD-gated single-shot KWS: PDM capture + PDM2PCM in the SAI IRQ
+ *          -> ring buffer -> energy VAD -> 1 s utterance
  *          capture -> full mel frontend -> echodscnn inference ->
  *          single-shot print (USART1).
  *
- * Data flow (16 kHz, mono, int16, x2-amplified in the SAI IRQ):
- *   SAI1_B DMA (10 ms half-blocks, IRQ) -> VAD + ring buffer
+ * Data flow (16 kHz, mono, int16, 24 dB PDM gain, x128 decimation):
+ *   SAI1_A PDM DMA (10 ms half-blocks, IRQ) -> PDM2PCM -> VAD + ring buffer
  *   -> main loop: consume 10 ms blocks, watch the VAD level; on a rising
  *      edge (OFF -> ON) capture audio into a 1 s buffer,
  *      then run ONE inference on the full 1 s window:
@@ -197,8 +197,8 @@ static const int16_t *consume_block(void)
   return s_blk;
 }
 
-/* Append n samples to the capture buffer. Audio is already x2-amplified
- * upstream in audio_stream.c (SAI IRQ), no further gain here. */
+/* Append n samples to the capture buffer. Gain is already applied by the
+ * PDM2PCM filter (24 dB) in audio_stream.c (SAI IRQ), no gain here. */
 static void capture_append(const int16_t *src, uint32_t n)
 {
   uint32_t room = (uint32_t)DESIRED_SAMPLES - s_cap_len;

@@ -36,7 +36,7 @@
 			{
 				"command" : 1,
 				"file" : 0,
-				"line" : 98,
+				"line" : 101,
 				"parent" : 0
 			},
 			{
@@ -53,6 +53,12 @@
 				"file" : 1,
 				"line" : 166,
 				"parent" : 3
+			},
+			{
+				"command" : 3,
+				"file" : 0,
+				"line" : 92,
+				"parent" : 0
 			},
 			{
 				"command" : 4,
@@ -101,31 +107,35 @@
 			"includes" : 
 			[
 				{
-					"backtrace" : 6,
+					"backtrace" : 7,
 					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/BLEServices"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 7,
 					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Audio/App"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 7,
 					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Audio/Frontend"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 7,
 					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Audio/kws"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 7,
 					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/VM3011"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 7,
 					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/VOFA+"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 7,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/PDM2PCM"
+				},
+				{
+					"backtrace" : 7,
 					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Drivers/CMSIS/DSP/Include"
 				},
 				{
@@ -295,31 +305,35 @@
 			"includes" : 
 			[
 				{
-					"backtrace" : 6,
+					"backtrace" : 7,
 					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/BLEServices"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 7,
 					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Audio/App"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 7,
 					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Audio/Frontend"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 7,
 					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Audio/kws"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 7,
 					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/VM3011"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 7,
 					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/VOFA+"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 7,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/PDM2PCM"
+				},
+				{
+					"backtrace" : 7,
 					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Drivers/CMSIS/DSP/Include"
 				},
 				{
@@ -471,6 +485,11 @@
 				"backtrace" : 5,
 				"fragment" : "-lm",
 				"role" : "libraries"
+			},
+			{
+				"backtrace" : 6,
+				"fragment" : "D:\\edgedownload\\STM32WB55XX-HERA\\STM32WB55XX-HERA\\PDM2PCM\\libPDMFilter_CM4_GCC_wc16_hardcompat.a",
+				"role" : "libraries"
 			}
 		],
 		"language" : "C"
@@ -596,271 +615,271 @@
 	"sources" : 
 	[
 		{
-			"backtrace" : 7,
+			"backtrace" : 8,
 			"compileGroupIndex" : 0,
 			"path" : "STM32_WPAN/Target/hw_ipcc.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 7,
+			"backtrace" : 8,
 			"compileGroupIndex" : 0,
 			"path" : "STM32_WPAN/App/app_ble.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 7,
+			"backtrace" : 8,
 			"compileGroupIndex" : 0,
 			"path" : "STM32_WPAN/App/custom_stm.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 7,
+			"backtrace" : 8,
 			"compileGroupIndex" : 0,
 			"path" : "STM32_WPAN/App/custom_app.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 7,
+			"backtrace" : 8,
 			"compileGroupIndex" : 0,
 			"path" : "Core/Src/main.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 7,
+			"backtrace" : 8,
 			"compileGroupIndex" : 0,
 			"path" : "Core/Src/gpio.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 7,
+			"backtrace" : 8,
 			"compileGroupIndex" : 0,
 			"path" : "Core/Src/dma.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 7,
+			"backtrace" : 8,
 			"compileGroupIndex" : 0,
 			"path" : "Core/Src/i2c.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 7,
+			"backtrace" : 8,
 			"compileGroupIndex" : 0,
 			"path" : "Core/Src/ipcc.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 7,
+			"backtrace" : 8,
 			"compileGroupIndex" : 0,
 			"path" : "Core/Src/rf.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 7,
+			"backtrace" : 8,
 			"compileGroupIndex" : 0,
 			"path" : "Core/Src/rtc.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 7,
+			"backtrace" : 8,
 			"compileGroupIndex" : 0,
 			"path" : "Core/Src/sai.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 7,
+			"backtrace" : 8,
 			"compileGroupIndex" : 0,
 			"path" : "Core/Src/app_entry.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 7,
+			"backtrace" : 8,
 			"compileGroupIndex" : 0,
 			"path" : "Core/Src/app_debug.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 7,
+			"backtrace" : 8,
 			"compileGroupIndex" : 0,
 			"path" : "Core/Src/hw_timerserver.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 7,
+			"backtrace" : 8,
 			"compileGroupIndex" : 0,
 			"path" : "Core/Src/stm32_lpm_if.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 7,
+			"backtrace" : 8,
 			"compileGroupIndex" : 0,
 			"path" : "Core/Src/usart.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 7,
+			"backtrace" : 8,
 			"compileGroupIndex" : 0,
 			"path" : "Core/Src/stm32wbxx_it.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 7,
+			"backtrace" : 8,
 			"compileGroupIndex" : 0,
 			"path" : "Core/Src/stm32wbxx_hal_msp.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 7,
+			"backtrace" : 8,
 			"compileGroupIndex" : 0,
 			"path" : "Core/Src/sysmem.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 7,
+			"backtrace" : 8,
 			"compileGroupIndex" : 0,
 			"path" : "Core/Src/syscalls.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 7,
+			"backtrace" : 8,
 			"compileGroupIndex" : 0,
 			"path" : "X-CUBE-AI/App/echodscnn.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 7,
+			"backtrace" : 8,
 			"compileGroupIndex" : 0,
 			"path" : "X-CUBE-AI/App/echodscnn_data.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 7,
+			"backtrace" : 8,
 			"compileGroupIndex" : 0,
 			"path" : "X-CUBE-AI/App/echodscnn_data_params.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 7,
+			"backtrace" : 8,
 			"compileGroupIndex" : 1,
 			"path" : "startup_stm32wb55xx_cm4.s",
 			"sourceGroupIndex" : 1
 		},
 		{
-			"backtrace" : 8,
+			"backtrace" : 9,
 			"compileGroupIndex" : 0,
 			"path" : "BLEServices/Services.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 8,
+			"backtrace" : 9,
 			"compileGroupIndex" : 0,
 			"path" : "BLEServices/svc_led.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 8,
+			"backtrace" : 9,
 			"compileGroupIndex" : 0,
 			"path" : "Audio/App/audio_capture_ring_buff.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 8,
+			"backtrace" : 9,
 			"compileGroupIndex" : 0,
 			"path" : "Audio/App/audio_stream.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 8,
+			"backtrace" : 9,
 			"compileGroupIndex" : 0,
 			"path" : "Audio/App/audio_vad.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 8,
+			"backtrace" : 9,
 			"compileGroupIndex" : 0,
 			"path" : "Audio/App/audio_app.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 8,
+			"backtrace" : 9,
 			"compileGroupIndex" : 0,
 			"path" : "Audio/Frontend/audio_frontend.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 8,
+			"backtrace" : 9,
 			"compileGroupIndex" : 0,
 			"path" : "VM3011/vm3011.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 8,
+			"backtrace" : 9,
 			"compileGroupIndex" : 0,
 			"path" : "VOFA+/VOFA.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 8,
+			"backtrace" : 9,
 			"compileGroupIndex" : 0,
 			"path" : "Drivers/CMSIS/DSP/Source/TransformFunctions/arm_rfft_init_q15.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 8,
+			"backtrace" : 9,
 			"compileGroupIndex" : 0,
 			"path" : "Drivers/CMSIS/DSP/Source/TransformFunctions/arm_rfft_q15.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 8,
+			"backtrace" : 9,
 			"compileGroupIndex" : 0,
 			"path" : "Drivers/CMSIS/DSP/Source/TransformFunctions/arm_cfft_init_q15.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 8,
+			"backtrace" : 9,
 			"compileGroupIndex" : 0,
 			"path" : "Drivers/CMSIS/DSP/Source/TransformFunctions/arm_cfft_q15.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 8,
+			"backtrace" : 9,
 			"compileGroupIndex" : 0,
 			"path" : "Drivers/CMSIS/DSP/Source/TransformFunctions/arm_cfft_radix4_q15.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 8,
+			"backtrace" : 9,
 			"compileGroupIndex" : 0,
 			"path" : "Drivers/CMSIS/DSP/Source/TransformFunctions/arm_bitreversal.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 8,
+			"backtrace" : 9,
 			"compileGroupIndex" : 0,
 			"path" : "Drivers/CMSIS/DSP/Source/TransformFunctions/arm_bitreversal2.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 8,
+			"backtrace" : 9,
 			"compileGroupIndex" : 0,
 			"path" : "Drivers/CMSIS/DSP/Source/CommonTables/arm_common_tables.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 8,
+			"backtrace" : 9,
 			"compileGroupIndex" : 0,
 			"path" : "Drivers/CMSIS/DSP/Source/CommonTables/arm_const_structs.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 8,
+			"backtrace" : 9,
 			"compileGroupIndex" : 0,
 			"path" : "Drivers/CMSIS/DSP/Source/StatisticsFunctions/arm_absmax_q15.c",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 8,
+			"backtrace" : 9,
 			"compileGroupIndex" : 0,
 			"path" : "Drivers/CMSIS/DSP/Source/BasicMathFunctions/arm_shift_q15.c",
 			"sourceGroupIndex" : 0

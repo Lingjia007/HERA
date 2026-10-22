@@ -76,6 +76,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     Audio/kws
     VM3011
     VOFA+
+    PDM2PCM
     Drivers/CMSIS/DSP/Include
 )
 
@@ -92,6 +93,8 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
     stm32cubemx
 
     # Add user defined libraries
+    # PDM2PCM decimation filter (hard-float toolchain)
+    ${CMAKE_CURRENT_SOURCE_DIR}/PDM2PCM/libPDMFilter_CM4_GCC_wc16_hardcompat.a
 )
 
 # Pull in float formatting for printf (nano.specs): KWS prints softmax %.1f

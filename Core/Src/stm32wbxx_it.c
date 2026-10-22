@@ -56,8 +56,8 @@
 
 /* External variables --------------------------------------------------------*/
 extern IPCC_HandleTypeDef hipcc;
-extern DMA_HandleTypeDef hdma_sai1_b;
-extern SAI_HandleTypeDef hsai_BlockB1;
+extern DMA_HandleTypeDef hdma_sai1_a;
+extern SAI_HandleTypeDef hsai_BlockA1;
 /* USER CODE BEGIN EV */
 
 /* USER CODE END EV */
@@ -208,7 +208,7 @@ void DMA1_Channel1_IRQHandler(void)
   /* USER CODE BEGIN DMA1_Channel1_IRQn 0 */
 
   /* USER CODE END DMA1_Channel1_IRQn 0 */
-  HAL_DMA_IRQHandler(&hdma_sai1_b);
+  HAL_DMA_IRQHandler(&hdma_sai1_a);
   /* USER CODE BEGIN DMA1_Channel1_IRQn 1 */
 
   /* USER CODE END DMA1_Channel1_IRQn 1 */
@@ -222,7 +222,7 @@ void SAI1_IRQHandler(void)
   /* USER CODE BEGIN SAI1_IRQn 0 */
 
   /* USER CODE END SAI1_IRQn 0 */
-  HAL_SAI_IRQHandler(&hsai_BlockB1);
+  HAL_SAI_IRQHandler(&hsai_BlockA1);
   /* USER CODE BEGIN SAI1_IRQn 1 */
 
   /* USER CODE END SAI1_IRQn 1 */
