@@ -2,7 +2,6 @@
 #define WAV_RECORDER_H
 
 #include <stdint.h>
-#include "lfs.h"
 
 /* 16 kHz mono S16 PCM (与 KWS 采集管线一致的音频几何） */
 #define WAV_REC_SAMPLE_RATE 16000U
@@ -12,10 +11,11 @@
 /* 1MB flash / 32 KB/s ≈ 32.7s 上限，留 fs 余量取 28s 自动停止 */
 #define WAV_REC_MAX_SECONDS 28U
 
-/* 绑定文件系统（mount 成功后调用一次） */
-void WavRecorder_Init(lfs_t *lfs);
+/* FatFS 挂载成功后调用一次（读取 seq.dat 序号） */
+void WavRecorder_Init(void);
 
-/* 开始录音：创建 RECxxxx.WAV，写入占位 WAV 头。0 成功。 */
+/* 开始录音：创建 RECxxxx.WAV，写入占位 WAV 头。0 成功。
+ * U 盘挂载中会自动断开 USB（录音独占 Flash），停止后自动重连。 */
 int WavRecorder_start(void);
 
 /* 停止并落盘：回填最终 WAV 头、close。返回数据字节数，<0 失败。 */

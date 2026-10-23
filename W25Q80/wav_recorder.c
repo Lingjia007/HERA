@@ -1,55 +1,57 @@
 /**
  ******************************************************************************
  * @file wav_recorder.c
- * @brief WAV 录音落盘：PCM 16k/mono/S16 -> littlefs 文件 RECxxxx.WAV。
+ * @brief WAV 录音落盘：PCM 16k/mono/S16 -> FAT 文件 RECxxxx.WAV（W25Q80）。
  *        录音期间由 audio_app 的消费循环喂块（10 ms / 160 采样），
- *        lfs 的 256B 程序缓存吸收小写入，close 前回填最终 WAV 头。
+ *        FIL 自带 512B 扇区缓冲，周期 f_sync 落盘，close 前回填 WAV 头。
  *
- * 掉电安全：littlefs 幂等提交，已 close 的文件不会因掉电损坏；
- * 录音中途掉电最多丢最后一段未提交数据（文件不可见，不留垃圾）。
+ * 掉电安全：f_sync 周期提交（默认每 1s），掉电最多丢最后一段未提交数据；
+ * USB U 盘挂载期间固件端禁写（start 返回 -3，挂载沿自动停录音）。
  ******************************************************************************
  */
 #include "wav_recorder.h"
+#include "usb_msc.h"
+#include "ff.h"
 #include <stdio.h>
 #include <string.h>
 
-static lfs_t *s_lfs;
-static lfs_file_t s_file;
-static uint8_t s_file_cache[256]; /* lfs 静态文件缓存（LFS_NO_MALLOC） */
+#define REC_SYNC_EVERY_SAMPLES (WAV_REC_SAMPLE_RATE * 1U) /* 每 1s f_sync */
+
+static FIL s_file;
+static uint8_t s_fs_ok; /* FatFS 已挂载（main 自检置位） */
 
 static uint8_t s_active;
 static uint32_t s_samples; /* 已写入的 PCM 采样数 */
 static uint32_t s_seq;     /* 文件序号（seq.dat 持久化） */
+static uint8_t s_rec_usb_disc; /* 录音时主动断开了 U 盘（停止后重连） */
 
 /* 用小文件 seq.dat 持久化递增序号，掉电后不覆盖旧录音 */
 static uint32_t load_seq(void)
 {
-    lfs_file_t f;
+    FIL f;
     uint32_t v = 0;
-    struct lfs_file_config fcfg = {0};
+    UINT rd = 0;
 
-    fcfg.buffer = s_file_cache;
-    if (lfs_file_opencfg(s_lfs, &f, "seq.dat",
-                         LFS_O_RDONLY, &fcfg) == LFS_ERR_OK)
+    if (f_open(&f, "0:seq.dat", FA_READ) == FR_OK)
     {
-        (void)lfs_file_read(s_lfs, &f, &v, 4);
-        (void)lfs_file_close(s_lfs, &f);
+        if (f_read(&f, &v, 4, &rd) != FR_OK || rd != 4U)
+        {
+            v = 0;
+        }
+        (void)f_close(&f);
     }
     return v;
 }
 
 static void save_seq(uint32_t v)
 {
-    lfs_file_t f;
-    struct lfs_file_config fcfg = {0};
+    FIL f;
+    UINT wr = 0;
 
-    fcfg.buffer = s_file_cache;
-    if (lfs_file_opencfg(s_lfs, &f, "seq.dat",
-                         LFS_O_WRONLY | LFS_O_CREAT | LFS_O_TRUNC,
-                         &fcfg) == LFS_ERR_OK)
+    if (f_open(&f, "0:seq.dat", FA_WRITE | FA_CREATE_ALWAYS) == FR_OK)
     {
-        (void)lfs_file_write(s_lfs, &f, &v, 4);
-        (void)lfs_file_close(s_lfs, &f);
+        (void)f_write(&f, &v, 4, &wr);
+        (void)f_close(&f);
     }
 }
 
@@ -79,12 +81,12 @@ static void build_header(uint8_t *h, uint32_t data_bytes)
     memcpy(h + 40, &data_bytes, 4);
 }
 
-void WavRecorder_Init(lfs_t *lfs)
+void WavRecorder_Init(void)
 {
-    s_lfs = lfs;
     s_active = 0;
     s_samples = 0;
-    s_seq = (lfs != NULL) ? load_seq() : 0U;
+    s_fs_ok = 1;
+    s_seq = load_seq();
 }
 
 uint8_t WavRecorder_active(void)
@@ -95,21 +97,25 @@ uint8_t WavRecorder_active(void)
 int WavRecorder_start(void)
 {
     uint8_t hdr[44];
+    char name[20];
+    UINT wr = 0;
 
-    if (s_lfs == NULL)
+    if (!s_fs_ok)
         return -1;
     if (s_active)
         return 0;
+    if (UsbMsc_Mounted())
+    {
+        /* U 盘挂载中：断开（PC 视为拔出），录音独占 Flash 直到停止；
+         * 停止后才重连（若立即重连，PC 挂载沿会触发"停录音"保护）。 */
+        printf("[REC] usb mounted -> disconnect U-disk while recording\r\n");
+        UsbMsc_Disconnect();
+        s_rec_usb_disc = 1U;
+    }
 
-    char name[16];
-    snprintf(name, sizeof(name), "REC%04lu.WAV", (unsigned long)s_seq);
+    snprintf(name, sizeof(name), "0:REC%04lu.WAV", (unsigned long)s_seq);
 
-    static struct lfs_file_config fcfg;
-    fcfg.buffer = s_file_cache;
-
-    if (lfs_file_opencfg(s_lfs, &s_file, name,
-                         LFS_O_WRONLY | LFS_O_CREAT | LFS_O_TRUNC,
-                         &fcfg) != LFS_ERR_OK)
+    if (f_open(&s_file, name, FA_WRITE | FA_CREATE_ALWAYS) != FR_OK)
     {
         printf("[REC] open %s failed\r\n", name);
         return -2;
@@ -118,9 +124,9 @@ int WavRecorder_start(void)
     /* 占位头：停止时回填真实长度 */
     memset(hdr, 0, sizeof(hdr));
     build_header(hdr, 0);
-    if (lfs_file_write(s_lfs, &s_file, hdr, sizeof(hdr)) != (lfs_ssize_t)sizeof(hdr))
+    if (f_write(&s_file, hdr, sizeof(hdr), &wr) != FR_OK || wr != sizeof(hdr))
     {
-        (void)lfs_file_close(s_lfs, &s_file);
+        (void)f_close(&s_file);
         printf("[REC] header write failed\r\n");
         return -3;
     }
@@ -136,7 +142,8 @@ int WavRecorder_stop(void)
 {
     uint8_t hdr[44];
     uint32_t data_bytes;
-    char name[16];
+    char name[20];
+    UINT wr = 0;
 
     if (!s_active)
         return 0;
@@ -146,22 +153,33 @@ int WavRecorder_stop(void)
     build_header(hdr, data_bytes);
 
     /* 回到文件头回填长度，close 提交 */
-    if (lfs_file_seek(s_lfs, &s_file, 0, LFS_SEEK_SET) < 0 ||
-        lfs_file_write(s_lfs, &s_file, hdr, sizeof(hdr)) != (lfs_ssize_t)sizeof(hdr))
+    if (f_lseek(&s_file, 0) != FR_OK ||
+        f_write(&s_file, hdr, sizeof(hdr), &wr) != FR_OK || wr != sizeof(hdr))
     {
-        (void)lfs_file_close(s_lfs, &s_file);
+        (void)f_close(&s_file);
         printf("[REC] finalize failed (data may be incomplete)\r\n");
         return -1;
     }
-    if (lfs_file_close(s_lfs, &s_file) != LFS_ERR_OK)
+    if (f_close(&s_file) != FR_OK)
     {
         printf("[REC] close failed\r\n");
         return -2;
     }
 
     snprintf(name, sizeof(name), "REC%04lu.WAV", (unsigned long)s_seq);
-    s_seq++;
-    save_seq(s_seq);
+    if (!UsbMsc_Mounted())
+    {
+        s_seq++;
+        save_seq(s_seq);
+    }
+
+    /* 录音时断过 U 盘：重连，PC 重新枚举即可看到新文件 */
+    if (s_rec_usb_disc != 0U)
+    {
+        s_rec_usb_disc = 0U;
+        printf("[REC] usb U-disk re-connected\r\n");
+        UsbMsc_Restart();
+    }
 
     printf("[REC] saved %s: %lu.%02lus, %lu B\r\n", name,
            (unsigned long)(s_samples / WAV_REC_SAMPLE_RATE),
@@ -172,18 +190,25 @@ int WavRecorder_stop(void)
 
 void WavRecorder_feed(const int16_t *pcm, uint32_t n)
 {
+    UINT wr = 0;
+
     if (!s_active || pcm == NULL || n == 0U)
         return;
 
-    lfs_ssize_t w = lfs_file_write(s_lfs, &s_file, pcm,
-                                   (lfs_size_t)n * 2U);
-    if (w != (lfs_ssize_t)(n * 2U))
+    if (f_write(&s_file, pcm, n * 2U, &wr) != FR_OK || wr != n * 2U)
     {
-        printf("[REC] write failed (%ld) -> stop\r\n", (long)w);
+        printf("[REC] write failed -> stop\r\n");
         (void)WavRecorder_stop();
         return;
     }
     s_samples += n;
+
+    /* 周期落盘：掉电最多丢最后 <1s 数据；每秒一次 4KB 擦除尖峰
+     * 由 800ms 环形缓冲吸收 */
+    if ((s_samples % REC_SYNC_EVERY_SAMPLES) < n)
+    {
+        (void)f_sync(&s_file);
+    }
 
     if (s_samples >= WAV_REC_MAX_SECONDS * WAV_REC_SAMPLE_RATE)
     {

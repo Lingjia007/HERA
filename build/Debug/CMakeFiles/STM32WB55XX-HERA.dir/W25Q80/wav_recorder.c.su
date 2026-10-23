@@ -1,5 +1,6 @@
-D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/W25Q80/wav_recorder.c:82:6:WavRecorder_Init	120	static
-D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/W25Q80/wav_recorder.c:90:9:WavRecorder_active	0	static
-D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/W25Q80/wav_recorder.c:95:5:WavRecorder_start	96	static
-D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/W25Q80/wav_recorder.c:135:5:WavRecorder_stop	200	static
-D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/W25Q80/wav_recorder.c:173:6:WavRecorder_feed	16	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/W25Q80/wav_recorder.c:29:17:load_seq	584	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/W25Q80/wav_recorder.c:84:6:WavRecorder_Init	8	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/W25Q80/wav_recorder.c:92:9:WavRecorder_active	0	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/W25Q80/wav_recorder.c:97:5:WavRecorder_start	88	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/W25Q80/wav_recorder.c:141:5:WavRecorder_stop	672	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/W25Q80/wav_recorder.c:191:6:WavRecorder_feed	24	static

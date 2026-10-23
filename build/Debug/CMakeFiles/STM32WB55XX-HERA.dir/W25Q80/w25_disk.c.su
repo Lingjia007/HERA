@@ -1,0 +1,11 @@
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/W25Q80/w25_disk.c:58:12:ensure_init	16	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/W25Q80/w25_disk.c:100:16:cache_flush_row	24	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/W25Q80/w25_disk.c:137:16:cache_load_row	16	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/W25Q80/w25_disk.c:28:16:spi_guard_enter	8	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/W25Q80/w25_disk.c:38:13:spi_guard_exit	0	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/W25Q80/w25_disk.c:77:6:W25Disk_Bind	16	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/W25Q80/w25_disk.c:86:9:W25Disk_Ready	16	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/W25Q80/w25_disk.c:94:17:W25Disk_Flash	0	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/W25Q80/w25_disk.c:121:9:W25Disk_Flush	16	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/W25Q80/w25_disk.c:159:9:W25Disk_Read	40	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/W25Q80/w25_disk.c:199:9:W25Disk_Write	48	static

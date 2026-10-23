@@ -19,6 +19,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "dma.h"
+#include "app_fatfs.h"
 #include "i2c.h"
 #include "ipcc.h"
 #include "rf.h"
@@ -26,6 +27,7 @@
 #include "sai.h"
 #include "spi.h"
 #include "usart.h"
+#include "usb_device.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -35,7 +37,8 @@
 #include "audio_app.h"
 #include "vm3011.h"
 #include "platform_w25q80_stm32_impl.h"
-#include "lfs_w25q80_adapter.h"
+#include "w25_disk.h"
+#include "usb_msc.h"
 #include "shell_cli.h"
 #include "wav_recorder.h"
 /* USER CODE END Includes */
@@ -107,7 +110,9 @@ int main(void)
   MX_IPCC_Init();
 
   /* USER CODE BEGIN SysInit */
-
+  /* W25Q80 块设备绑定（只记录参数，不碰硬件）：USB MSC 枚举可能早于
+   * main 的自检块，W25Disk 内部 lazy init 保证任意顺序都安全。 */
+  W25Disk_Bind(&hspi1, GPIOA, GPIO_PIN_4);
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
@@ -118,122 +123,68 @@ int main(void)
   MX_USART1_UART_Init();
   MX_I2C1_Init();
   MX_SPI1_Init();
+  if (MX_FATFS_Init() != APP_OK) {
+    Error_Handler();
+  }
+  MX_USB_Device_Init();
   MX_RF_Init();
   /* USER CODE BEGIN 2 */
-  /* W25Q80 SPI Flash 自检：初始化 -> 读 ID -> 读 0x000000 前 16 字节 */
+  /* W25Q80 SPI Flash 自检 + FAT 挂载（USB U 盘与 CLI/录音共用同一卷） */
   {
-    static w25q80_stm32_t s_w25q80;
-    uint8_t buf[16];
-    uint32_t i;
-    lfs_t *lfs_p = NULL;
+    FRESULT fr;
 
     printf("[W25Q80] selftest start (CS=PA4, SPI1)\r\n");
 
     /* CS=PA4 已由 MX_GPIO_Init() 配好：开漏输出、初始高，板载上拉拉高。
-     * 拉低为主动驱动、释放靠上拉，2 MHz SPI 下时序无问题，无需再改回推挽。 */
-
-    platform_w25q80_stm32_register(&s_w25q80, &hspi1, GPIOA, GPIO_PIN_4, "w25q80");
-
-    int16_t st = SPI_FLASH_INIT(&s_w25q80.base);
-    printf("[W25Q80] init ret=%d, id(0x90)=0x%04X\r\n", st, SPI_FLASH_READ_ID(&s_w25q80.base));
+     * W25Disk lazy init（SPI_FLASH_INIT），USB MSC 枚举早于此也已安全。 */
+    if (W25Disk_Ready() == 0U)
     {
+      printf("[W25Q80] init failed - fs/usb unavailable\r\n");
+    }
+    else
+    {
+      w25q80_stm32_t *fl = W25Disk_Flash();
       uint8_t jid[3] = {0};
-      if (platform_w25q80_stm32_read_jedec_id(&s_w25q80, jid) == SPI_FLASH_STATUS_OK)
+
+      printf("[W25Q80] id(0x90)=0x%04X\r\n", SPI_FLASH_READ_ID(&fl->base));
+      if (platform_w25q80_stm32_read_jedec_id(fl, jid) == SPI_FLASH_STATUS_OK)
       {
         printf("[W25Q80] jedec(0x9F)=0x%02X 0x%02X 0x%02X (expect EF 40 14)\r\n",
                jid[0], jid[1], jid[2]);
       }
-    }
-    if (st == SPI_FLASH_STATUS_OK)
-    {
       printf("[W25Q80] total=%lu B, sector=%lu B, block=%lu B, page=%u B\r\n",
-             (unsigned long)SPI_FLASH_GET_TOTAL_SIZE(&s_w25q80.base),
-             (unsigned long)SPI_FLASH_GET_SECTOR_SIZE(&s_w25q80.base),
-             (unsigned long)SPI_FLASH_GET_BLOCK_SIZE(&s_w25q80.base),
-             SPI_FLASH_GET_PAGE_SIZE(&s_w25q80.base));
+             (unsigned long)SPI_FLASH_GET_TOTAL_SIZE(&fl->base),
+             (unsigned long)SPI_FLASH_GET_SECTOR_SIZE(&fl->base),
+             (unsigned long)SPI_FLASH_GET_BLOCK_SIZE(&fl->base),
+             SPI_FLASH_GET_PAGE_SIZE(&fl->base));
 
-      if (SPI_FLASH_READ(&s_w25q80.base, 0x000000, buf, sizeof(buf)) == SPI_FLASH_STATUS_OK)
+      /* ---- FAT 挂载：首次上电/旧 littlefs 数据则自动格式化 FAT12 ---- */
+      fr = f_mount(&USERFatFs, "0:", 1U);
+      if (fr == FR_NO_FILESYSTEM)
       {
-        printf("[W25Q80] @0x000000:");
-        for (i = 0; i < sizeof(buf); i++)
+        static uint8_t mkfs_work[512];
+        printf("[FAT] no filesystem -> formatting FAT12 (wipes flash)...\r\n");
+        fr = f_mkfs("0:", FM_FAT | FM_SFD, 0U, mkfs_work, sizeof(mkfs_work));
+        if (fr == FR_OK)
         {
-          printf(" %02X", buf[i]);
+          /* PC 可能在 mkfs 期间已读到旧/半格式化 BPB（Windows 缓存）：
+           * 断开重连强制 PC 重新枚举，读到全新 FAT。 */
+          printf("[FAT] formatted -> usb re-enumerate\r\n");
+          UsbMsc_Restart();
+          fr = f_mount(&USERFatFs, "0:", 1U);
         }
-        printf("\r\n");
+      }
+      if (fr == FR_OK)
+      {
+        printf("[FAT] mounted - usb U-disk + cli share this volume\r\n");
+        WavRecorder_Init();
       }
       else
       {
-        printf("[W25Q80] read failed\r\n");
-      }
-
-      /* ---- LittleFS 文件系统自检：挂载(首次自动格式化) -> 写 -> 回读 -> 列目录 ---- */
-      static lfs_w25q80_t s_lfs_fs;
-      static uint8_t file_buf[256];
-      uint8_t rb[64];
-      if (lfs_w25q80_mount_or_format(&s_lfs_fs, &s_w25q80.base) != LFS_ERR_OK)
-      {
-        printf("[LFS] mount/format failed\r\n");
-      }
-      else
-      {
-        printf("[LFS] mounted, %lu blocks x 4096 B\r\n",
-               (unsigned long)s_lfs_fs.cfg.block_count);
-
-        lfs_file_t file;
-        struct lfs_file_config fcfg = {0};
-        fcfg.buffer = file_buf;
-        const char *msg = "HERA W25Q80 LittleFS selftest";
-        int ferr = lfs_file_opencfg(&s_lfs_fs.lfs, &file, "selftest.txt",
-                                    LFS_O_WRONLY | LFS_O_CREAT | LFS_O_TRUNC, &fcfg);
-        if (ferr != LFS_ERR_OK)
-        {
-          printf("[LFS] open(w) err=%d\r\n", ferr);
-        }
-        else
-        {
-          lfs_size_t wn = lfs_file_write(&s_lfs_fs.lfs, &file, msg,
-                                         (lfs_size_t)strlen(msg));
-          lfs_file_close(&s_lfs_fs.lfs, &file);
-
-          ferr = lfs_file_opencfg(&s_lfs_fs.lfs, &file, "selftest.txt",
-                                  LFS_O_RDONLY, &fcfg);
-          lfs_size_t rn = 0U;
-          if (ferr == LFS_ERR_OK)
-          {
-            rn = lfs_file_read(&s_lfs_fs.lfs, &file, rb, (lfs_size_t)sizeof(rb));
-            lfs_file_close(&s_lfs_fs.lfs, &file);
-          }
-          if (wn == (lfs_size_t)strlen(msg) && rn == wn &&
-              memcmp(rb, msg, wn) == 0)
-          {
-            printf("[LFS] selftest.txt write+readback OK (%u B)\r\n",
-                   (unsigned)wn);
-          }
-          else
-          {
-            printf("[LFS] verify FAILED (w=%u r=%u)\r\n",
-                   (unsigned)wn, (unsigned)rn);
-          }
-        }
-
-        lfs_dir_t dir;
-        struct lfs_info info;
-        if (lfs_dir_open(&s_lfs_fs.lfs, &dir, "/") == LFS_ERR_OK)
-        {
-          printf("[LFS] root dir:");
-          while (lfs_dir_read(&s_lfs_fs.lfs, &dir, &info) > 0)
-          {
-            printf(" %s(%lu B)", info.name, (unsigned long)info.size);
-          }
-          printf("\r\n");
-          lfs_dir_close(&s_lfs_fs.lfs, &dir);
-        }
-        printf("[LFS] ready, filesystem stays mounted\r\n");
-        lfs_p = &s_lfs_fs.lfs;
+        printf("[FAT] mount/mkfs failed (%d) - recording disabled\r\n", (int)fr);
       }
     }
-    WavRecorder_Init(lfs_p);
-    Shell_CLI_Init(lfs_p);
+    Shell_CLI_Init();
   }
 
   /* VM3011 bring-up via driver (Zephyr port): waits 1 s for ZPL settle,
@@ -332,6 +283,8 @@ int main(void)
          (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0) != GPIO_PIN_RESET) ? "HIGH" : "LOW");
   /* USER CODE END 2 */
 
+  while(LL_HSEM_1StepLock(HSEM, CFG_HW_CLK48_CONFIG_SEMID));
+
   /* Init code for STM32_WPAN */
   MX_APPE_Init();
 
@@ -377,6 +330,7 @@ int main(void)
     }
 
     Shell_CLI_Process();
+    UsbMsc_Poll();      /* STOP2 唤醒后重启 USB 枚举；挂载沿停录音 */
     AudioApp_Process();
   }
   /* USER CODE END 3 */
@@ -404,18 +358,21 @@ void SystemClock_Config(void)
   * in the RCC_OscInitTypeDef structure.
   */
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI|RCC_OSCILLATORTYPE_HSE
-                              |RCC_OSCILLATORTYPE_LSE;
+                              |RCC_OSCILLATORTYPE_LSE|RCC_OSCILLATORTYPE_MSI;
   RCC_OscInitStruct.HSEState = RCC_HSE_ON;
   RCC_OscInitStruct.LSEState = RCC_LSE_ON;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+  RCC_OscInitStruct.MSIState = RCC_MSI_ON;
   RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+  RCC_OscInitStruct.MSICalibrationValue = RCC_MSICALIBRATION_DEFAULT;
+  RCC_OscInitStruct.MSIClockRange = RCC_MSIRANGE_11;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
   RCC_OscInitStruct.PLL.PLLM = RCC_PLLM_DIV2;
   RCC_OscInitStruct.PLL.PLLN = 8;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV8;
   RCC_OscInitStruct.PLL.PLLR = RCC_PLLR_DIV2;
-  RCC_OscInitStruct.PLL.PLLQ = RCC_PLLQ_DIV2;
+  RCC_OscInitStruct.PLL.PLLQ = RCC_PLLQ_DIV3;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
     Error_Handler();
@@ -437,6 +394,10 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+
+  /** Enable MSI Auto calibration
+  */
+  HAL_RCCEx_EnableMSIPLLMode();
 }
 
 /**

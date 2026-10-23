@@ -1,23 +1,25 @@
 /**
  ******************************************************************************
  * @file shell_cli.c
- * @brief USART1 命令行：ls/rm/df/rec/stop/ym/info/help。
+ * @brief USART1 命令行：ls/rm/df/rec/stop/ym/info/help（FAT on W25Q80）。
  *        单字节中断接收 -> 行缓冲 -> 主循环解析。
  *        KEY(PC12) 与 `rec` 命令等效（按键翻转录音）。
+ *        USB U 盘挂载期间固件端禁写（rm/rec 拒绝），读命令照常。
  ******************************************************************************
  */
 #include "shell_cli.h"
 #include "wav_recorder.h"
 #include "ymodem_tx.h"
+#include "usb_msc.h"
 #include "audio_app.h"
 #include "usart.h"
+#include "ff.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 
 #define CLI_LINE_MAX 64
 
-static lfs_t *s_lfs;
 static uint8_t s_rx;
 static char s_line[CLI_LINE_MAX];
 static volatile uint16_t s_len;
@@ -38,13 +40,14 @@ static void print_menu(void)
     printf(" 5 df usage     6 kws %s\r\n",
            (AudioApp_GetKwsEnabled() != 0U) ? "ON" : "OFF");
     printf(" 7 sleep now    8 info\r\n");
+    printf("usb %s\r\n", UsbMsc_Mounted() ? "U-DISK mounted (MCU readonly)"
+                                         : "U-DISK off (plug usb to mount)");
     printf("digit+Enter, or cmd: help ls rm df rec stop ym kws sleep\r\n");
     printf("> ");
 }
 
-void Shell_CLI_Init(lfs_t *lfs)
+void Shell_CLI_Init(void)
 {
-    s_lfs = lfs;
     s_len = 0;
     s_line_rdy = 0;
     s_menu_pending = 0;
@@ -111,11 +114,11 @@ static void cmd_help(void)
 {
     printf("menu             show the menu\r\n"
            "ls               list files\r\n"
-           "rm <file>        delete file\r\n"
+           "rm <file>        delete file (blocked while usb mounted)\r\n"
            "df               fs usage\r\n"
            "rec              toggle recording (KEY/PC12 same)\r\n"
            "stop             stop recording\r\n"
-           "ym <file>        send file via YMODEM\r\n"
+           "ym <file>        send file via YMODEM (backup of usb)\r\n"
            "kws on|off       toggle speech recognition\r\n"
            "sleep            enter STOP2 now (KEY/sound wakes)\r\n"
            "info             system info\r\n");
@@ -123,60 +126,60 @@ static void cmd_help(void)
 
 static void cmd_ls(void)
 {
-    lfs_dir_t d;
-    struct lfs_info info;
+    DIR d;
+    FILINFO info;
     uint32_t cnt = 0;
 
-    if (s_lfs == NULL)
+    if (f_opendir(&d, "0:") != FR_OK)
     {
         printf("fs not mounted\r\n");
         return;
     }
-    if (lfs_dir_open(s_lfs, &d, "/") != LFS_ERR_OK)
+    while (f_readdir(&d, &info) == FR_OK && info.fname[0] != '\0')
     {
-        printf("dir open failed\r\n");
-        return;
-    }
-    while (lfs_dir_read(s_lfs, &d, &info) > 0)
-    {
-        if (info.type == LFS_TYPE_REG)
+        if (!(info.fattrib & AM_DIR))
         {
-            printf("%-14s %6lu B\r\n", info.name, (unsigned long)info.size);
+            printf("%-14s %6lu B\r\n", info.fname, (unsigned long)info.fsize);
             cnt++;
         }
     }
-    (void)lfs_dir_close(s_lfs, &d);
+    (void)f_closedir(&d);
     printf("%lu file(s)\r\n", (unsigned long)cnt);
 }
 
 static void cmd_rm(char *name)
 {
+    char path[80];
+
     if (name == NULL)
     {
         printf("usage: rm <file>\r\n");
         return;
     }
-    int e = lfs_remove(s_lfs, name);
-    printf("rm %s: %s\r\n", name, (e == 0) ? "ok" : "failed");
+    if (UsbMsc_Mounted())
+    {
+        printf("usb mounted (readonly) - eject disk first\r\n");
+        return;
+    }
+    (void)snprintf(path, sizeof(path), "0:%s", name);
+    FRESULT e = f_unlink(path);
+    printf("rm %s: %s\r\n", name, (e == FR_OK) ? "ok" : "failed");
 }
 
 static void cmd_df(void)
 {
-    if (s_lfs == NULL)
+    FATFS *fs = NULL;
+    DWORD fre = 0;
+
+    if (f_getfree("0:", &fre, &fs) != FR_OK || fs == NULL)
     {
-        printf("fs not mounted\r\n");
+        printf("fs stat failed\r\n");
         return;
     }
-    lfs_ssize_t used = lfs_fs_size(s_lfs);
-    if (used >= 0)
-    {
-        printf("fs: %ld/%lu blocks (%ld B free)\r\n", (long)used,
-               (unsigned long)256, (long)(256 - used) * 4096L);
-    }
-    else
-    {
-        printf("fs stat failed (%ld)\r\n", (long)used);
-    }
+    /* 1MB 卷：总簇 = 2048 扇区 / 每簇扇区数 */
+    printf("fs: %lu/%lu KB free\r\n",
+           (unsigned long)(fre * (fs->csize / 2U)),
+           (unsigned long)((fs->n_fatent - 2U) * (fs->csize / 2U)));
 }
 
 static void cmd_rec(void)
@@ -197,10 +200,11 @@ static void cmd_rec(void)
 static void cmd_info(void)
 {
     printf("mcu: STM32WB55, pcm: %u Hz mono S16\r\n", 16000U);
-    printf("flash: W25Q80 1MB, fs: littlefs 256x4KB\r\n");
-    printf("kws: %s, key: PC12 toggle record, cli: %s\r\n",
-           (AudioApp_GetKwsEnabled() != 0U) ? "on" : "off",
-           (s_lfs != NULL) ? "fs ok" : "fs NOT mounted");
+    printf("flash: W25Q80 1MB, fs: FAT12 512B sector\r\n");
+    printf("kws: %s, key: PC12 toggle record\r\n",
+           (AudioApp_GetKwsEnabled() != 0U) ? "on" : "off");
+    printf("usb: %s\r\n", UsbMsc_Mounted() ? "U-disk mounted (MCU readonly)"
+                                         : "idle");
 }
 
 void Shell_CLI_Process(void)
@@ -224,20 +228,16 @@ void Shell_CLI_Process(void)
         uint8_t pend = s_menu_pending;
         s_menu_pending = 0U;
         printf("\r\n");
-        if (s_line[0] != '\0' && s_lfs != NULL)
+        if (s_line[0] != '\0')
         {
             if (pend == '3')
             {
-                (void)YmodemTx_Send(s_lfs, s_line);
+                (void)YmodemTx_Send(s_line);
             }
             else
             {
                 cmd_rm(s_line);
             }
-        }
-        else if (s_lfs == NULL)
-        {
-            printf("fs not mounted\r\n");
         }
         print_menu();
         return;
@@ -264,18 +264,10 @@ void Shell_CLI_Process(void)
             break;
         case '3': /* YMODEM：下一行输入文件名 */
         case '4': /* 删除：同上 */
-            if (s_lfs == NULL)
-            {
-                printf("fs not mounted\r\n");
-            }
-            else
-            {
-                s_menu_pending = (uint8_t)cmd[0];
-                printf("%s - enter file name: ",
-                       (cmd[0] == '3') ? "ymodem" : "rm");
-                return; /* 等文件名行，不重印菜单 */
-            }
-            break;
+            s_menu_pending = (uint8_t)cmd[0];
+            printf("%s - enter file name: ",
+                   (cmd[0] == '3') ? "ymodem" : "rm");
+            return; /* 等文件名行，不重印菜单 */
         case '5':
             cmd_df();
             break;
@@ -307,14 +299,7 @@ void Shell_CLI_Process(void)
     }
     else if (strcmp(cmd, "rm") == 0)
     {
-        if (s_lfs == NULL)
-        {
-            printf("fs not mounted\r\n");
-        }
-        else
-        {
-            cmd_rm(arg);
-        }
+        cmd_rm(arg);
     }
     else if (strcmp(cmd, "df") == 0)
     {
@@ -330,13 +315,13 @@ void Shell_CLI_Process(void)
     }
     else if (strcmp(cmd, "ym") == 0 || strcmp(cmd, "ymodem") == 0)
     {
-        if (s_lfs == NULL || arg == NULL)
+        if (arg == NULL)
         {
             printf("usage: ym <file>\r\n");
         }
         else
         {
-            (void)YmodemTx_Send(s_lfs, arg);
+            (void)YmodemTx_Send(arg);
         }
     }
     else if (strcmp(cmd, "kws") == 0)

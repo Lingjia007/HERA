@@ -55,12 +55,11 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     VM3011/vm3011.c
     VOFA+/VOFA.c
     W25Q80/platform_w25q80_stm32_impl.c
-    W25Q80/lfs_w25q80_adapter.c
+    W25Q80/w25_disk.c
+    W25Q80/usb_msc.c
     W25Q80/shell_cli.c
     W25Q80/wav_recorder.c
     W25Q80/ymodem_tx.c
-    W25Q80/lfs/lfs.c
-    W25Q80/lfs/lfs_util.c
     Drivers/CMSIS/DSP/Source/TransformFunctions/arm_rfft_init_q15.c
     Drivers/CMSIS/DSP/Source/TransformFunctions/arm_rfft_q15.c
     Drivers/CMSIS/DSP/Source/TransformFunctions/arm_cfft_init_q15.c
@@ -84,7 +83,6 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     VM3011
     VOFA+
     W25Q80
-    W25Q80/lfs
     PDM2PCM
     Drivers/CMSIS/DSP/Include
 )
@@ -97,15 +95,9 @@ target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
 # Remove wrong libob.a library dependency when using cpp files
 list(REMOVE_ITEM CMAKE_C_IMPLICIT_LINK_LIBRARIES ob)
 
-# littlefs: 禁用 malloc/日志（缓冲全部静态提供，压缩 FLASH 占用）
-set(LFS_NO_BUF_OPTS LFS_NO_MALLOC LFS_NO_DEBUG LFS_NO_WARN LFS_NO_ERROR LFS_NO_ASSERT)
-set_source_files_properties(W25Q80/lfs/lfs.c W25Q80/lfs/lfs_util.c
-    PROPERTIES COMPILE_DEFINITIONS "${LFS_NO_BUF_OPTS}")
-
-# FLASH 紧张：lfs 与存储/CLI 模块用 -Os 覆盖 Debug 的 -Og
+# FLASH 紧张：存储/CLI 模块用 -Os 覆盖 Debug 的 -Og
 set_source_files_properties(
-    W25Q80/lfs/lfs.c W25Q80/lfs/lfs_util.c
-    W25Q80/lfs_w25q80_adapter.c
+    W25Q80/w25_disk.c W25Q80/usb_msc.c
     W25Q80/shell_cli.c W25Q80/wav_recorder.c W25Q80/ymodem_tx.c
     W25Q80/platform_w25q80_stm32_impl.c
     PROPERTIES COMPILE_OPTIONS "-Os")

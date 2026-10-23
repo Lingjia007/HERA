@@ -1,0 +1,5 @@
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/FATFS/Target/user_diskio.c:80:9:USER_initialize	8	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/FATFS/Target/user_diskio.c:102:9:USER_status	8	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/FATFS/Target/user_diskio.c:123:9:USER_read	8	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/FATFS/Target/user_diskio.c:152:9:USER_write	8	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/FATFS/Target/user_diskio.c:182:9:USER_ioctl	8	static

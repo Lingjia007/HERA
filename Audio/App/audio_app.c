@@ -50,6 +50,7 @@
 #include "app_conf.h"
 #include "stm32_lpm.h"
 #include "wav_recorder.h"
+#include "usb_msc.h"
 #include <stdint.h>
 #include <string.h>
 #include <stdio.h>
@@ -176,6 +177,7 @@ static VM3011_Dev_t *s_vm;      /* mic handle for the DOUT re-arm (main owns) */
 static uint32_t s_awake_until;  /* HAL_GetTick deadline; 0 = session closed   */
 static uint8_t s_kws_enabled;       /* 0 = KWS/VAD off (record debug mode)    */
 static uint32_t s_hold_awake_until; /* debug hold-awake deadline (CLI alive)   */
+static uint8_t s_usb_stopped;        /* USB disconnected for STOP2 (restarted by UsbMsc_Poll) */
 
 static void ai_log_err(const ai_error err, const char *fct)
 {
@@ -451,6 +453,10 @@ void AudioApp_ZplNotify(void)
 static void zpl_sleep(void)
 {
   printf("[ZPL] sleep\r\n");
+  /* STOP2 后 USB IP 无时钟：断开 DP（PC 视为拔出），唤醒后
+   * UsbMsc_Poll 重新枚举。 */
+  UsbMsc_NotifySleep();
+  s_usb_stopped = 1U;
   AudioStream_stop();
   /* Settle time for the ZPL re-entry after the PDM clock stops. */
   HAL_Delay(20U);
@@ -485,6 +491,11 @@ void AudioApp_RequestSleep(void)
     printf("[LPM] recording - sleep refused\r\n");
     return;
   }
+  if (UsbMsc_Mounted())
+  {
+    printf("[LPM] usb U-disk mounted - sleep refused\r\n");
+    return;
+  }
   s_hold_awake_until = 0U;
 #if AUDIO_ZPL_WAKE
   zpl_sleep();
@@ -502,16 +513,25 @@ void AudioApp_Process(void)
 #if AUDIO_ZPL_WAKE
   if (s_awake_until == 0U || !s_net)
   {
-    /* Debug hold-awake window (CLI activity): veto STOP2 so the shell
-     * stays usable; the sequencer idles in SLEEP instead. */
-    if (HAL_GetTick() < s_hold_awake_until)
+    /* Debug hold-awake window (CLI activity) or USB U-disk mounted: veto
+     * STOP2 so the shell / the disk stay usable; the sequencer idles in
+     * SLEEP instead. */
+    if (HAL_GetTick() < s_hold_awake_until || UsbMsc_Mounted())
     {
+      s_usb_stopped = 0U;
       UTIL_LPM_SetStopMode(1U << CFG_LPM_APP, UTIL_LPM_DISABLE);
       return;
     }
 
     /* Session closed: allow STOP2 - the VM3011 DOUT wake line (PA0) brings
-     * us back on the next acoustic event above the margin. */
+     * us back on the next acoustic event above the margin. USB must be
+     * disconnected first (once per transition - USBD_Stop is not idempotent
+     * enough to call every tick); the wake path restarts it via Poll. */
+    if (s_usb_stopped == 0U)
+    {
+      UsbMsc_NotifySleep();
+      s_usb_stopped = 1U;
+    }
     UTIL_LPM_SetStopMode(1U << CFG_LPM_APP, UTIL_LPM_ENABLE);
     return;
   }

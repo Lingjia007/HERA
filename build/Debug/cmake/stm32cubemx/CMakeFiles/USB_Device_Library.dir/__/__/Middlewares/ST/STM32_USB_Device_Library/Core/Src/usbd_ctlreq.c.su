@@ -1,0 +1,6 @@
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ctlreq.c:104:20:USBD_StdDevReq	24	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ctlreq.c:167:20:USBD_StdItfReq	16	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ctlreq.c:239:20:USBD_StdEPReq	16	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ctlreq.c:950:6:USBD_ParseSetupRequest	0	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ctlreq.c:979:6:USBD_CtlError	8	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ctlreq.c:996:6:USBD_GetString	16	static

@@ -11,6 +11,7 @@
 #include "ymodem_tx.h"
 #include "shell_cli.h"
 #include "usart.h"
+#include "ff.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -108,35 +109,42 @@ static int wait_ctrl(uint8_t want, uint32_t timeout_ms, uint32_t retries)
     return -1; /* 超时 */
 }
 
-int YmodemTx_Send(lfs_t *lfs, const char *path)
+int YmodemTx_Send(const char *path)
 {
-    lfs_file_t f;
-    struct lfs_file_config fcfg = {0};
-    static uint8_t fcache[256];
+    FIL f;
     uint8_t blk0[YM_BLK0_LEN];
     uint8_t blkno = 1U;
     uint8_t hdr_buf[YM_DATA_LEN];
-    lfs_ssize_t r;
-    lfs_ssize_t total = 0;
+    UINT rd = 0;
+    int32_t total = 0;
     int err;
     uint32_t size;
+    char fatpath[64];
 
-    if (lfs == NULL || path == NULL)
+    if (path == NULL)
     {
         return -4;
     }
-
-    fcfg.buffer = fcache;
-    if (lfs_file_opencfg(lfs, &f, path, LFS_O_RDONLY, &fcfg) != LFS_ERR_OK)
+    /* CLI 传入的是裸文件名，补 FAT 卷前缀 */
+    if (path[0] == '0' && path[1] == ':')
     {
-        printf("[YM] open %s failed\r\n", path);
+        (void)snprintf(fatpath, sizeof(fatpath), "%s", path);
+    }
+    else
+    {
+        (void)snprintf(fatpath, sizeof(fatpath), "0:%s", path);
+    }
+
+    if (f_open(&f, fatpath, FA_READ) != FR_OK)
+    {
+        printf("[YM] open %s failed\r\n", fatpath);
         return -2;
     }
-    size = (uint32_t)lfs_file_size(lfs, &f);
+    size = (uint32_t)f_size(&f);
 
     Shell_CLI_Pause();
     printf("[YM] sending %s (%lu B), waiting for receiver 'C'...\r\n",
-           path, (unsigned long)size);
+           fatpath, (unsigned long)size);
 
     /* 1. 等接收端 CRC 模式请求 */
     err = wait_ctrl('C', 1000U, 10U);
@@ -171,17 +179,16 @@ int YmodemTx_Send(lfs_t *lfs, const char *path)
     /* 3. 数据块 1K */
     for (;;)
     {
-        r = lfs_file_read(lfs, &f, hdr_buf, YM_DATA_LEN);
-        if (r < 0)
+        if (f_read(&f, hdr_buf, YM_DATA_LEN, &rd) != FR_OK)
         {
             err = -6;
             goto exit_cancel;
         }
-        if (r == 0)
+        if (rd == 0U)
         {
             break;
         }
-        if (send_packet(STX, blkno, hdr_buf, (uint32_t)r) != 0)
+        if (send_packet(STX, blkno, hdr_buf, rd) != 0)
         {
             err = -5;
             goto exit_cancel;
@@ -192,7 +199,7 @@ int YmodemTx_Send(lfs_t *lfs, const char *path)
             goto exit_cancel;
         }
         blkno++;
-        total += r;
+        total += (int32_t)rd;
     }
 
     /* 4. EOT（接收端可能先 NAK：重发直到 ACK） */
@@ -238,7 +245,7 @@ exit_cancel:
     printf("[YM] aborted (err=%d, %ld B)\r\n", err, (long)total);
 
 exit_resume:
-    (void)lfs_file_close(lfs, &f);
+    (void)f_close(&f);
     Shell_CLI_Resume();
     return err;
 }

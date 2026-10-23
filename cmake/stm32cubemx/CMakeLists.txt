@@ -11,12 +11,17 @@ set(MX_Defines_Syms
 # STM32CubeMX generated include paths
 set(MX_Include_Dirs
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Inc
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../FATFS/Target
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../FATFS/App
     ${CMAKE_CURRENT_SOURCE_DIR}/../../STM32_WPAN/App
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../USB_Device/App
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../USB_Device/Target
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/ST/AI/Inc
     ${CMAKE_CURRENT_SOURCE_DIR}/../../X-CUBE-AI/App
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Drivers/STM32WBxx_HAL_Driver/Inc
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Drivers/STM32WBxx_HAL_Driver/Inc/Legacy
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Utilities/lpm/tiny_lpm
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/Third_Party/FatFs/src
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/ST/STM32_WPAN
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/ST/STM32_WPAN/interface/patterns/ble_thread
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/ST/STM32_WPAN/interface/patterns/ble_thread/tl
@@ -27,6 +32,8 @@ set(MX_Include_Dirs
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/ST/STM32_WPAN/ble/core/template
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/ST/STM32_WPAN/ble/svc/Inc
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/ST/STM32_WPAN/ble/svc/Src
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/ST/STM32_USB_Device_Library/Core/Inc
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/ST/STM32_USB_Device_Library/Class/MSC/Inc
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Drivers/CMSIS/Device/ST/STM32WBxx/Include
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Utilities/sequencer
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/ST/STM32_WPAN/ble
@@ -39,6 +46,12 @@ set(MX_Application_Src
     ${CMAKE_CURRENT_SOURCE_DIR}/../../STM32_WPAN/App/app_ble.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../STM32_WPAN/App/custom_stm.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../STM32_WPAN/App/custom_app.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../FATFS/App/app_fatfs.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../FATFS/Target/user_diskio.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../USB_Device/App/usb_device.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../USB_Device/App/usbd_desc.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../USB_Device/App/usbd_storage_if.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../USB_Device/Target/usbd_conf.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Src/main.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Src/gpio.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Src/dma.c
@@ -66,13 +79,16 @@ set(MX_Application_Src
 # STM32 HAL/LL Drivers
 set(STM32_Drivers_Src
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Src/system_stm32wbxx.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../Drivers/STM32WBxx_HAL_Driver/Src/stm32wbxx_hal_hsem.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../Drivers/STM32WBxx_HAL_Driver/Src/stm32wbxx_hal_pcd.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../Drivers/STM32WBxx_HAL_Driver/Src/stm32wbxx_hal_pcd_ex.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../Drivers/STM32WBxx_HAL_Driver/Src/stm32wbxx_ll_usb.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Drivers/STM32WBxx_HAL_Driver/Src/stm32wbxx_hal_rcc.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Drivers/STM32WBxx_HAL_Driver/Src/stm32wbxx_ll_rcc.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Drivers/STM32WBxx_HAL_Driver/Src/stm32wbxx_hal_rcc_ex.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Drivers/STM32WBxx_HAL_Driver/Src/stm32wbxx_hal_flash.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Drivers/STM32WBxx_HAL_Driver/Src/stm32wbxx_hal_flash_ex.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Drivers/STM32WBxx_HAL_Driver/Src/stm32wbxx_hal_gpio.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../Drivers/STM32WBxx_HAL_Driver/Src/stm32wbxx_hal_hsem.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Drivers/STM32WBxx_HAL_Driver/Src/stm32wbxx_hal_dma.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Drivers/STM32WBxx_HAL_Driver/Src/stm32wbxx_hal_dma_ex.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Drivers/STM32WBxx_HAL_Driver/Src/stm32wbxx_hal_pwr.c
@@ -96,6 +112,15 @@ set(STM32_Drivers_Src
 # Drivers Midllewares
 
 
+set(USB_Device_Library_Src
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_core.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ctlreq.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ioreq.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/ST/STM32_USB_Device_Library/Class/MSC/Src/usbd_msc.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/ST/STM32_USB_Device_Library/Class/MSC/Src/usbd_msc_bot.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/ST/STM32_USB_Device_Library/Class/MSC/Src/usbd_msc_data.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/ST/STM32_USB_Device_Library/Class/MSC/Src/usbd_msc_scsi.c
+)
 set(Utilities_Src
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Utilities/lpm/tiny_lpm/stm32_lpm.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Utilities/sequencer/stm32_seq.c
@@ -121,6 +146,12 @@ set(STM32_WPAN_Src
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/ST/STM32_WPAN/interface/patterns/ble_thread/tl/shci_tl_if.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/ST/STM32_WPAN/ble/svc/Src/svc_ctl.c
 )
+set(FatFs_Src
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/Third_Party/FatFs/src/diskio.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/Third_Party/FatFs/src/ff.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/Third_Party/FatFs/src/ff_gen_drv.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/Third_Party/FatFs/src/option/syscall.c
+)
 
 # Link directories setup
 set(MX_LINK_DIRS
@@ -134,8 +165,10 @@ set(MX_LINK_LIBS
  "-Wl,--end-group"
     STM32_Drivers
     ${TOOLCHAIN_LINK_LIBRARIES}
-    Utilities
+    USB_Device_Library
+	Utilities
 	STM32_WPAN
+	FatFs
 	
 )
 # Interface library for includes and symbols
@@ -149,6 +182,11 @@ target_sources(STM32_Drivers PRIVATE ${STM32_Drivers_Src})
 target_link_libraries(STM32_Drivers PUBLIC stm32cubemx)
 
 
+# Create USB_Device_Library static library
+add_library(USB_Device_Library OBJECT)
+target_sources(USB_Device_Library PRIVATE ${USB_Device_Library_Src})
+target_link_libraries(USB_Device_Library PUBLIC stm32cubemx)
+
 # Create Utilities static library
 add_library(Utilities OBJECT)
 target_sources(Utilities PRIVATE ${Utilities_Src})
@@ -158,6 +196,11 @@ target_link_libraries(Utilities PUBLIC stm32cubemx)
 add_library(STM32_WPAN OBJECT)
 target_sources(STM32_WPAN PRIVATE ${STM32_WPAN_Src})
 target_link_libraries(STM32_WPAN PUBLIC stm32cubemx)
+
+# Create FatFs static library
+add_library(FatFs OBJECT)
+target_sources(FatFs PRIVATE ${FatFs_Src})
+target_link_libraries(FatFs PUBLIC stm32cubemx)
 
 # Add STM32CubeMX generated application sources to the project
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE ${MX_Application_Src})

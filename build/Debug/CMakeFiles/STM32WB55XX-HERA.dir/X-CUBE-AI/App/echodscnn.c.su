@@ -5,7 +5,7 @@ D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/X-CUBE-AI/App/echodscnn.c:2578
 D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/X-CUBE-AI/App/echodscnn.c:2624:12:ai_echodscnn_inputs_get	0	static
 D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/X-CUBE-AI/App/echodscnn.c:2635:12:ai_echodscnn_outputs_get	0	static
 D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/X-CUBE-AI/App/echodscnn.c:2646:11:ai_echodscnn_destroy	0	static
-D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/X-CUBE-AI/App/echodscnn.c:2653:9:ai_echodscnn_init	64	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/X-CUBE-AI/App/echodscnn.c:2653:9:ai_echodscnn_init	56	static
 D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/X-CUBE-AI/App/echodscnn.c:2589:10:ai_echodscnn_create_and_init	96	static
 D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/X-CUBE-AI/App/echodscnn.c:2670:8:ai_echodscnn_run	0	static
 D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/X-CUBE-AI/App/echodscnn.c:2678:8:ai_echodscnn_forward	0	static
