@@ -112,14 +112,18 @@ int main(void)
   MX_I2C1_Init();
   MX_RF_Init();
   /* USER CODE BEGIN 2 */
-  AudioApp_Init();
-
   /* VM3011 bring-up via driver (Zephyr port): waits 1 s for ZPL settle,
-   * verifies I2C_CNTRL==0x00 (device detect) and applies the config. */
+   * verifies I2C_CNTRL==0x00 (device detect) and applies the config.
+   * Runs BEFORE AudioApp_Init: the audio app stores the handle and clears
+   * DOUT itself when a listen session closes. */
   {
     VM3011_Config_t cfg;
     VM3011_ConfigDefault(&cfg);
-    cfg.wos_dout_thresh = 7U; /* 8x margin (18 dBSPL): max, reject taps */
+    cfg.wos_dout_thresh = 1U; /* 2x margin (6.0 dBSPL): most sensitive */
+    cfg.wos_rms = 1U;         /* 2 Hz WoS comparator: DOUT asserts ~2x
+                              * faster than the 1 Hz default - observed:
+                              * with 1 Hz the wake arrived so late that the
+                              * keyword head was already gone. */
     int ret = VM3011_Init(&s_vm, &hi2c1, VM3011_I2C_ADDR_L, &cfg);
     printf("[VM3011] init ret=%d (0=OK, -1=I2C, -3=NODEV)\r\n", ret);
     if (ret == VM3011_OK)
@@ -160,14 +164,27 @@ int main(void)
                (((v[4] >> 5) & 1U) != 0U) ? "2" : "1");
         printf("[VM3011] dout: margin=%ux (+%u.%u dB SPL over ambient)\r\n",
                t + 1U, margin_db10[t] / 10U, margin_db10[t] % 10U);
+
+        /* Drop any power-up DOUT indication so the wake line starts LOW. */
+        (void)VM3011_ClearDout(&s_vm);
       }
     }
   }
 
-  /* VM3011 DOUT (PA0) EXTI: ZPL FLAG monitor */
+  /* ZPL-gated KWS: AudioApp_Init does NOT start the audio stream - the
+   * first DOUT wake (see while(1)) opens the first listening session. */
+  AudioApp_Init(&s_vm);
+
+  /* VM3011 DOUT (PA0) ZPL wake line, two independent paths:
+   *  - EXTI0 rising edge -> HAL_GPIO_EXTI_Callback sets s_zpl_evt;
+   *  - PWR WKUP1 (PA0 is WKUP1, level HIGH) -> STOP2 wake even if the
+   *    edge slips by; the main loop polls WUF1 and treats it as a ZPL. */
+  LL_PWR_SetWakeUpPinPolarityHigh(LL_PWR_WAKEUP_PIN1);
+  LL_PWR_EnableWakeUpPin(LL_PWR_WAKEUP_PIN1);
+  LL_PWR_ClearFlag_WU1();
   HAL_NVIC_SetPriority(EXTI0_IRQn, 3, 0);
   HAL_NVIC_EnableIRQ(EXTI0_IRQn);
-  printf("[VM3011] DOUT(PA0) init %s\r\n",
+  printf("[VM3011] DOUT(PA0) init %s, STOP2 wake armed\r\n",
          (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0) != GPIO_PIN_RESET) ? "HIGH" : "LOW");
   /* USER CODE END 2 */
 
@@ -182,6 +199,19 @@ int main(void)
     MX_APPE_Process();
 
     /* USER CODE BEGIN 3 */
+    /* ZPL event detection: EXTI edge flag and/or the STOP2 wake flag
+     * (WUF1). Either way, open/extend an audio listening session. */
+    if (LL_PWR_IsActiveFlag_WU1() != 0U)
+    {
+      LL_PWR_ClearFlag_WU1();
+      s_zpl_evt = 1U;
+    }
+    if (s_zpl_evt != 0U)
+    {
+      s_zpl_evt = 0U;
+      AudioApp_ZplNotify();
+    }
+
     AudioApp_Process();
   }
   /* USER CODE END 3 */

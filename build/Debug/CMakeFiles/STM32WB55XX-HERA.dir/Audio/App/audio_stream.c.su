@@ -1,8 +1,9 @@
-D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Audio/App/audio_stream.c:122:13:AudioStream_process_half	16	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Audio/App/audio_stream.c:140:13:AudioStream_process_half	16	static
 D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Audio/App/audio_stream.c:66:25:AudioStream_get_ring	0	static
 D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Audio/App/audio_stream.c:68:10:AudioStream_get_sai_error	0	static
 D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Audio/App/audio_stream.c:70:6:AudioStream_init	24	static
 D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Audio/App/audio_stream.c:108:6:AudioStream_start	8	static
-D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Audio/App/audio_stream.c:158:6:HAL_SAI_RxHalfCpltCallback	0	static
-D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Audio/App/audio_stream.c:164:6:HAL_SAI_RxCpltCallback	0	static
-D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Audio/App/audio_stream.c:174:6:HAL_SAI_ErrorCallback	0	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Audio/App/audio_stream.c:131:6:AudioStream_stop	0	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Audio/App/audio_stream.c:176:6:HAL_SAI_RxHalfCpltCallback	0	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Audio/App/audio_stream.c:182:6:HAL_SAI_RxCpltCallback	0	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Audio/App/audio_stream.c:192:6:HAL_SAI_ErrorCallback	0	static

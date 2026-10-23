@@ -117,7 +117,12 @@ void MX_APPE_Init(void)
   HW_TS_Init(hw_ts_InitMode_Full, &hrtc); /**< Initialize the TimerServer */
 
 /* USER CODE BEGIN APPE_Init_1 */
-
+  /* Standby is never acceptable here (SRAM + the ZPL wake line are lost).
+   * UTIL_LPM_Init() inside SystemPower_Config() just cleared every veto,
+   * and APP_BLE_Init() only sets its own OFF veto when the CPU2 ready
+   * event arrives - without this, the sequencer idle while waiting for
+   * CPU2 could attempt OFF mode. */
+  UTIL_LPM_SetOffMode(1U << CFG_LPM_APP, UTIL_LPM_DISABLE);
 /* USER CODE END APPE_Init_1 */
   appe_Tl_Init();	/* Initialize all transport layers */
 

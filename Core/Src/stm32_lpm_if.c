@@ -23,7 +23,14 @@
 #include "stm32_lpm.h"
 #include "app_conf.h"
 /* USER CODE BEGIN include */
+/* Application clock tree restore after a low-power wake (see
+ * RestoreClocks / ExitLowPower). */
+extern void SystemClock_Config(void);
+extern void PeriphCommonClock_Config(void);
+#include "usart.h"
 
+static void Console_DrainTx(void); /* drain USART1 TX before clock switch */
+static void RestoreClocks(void);    /* back to HSE -> PLL after a wake      */
 /* USER CODE END include */
 
 /* Exported variables --------------------------------------------------------*/
@@ -72,7 +79,7 @@ static void ExitLowPower(void);
 void PWR_EnterOffMode(void)
 {
 /* USER CODE BEGIN PWR_EnterOffMode_1 */
-
+  Console_DrainTx();
 /* USER CODE END PWR_EnterOffMode_1 */
   /**
    * The systick should be disabled for the same reason than when the device enters stop mode because
@@ -121,7 +128,11 @@ void PWR_EnterOffMode(void)
 void PWR_ExitOffMode(void)
 {
 /* USER CODE BEGIN PWR_ExitOffMode_1 */
-
+  /* The OFF entry path also switches the system clock to HSI
+   * (EnterLowPower), and this exit path never restores it: without this,
+   * a blocked standby attempt (CPU2 still running) would leave the console
+   * and timing at 16 MHz until the next full STOP2 cycle. */
+  RestoreClocks();
 /* USER CODE END PWR_ExitOffMode_1 */
   HAL_ResumeTick();
 /* USER CODE BEGIN PWR_ExitOffMode_2 */
@@ -139,7 +150,10 @@ void PWR_ExitOffMode(void)
 void PWR_EnterStopMode(void)
 {
 /* USER CODE BEGIN PWR_EnterStopMode_1 */
-
+  /* Finish any in-flight console byte BEFORE EnterLowPower() switches the
+   * system clock to HSI: the tail of a printf would otherwise be shifted
+   * out at the wrong baud and garble the console. */
+  Console_DrainTx();
 /* USER CODE END PWR_EnterStopMode_1 */
   /**
    * When HAL_DBGMCU_EnableDBGStopMode() is called to keep the debugger active in Stop Mode,
@@ -309,7 +323,14 @@ static void ExitLowPower(void)
   {
 /* Restore the clock configuration of the application in this user section */
 /* USER CODE BEGIN ExitLowPower_1 */
-
+  /* STOP2 wake: the system is back on HSI (EnterLowPower switched to it
+   * before the stop) and the main PLL is down - restore the application
+   * tree (HSE -> PLL, 64 MHz) or the CPU timing and the USART1 baud are
+   * off. PeriphCommonClock_Config is also needed: Switch_On_HSI moved the
+   * SMPS to HSI and the SMPS/RFWKP sources must go back to HSE.
+   * Safe: the RCC semaphore is held while this section runs. */
+  SystemClock_Config();
+  PeriphCommonClock_Config();
 /* USER CODE END ExitLowPower_1 */
   }
   else
@@ -342,6 +363,40 @@ static void Switch_On_HSI(void)
 }
 
 /* USER CODE BEGIN Private_Functions */
+
+/* Wait for any in-flight USART1 frame to complete. The low-power entry
+ * paths switch the system clock to HSI (EnterLowPower), and a byte still
+ * sitting in the TX shift register would be clocked out at the wrong baud
+ * and garble the console. */
+static void Console_DrainTx(void)
+{
+  while (__HAL_UART_GET_FLAG(&huart1, UART_FLAG_TXE) == RESET)
+  {
+  }
+  if (__HAL_UART_GET_FLAG(&huart1, UART_FLAG_TC) == RESET)
+  {
+    while (__HAL_UART_GET_FLAG(&huart1, UART_FLAG_TC) == RESET)
+    {
+    }
+  }
+}
+
+/* Restore the application clock tree (HSE -> PLL 64 MHz, SMPS + RFWKP) when
+ * a low-power exit left the system running on HSI. Locks the RCC semaphore
+ * for CPU2 arbitration, so it must NOT be called while the semaphore is
+ * already held (ExitLowPower calls SystemClock_Config directly instead). */
+static void RestoreClocks(void)
+{
+  if (LL_RCC_GetSysClkSource() == LL_RCC_SYS_CLKSOURCE_STATUS_HSI)
+  {
+    while (LL_HSEM_1StepLock(HSEM, CFG_HW_RCC_SEMID))
+    {
+    }
+    SystemClock_Config();
+    PeriphCommonClock_Config();
+    LL_HSEM_ReleaseLock(HSEM, CFG_HW_RCC_SEMID, 0);
+  }
+}
 
 /* USER CODE END Private_Functions */
 

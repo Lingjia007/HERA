@@ -49,6 +49,10 @@ extern "C"
   /* Start SAI1 Block A PDM DMA ping-pong capture. */
   void AudioStream_start(void);
 
+  /* Stop the SAI1 PDM DMA (PDM clock stops -> the VM3011 falls back to
+   * ZPL mode and can raise DOUT again). Safe to call while not started. */
+  void AudioStream_stop(void);
+
   /* Access the ring buffer handle (consumer side). */
   AudioCaptureRingBuff_t *AudioStream_get_ring(void);
 

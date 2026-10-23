@@ -40,21 +40,35 @@ void audio_vad_feed_block(const int16_t *samples, uint32_t n)
   s_energy = e;
   uint32_t fl = s_floor;
 
-  /* True block loudness (above the hold threshold): the caller counts
-   * these to measure actual speech inside a capture, so hangover-extended
-   * quiet blocks are NOT counted as speech. */
-  s_loud = (e > fl * VAD_CLOSE_MARGIN) ? 1 : 0;
-
   if (!s_active)
   {
-    /* Track floor only while inactive: speech must not inflate it. */
-    fl = (uint32_t)((int32_t)fl +
-                    (((int32_t)e - (int32_t)fl) >> VAD_FLOOR_SHIFT));
+    /* Track floor only while inactive: speech must not inflate it.
+     * Asymmetric: rise slowly (a brief swell must not lift the bar for
+     * seconds), fall fast (sensitivity returns soon after noise ends). */
+    int32_t diff = (int32_t)e - (int32_t)fl;
+    uint32_t shift = (diff > 0) ? VAD_FLOOR_RISE_SHIFT : VAD_FLOOR_FALL_SHIFT;
+    fl = (uint32_t)((int32_t)fl + (diff >> (int32_t)shift));
     if (fl < VAD_FLOOR_MIN)
       fl = VAD_FLOOR_MIN;
     s_floor = fl;
+  }
 
-    if (e > fl * VAD_OPEN_MARGIN)
+  /* The bar: adaptive but NEVER above the absolute ceiling - however
+   * noisy the room (or however high the anti-stuck re-seed pushed the
+   * floor), a distant voice can still reach it. Hold = bar / 2. */
+  uint32_t open_thr = fl * VAD_OPEN_MARGIN;
+  if (open_thr > VAD_THRESHOLD_ABS_MAX)
+    open_thr = VAD_THRESHOLD_ABS_MAX;
+  uint32_t hold_thr = open_thr >> 1;
+
+  /* True block loudness (above the hold threshold): the caller counts
+   * these to measure actual speech inside a capture, so hangover-extended
+   * quiet blocks are NOT counted as speech. */
+  s_loud = (e > hold_thr) ? 1 : 0;
+
+  if (!s_active)
+  {
+    if (e > open_thr)
     {
       s_active = 1;
       s_hangover = VAD_HANGOVER_BLOCKS;
@@ -63,7 +77,7 @@ void audio_vad_feed_block(const int16_t *samples, uint32_t n)
   }
   else
   {
-    if (e > fl * VAD_CLOSE_MARGIN)
+    if (e > hold_thr)
       s_hangover = VAD_HANGOVER_BLOCKS;
     else if (s_hangover > 0)
       s_hangover--;
@@ -89,3 +103,8 @@ uint8_t audio_vad_active(void) { return s_active; }
 uint8_t audio_vad_loud(void) { return s_loud; }
 uint32_t audio_vad_energy(void) { return s_energy; }
 uint32_t audio_vad_floor(void) { return s_floor; }
+uint32_t audio_vad_open_threshold(void)
+{
+  uint32_t t = s_floor * VAD_OPEN_MARGIN;
+  return (t > VAD_THRESHOLD_ABS_MAX) ? (uint32_t)VAD_THRESHOLD_ABS_MAX : t;
+}

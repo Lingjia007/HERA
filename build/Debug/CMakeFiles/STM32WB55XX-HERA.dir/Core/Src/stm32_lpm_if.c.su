@@ -1,7 +1,7 @@
-D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Core/Src/stm32_lpm_if.c:210:6:PWR_EnterSleepMode	8	static
-D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Core/Src/stm32_lpm_if.c:121:6:PWR_ExitOffMode	0	static
-D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Core/Src/stm32_lpm_if.c:187:6:PWR_ExitStopMode	0	static
-D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Core/Src/stm32_lpm_if.c:243:6:PWR_ExitSleepMode	0	static
-D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Core/Src/stm32_lpm_if.c:265:13:EnterLowPower	0	static
-D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Core/Src/stm32_lpm_if.c:72:6:PWR_EnterOffMode	8	static
-D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Core/Src/stm32_lpm_if.c:139:6:PWR_EnterStopMode	8	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Core/Src/stm32_lpm_if.c:224:6:PWR_EnterSleepMode	8	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Core/Src/stm32_lpm_if.c:257:6:PWR_ExitSleepMode	0	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Core/Src/stm32_lpm_if.c:128:6:PWR_ExitOffMode	8	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Core/Src/stm32_lpm_if.c:201:6:PWR_ExitStopMode	8	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Core/Src/stm32_lpm_if.c:279:13:EnterLowPower	0	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Core/Src/stm32_lpm_if.c:79:6:PWR_EnterOffMode	8	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Core/Src/stm32_lpm_if.c:150:6:PWR_EnterStopMode	8	static

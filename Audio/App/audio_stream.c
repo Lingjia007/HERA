@@ -107,6 +107,17 @@ void AudioStream_init(void)
 
 void AudioStream_start(void)
 {
+  /* STOP2 (ZPL sleep) stops PLLSAI1, the SAI1 kernel clock. The CCIPR
+   * selection is retained, so only the PLL itself must be re-enabled and
+   * waited for before the SAI is fed audio bits again. Idempotent. */
+  if (__HAL_RCC_GET_FLAG(RCC_FLAG_PLLSAI1RDY) == 0U)
+  {
+    __HAL_RCC_PLLSAI1_ENABLE();
+    while (__HAL_RCC_GET_FLAG(RCC_FLAG_PLLSAI1RDY) == 0U)
+    {
+    }
+  }
+
   /* Circular DMA gives half + full transfer callbacks. Size counts memory
    * data units (bytes: SAI data size is 8-bit in PDM mode). */
   HAL_StatusTypeDef st = HAL_SAI_Receive_DMA(&hsai_BlockA1, s_pdm_buf,
@@ -115,6 +126,13 @@ void AudioStream_start(void)
   {
     printf("SAI DMA FAIL=%" PRId32 "\r\n", (int32_t)st);
   }
+}
+
+void AudioStream_stop(void)
+{
+  /* HAL_SAI_DMAStop aborts the circular DMA and disables the SAI: the PDM
+   * clock stops and the VM3011 falls back to ZPL (wake-on-sound) mode. */
+  (void)HAL_SAI_DMAStop(&hsai_BlockA1);
 }
 
 /* Convert one DMA half-block to PCM and push it to the VAD / ring.
