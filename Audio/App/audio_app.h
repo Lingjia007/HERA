@@ -43,6 +43,18 @@ extern "C"
    * session (stop stream, clear DOUT, allow STOP2) when it goes quiet. */
   void AudioApp_Process(void);
 
+  /* KWS/VAD 开关（默认关闭：录音调试期）。关闭时音频流照常排空缓冲，
+   * 但不做 VAD 捕获/推理，ZPL 事件也不再打开会话。 */
+  void AudioApp_SetKwsEnabled(uint8_t en);
+  uint8_t AudioApp_GetKwsEnabled(void);
+
+  /* 调试用：保持唤醒 ms 毫秒（否决 STOP2，串口 CLI 保持可用）。
+   * 串口每收到一个字节都会调用以续期。 */
+  void AudioApp_HoldAwake(uint32_t ms);
+
+  /* 请求立即睡眠（进入 STOP2；录音中会拒绝）。 */
+  void AudioApp_RequestSleep(void);
+
 #ifdef __cplusplus
 }
 #endif

@@ -49,6 +49,7 @@
 #include "main.h"
 #include "app_conf.h"
 #include "stm32_lpm.h"
+#include "wav_recorder.h"
 #include <stdint.h>
 #include <string.h>
 #include <stdio.h>
@@ -173,6 +174,8 @@ static uint8_t s_skip_blocks;      /* mic warm-up blocks to drop after stream st
 
 static VM3011_Dev_t *s_vm;      /* mic handle for the DOUT re-arm (main owns) */
 static uint32_t s_awake_until;  /* HAL_GetTick deadline; 0 = session closed   */
+static uint8_t s_kws_enabled;       /* 0 = KWS/VAD off (record debug mode)    */
+static uint32_t s_hold_awake_until; /* debug hold-awake deadline (CLI alive)   */
 
 static void ai_log_err(const ai_error err, const char *fct)
 {
@@ -457,6 +460,38 @@ static void zpl_sleep(void)
 }
 #endif
 
+void AudioApp_SetKwsEnabled(uint8_t en)
+{
+  s_kws_enabled = en;
+  printf("[KWS] %s\r\n", (en != 0U) ? "ON" : "OFF");
+}
+
+uint8_t AudioApp_GetKwsEnabled(void)
+{
+  return s_kws_enabled;
+}
+
+void AudioApp_HoldAwake(uint32_t ms)
+{
+  uint32_t until = HAL_GetTick() + ms;
+  if ((int32_t)(until - s_hold_awake_until) > 0)
+    s_hold_awake_until = until;
+}
+
+void AudioApp_RequestSleep(void)
+{
+  if (WavRecorder_active())
+  {
+    printf("[LPM] recording - sleep refused\r\n");
+    return;
+  }
+  s_hold_awake_until = 0U;
+#if AUDIO_ZPL_WAKE
+  zpl_sleep();
+#endif
+  printf("[LPM] STOP2 armed (KEY/PC12 or sound wakes, UART sleeps)\r\n");
+}
+
 void AudioApp_Process(void)
 {
   /* OFF mode (standby) is permanently vetoed here: standby would drop SRAM
@@ -467,6 +502,14 @@ void AudioApp_Process(void)
 #if AUDIO_ZPL_WAKE
   if (s_awake_until == 0U || !s_net)
   {
+    /* Debug hold-awake window (CLI activity): veto STOP2 so the shell
+     * stays usable; the sequencer idles in SLEEP instead. */
+    if (HAL_GetTick() < s_hold_awake_until)
+    {
+      UTIL_LPM_SetStopMode(1U << CFG_LPM_APP, UTIL_LPM_DISABLE);
+      return;
+    }
+
     /* Session closed: allow STOP2 - the VM3011 DOUT wake line (PA0) brings
      * us back on the next acoustic event above the margin. */
     UTIL_LPM_SetStopMode(1U << CFG_LPM_APP, UTIL_LPM_ENABLE);
@@ -510,9 +553,9 @@ void AudioApp_Process(void)
 
       /* No fresh audio: in the ZPL architecture, close the session once the
        * window expired and the VAD is fully closed (hangover tail included
-       * in the window via the refresh below). */
+       * in the window via the refresh below). Recording keeps the session. */
 #if AUDIO_ZPL_WAKE
-      if (s_phase == PH_IDLE && !audio_vad_active() &&
+      if (s_phase == PH_IDLE && !audio_vad_active() && !WavRecorder_active() &&
           (int32_t)(now - s_awake_until) >= 0)
         zpl_sleep();
 #endif
@@ -529,6 +572,19 @@ void AudioApp_Process(void)
       s_skip_blocks--;
       continue;
     }
+
+    /* WAV recorder tap: while recording, every block goes to the file and the
+     * KWS/VAD path is suspended (ring is owned by the recorder). */
+    if (WavRecorder_active())
+    {
+      WavRecorder_feed(blk, AS_DMA_HALF_FRAMES);
+      continue;
+    }
+
+    /* KWS off (record debug mode): drain the ring only - no VAD capture
+     * and no inference. The session still closes on the quiet window. */
+    if (!s_kws_enabled)
+      continue;
 
     uint8_t act = audio_vad_active();
 #if AUDIO_ZPL_WAKE

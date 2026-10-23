@@ -1,0 +1,6 @@
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/W25Q80/lfs_w25q80_adapter.c:61:12:lfs_w25q80_sync	8	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/W25Q80/lfs_w25q80_adapter.c:44:12:lfs_w25q80_erase	8	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/W25Q80/lfs_w25q80_adapter.c:24:12:lfs_w25q80_prog	16	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/W25Q80/lfs_w25q80_adapter.c:4:12:lfs_w25q80_read	16	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/W25Q80/lfs_w25q80_adapter.c:77:5:lfs_w25q80_mount_or_format	16	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/W25Q80/lfs_w25q80_adapter.c:114:5:lfs_w25q80_unmount	0	static

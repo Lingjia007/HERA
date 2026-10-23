@@ -15,7 +15,8 @@
 			"target_link_directories",
 			"target_link_libraries",
 			"target_include_directories",
-			"target_sources"
+			"target_sources",
+			"set_source_files_properties"
 		],
 		"files" : 
 		[
@@ -36,7 +37,7 @@
 			{
 				"command" : 1,
 				"file" : 0,
-				"line" : 103,
+				"line" : 123,
 				"parent" : 0
 			},
 			{
@@ -57,13 +58,13 @@
 			{
 				"command" : 3,
 				"file" : 0,
-				"line" : 94,
+				"line" : 114,
 				"parent" : 0
 			},
 			{
 				"command" : 4,
 				"file" : 0,
-				"line" : 72,
+				"line" : 78,
 				"parent" : 0
 			},
 			{
@@ -76,6 +77,18 @@
 				"command" : 5,
 				"file" : 0,
 				"line" : 46,
+				"parent" : 0
+			},
+			{
+				"command" : 6,
+				"file" : 0,
+				"line" : 106,
+				"parent" : 0
+			},
+			{
+				"command" : 6,
+				"file" : 0,
+				"line" : 102,
 				"parent" : 0
 			}
 		]
@@ -133,6 +146,10 @@
 				{
 					"backtrace" : 7,
 					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/W25Q80"
+				},
+				{
+					"backtrace" : 7,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/W25Q80/lfs"
 				},
 				{
 					"backtrace" : 7,
@@ -272,18 +289,17 @@
 				32,
 				33,
 				34,
-				35,
-				36,
-				37,
-				38,
-				39,
-				40,
-				41,
 				42,
 				43,
 				44,
 				45,
-				46
+				46,
+				47,
+				48,
+				49,
+				50,
+				51,
+				52
 			]
 		},
 		{
@@ -337,6 +353,10 @@
 				{
 					"backtrace" : 7,
 					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/W25Q80"
+				},
+				{
+					"backtrace" : 7,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/W25Q80/lfs"
 				},
 				{
 					"backtrace" : 7,
@@ -436,14 +456,369 @@
 			[
 				25
 			]
+		},
+		{
+			"compileCommandFragments" : 
+			[
+				{
+					"fragment" : " -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard  -Wall -fdata-sections -ffunction-sections -fstack-usage -O3 -g3 -std=gnu11"
+				},
+				{
+					"backtrace" : 10,
+					"fragment" : "-Os"
+				}
+			],
+			"defines" : 
+			[
+				{
+					"backtrace" : 5,
+					"define" : "DEBUG"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "STM32WB55xx"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "USE_HAL_DRIVER"
+				}
+			],
+			"includes" : 
+			[
+				{
+					"backtrace" : 7,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/BLEServices"
+				},
+				{
+					"backtrace" : 7,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Audio/App"
+				},
+				{
+					"backtrace" : 7,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Audio/Frontend"
+				},
+				{
+					"backtrace" : 7,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Audio/kws"
+				},
+				{
+					"backtrace" : 7,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/VM3011"
+				},
+				{
+					"backtrace" : 7,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/VOFA+"
+				},
+				{
+					"backtrace" : 7,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/W25Q80"
+				},
+				{
+					"backtrace" : 7,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/W25Q80/lfs"
+				},
+				{
+					"backtrace" : 7,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/PDM2PCM"
+				},
+				{
+					"backtrace" : 7,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Drivers/CMSIS/DSP/Include"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../Core/Inc"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../STM32_WPAN/App"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../Middlewares/ST/AI/Inc"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../X-CUBE-AI/App"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../Drivers/STM32WBxx_HAL_Driver/Inc"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../Drivers/STM32WBxx_HAL_Driver/Inc/Legacy"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../Utilities/lpm/tiny_lpm"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../Middlewares/ST/STM32_WPAN"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../Middlewares/ST/STM32_WPAN/interface/patterns/ble_thread"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../Middlewares/ST/STM32_WPAN/interface/patterns/ble_thread/tl"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../Middlewares/ST/STM32_WPAN/interface/patterns/ble_thread/shci"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../Middlewares/ST/STM32_WPAN/utilities"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../Middlewares/ST/STM32_WPAN/ble/core"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../Middlewares/ST/STM32_WPAN/ble/core/auto"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../Middlewares/ST/STM32_WPAN/ble/core/template"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../Middlewares/ST/STM32_WPAN/ble/svc/Inc"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../Middlewares/ST/STM32_WPAN/ble/svc/Src"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../Drivers/CMSIS/Device/ST/STM32WBxx/Include"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../Utilities/sequencer"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../Middlewares/ST/STM32_WPAN/ble"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../Drivers/CMSIS/Include"
+				}
+			],
+			"language" : "C",
+			"languageStandard" : 
+			{
+				"backtraces" : 
+				[
+					1
+				],
+				"standard" : "11"
+			},
+			"sourceIndexes" : 
+			[
+				35,
+				36,
+				37,
+				38,
+				39
+			]
+		},
+		{
+			"compileCommandFragments" : 
+			[
+				{
+					"fragment" : " -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard  -Wall -fdata-sections -ffunction-sections -fstack-usage -O3 -g3 -std=gnu11"
+				},
+				{
+					"backtrace" : 10,
+					"fragment" : "-Os"
+				}
+			],
+			"defines" : 
+			[
+				{
+					"backtrace" : 5,
+					"define" : "DEBUG"
+				},
+				{
+					"backtrace" : 11,
+					"define" : "LFS_NO_ASSERT"
+				},
+				{
+					"backtrace" : 11,
+					"define" : "LFS_NO_DEBUG"
+				},
+				{
+					"backtrace" : 11,
+					"define" : "LFS_NO_ERROR"
+				},
+				{
+					"backtrace" : 11,
+					"define" : "LFS_NO_MALLOC"
+				},
+				{
+					"backtrace" : 11,
+					"define" : "LFS_NO_WARN"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "STM32WB55xx"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "USE_HAL_DRIVER"
+				}
+			],
+			"includes" : 
+			[
+				{
+					"backtrace" : 7,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/BLEServices"
+				},
+				{
+					"backtrace" : 7,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Audio/App"
+				},
+				{
+					"backtrace" : 7,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Audio/Frontend"
+				},
+				{
+					"backtrace" : 7,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Audio/kws"
+				},
+				{
+					"backtrace" : 7,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/VM3011"
+				},
+				{
+					"backtrace" : 7,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/VOFA+"
+				},
+				{
+					"backtrace" : 7,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/W25Q80"
+				},
+				{
+					"backtrace" : 7,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/W25Q80/lfs"
+				},
+				{
+					"backtrace" : 7,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/PDM2PCM"
+				},
+				{
+					"backtrace" : 7,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Drivers/CMSIS/DSP/Include"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../Core/Inc"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../STM32_WPAN/App"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../Middlewares/ST/AI/Inc"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../X-CUBE-AI/App"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../Drivers/STM32WBxx_HAL_Driver/Inc"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../Drivers/STM32WBxx_HAL_Driver/Inc/Legacy"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../Utilities/lpm/tiny_lpm"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../Middlewares/ST/STM32_WPAN"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../Middlewares/ST/STM32_WPAN/interface/patterns/ble_thread"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../Middlewares/ST/STM32_WPAN/interface/patterns/ble_thread/tl"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../Middlewares/ST/STM32_WPAN/interface/patterns/ble_thread/shci"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../Middlewares/ST/STM32_WPAN/utilities"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../Middlewares/ST/STM32_WPAN/ble/core"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../Middlewares/ST/STM32_WPAN/ble/core/auto"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../Middlewares/ST/STM32_WPAN/ble/core/template"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../Middlewares/ST/STM32_WPAN/ble/svc/Inc"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../Middlewares/ST/STM32_WPAN/ble/svc/Src"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../Drivers/CMSIS/Device/ST/STM32WBxx/Include"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../Utilities/sequencer"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../Middlewares/ST/STM32_WPAN/ble"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../Drivers/CMSIS/Include"
+				}
+			],
+			"language" : "C",
+			"languageStandard" : 
+			{
+				"backtraces" : 
+				[
+					1
+				],
+				"standard" : "11"
+			},
+			"sourceIndexes" : 
+			[
+				40,
+				41
+			]
 		}
 	],
 	"dependencies" : 
 	[
-		{
-			"backtrace" : 5,
-			"id" : "STM32_Drivers::@768a070a0fe75716b479"
-		},
 		{
 			"backtrace" : 5,
 			"id" : "Utilities::@768a070a0fe75716b479"
@@ -451,6 +826,10 @@
 		{
 			"backtrace" : 5,
 			"id" : "STM32_WPAN::@768a070a0fe75716b479"
+		},
+		{
+			"backtrace" : 5,
+			"id" : "STM32_Drivers::@768a070a0fe75716b479"
 		}
 	],
 	"id" : "STM32WB55XX-HERA::@6890427a1f51a3e7e1df",
@@ -562,7 +941,13 @@
 				43,
 				44,
 				45,
-				46
+				46,
+				47,
+				48,
+				49,
+				50,
+				51,
+				52
 			]
 		},
 		{
@@ -576,12 +961,6 @@
 			"name" : "Object Libraries",
 			"sourceIndexes" : 
 			[
-				47,
-				48,
-				49,
-				50,
-				51,
-				52,
 				53,
 				54,
 				55,
@@ -622,7 +1001,13 @@
 				90,
 				91,
 				92,
-				93
+				93,
+				94,
+				95,
+				96,
+				97,
+				98,
+				99
 			]
 		}
 	],
@@ -840,8 +1225,44 @@
 		},
 		{
 			"backtrace" : 9,
-			"compileGroupIndex" : 0,
+			"compileGroupIndex" : 2,
 			"path" : "W25Q80/platform_w25q80_stm32_impl.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 9,
+			"compileGroupIndex" : 2,
+			"path" : "W25Q80/lfs_w25q80_adapter.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 9,
+			"compileGroupIndex" : 2,
+			"path" : "W25Q80/shell_cli.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 9,
+			"compileGroupIndex" : 2,
+			"path" : "W25Q80/wav_recorder.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 9,
+			"compileGroupIndex" : 2,
+			"path" : "W25Q80/ymodem_tx.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 9,
+			"compileGroupIndex" : 3,
+			"path" : "W25Q80/lfs/lfs.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 9,
+			"compileGroupIndex" : 3,
+			"path" : "W25Q80/lfs/lfs_util.c",
 			"sourceGroupIndex" : 0
 		},
 		{

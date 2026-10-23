@@ -31,9 +31,13 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
+#include <string.h>
 #include "audio_app.h"
 #include "vm3011.h"
 #include "platform_w25q80_stm32_impl.h"
+#include "lfs_w25q80_adapter.h"
+#include "shell_cli.h"
+#include "wav_recorder.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -56,6 +60,7 @@
 /* USER CODE BEGIN PV */
 static VM3011_Dev_t s_vm;
 static volatile uint8_t s_zpl_evt; /* 1 = ZPL (PA0) edge pending; also the STOP2 wake flag */
+static volatile uint8_t s_key_evt; /* 1 = KEY (PC12) falling edge pending */
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -120,6 +125,7 @@ int main(void)
     static w25q80_stm32_t s_w25q80;
     uint8_t buf[16];
     uint32_t i;
+    lfs_t *lfs_p = NULL;
 
     printf("[W25Q80] selftest start (CS=PA4, SPI1)\r\n");
 
@@ -159,7 +165,75 @@ int main(void)
       {
         printf("[W25Q80] read failed\r\n");
       }
+
+      /* ---- LittleFS 文件系统自检：挂载(首次自动格式化) -> 写 -> 回读 -> 列目录 ---- */
+      static lfs_w25q80_t s_lfs_fs;
+      static uint8_t file_buf[256];
+      uint8_t rb[64];
+      if (lfs_w25q80_mount_or_format(&s_lfs_fs, &s_w25q80.base) != LFS_ERR_OK)
+      {
+        printf("[LFS] mount/format failed\r\n");
+      }
+      else
+      {
+        printf("[LFS] mounted, %lu blocks x 4096 B\r\n",
+               (unsigned long)s_lfs_fs.cfg.block_count);
+
+        lfs_file_t file;
+        struct lfs_file_config fcfg = {0};
+        fcfg.buffer = file_buf;
+        const char *msg = "HERA W25Q80 LittleFS selftest";
+        int ferr = lfs_file_opencfg(&s_lfs_fs.lfs, &file, "selftest.txt",
+                                    LFS_O_WRONLY | LFS_O_CREAT | LFS_O_TRUNC, &fcfg);
+        if (ferr != LFS_ERR_OK)
+        {
+          printf("[LFS] open(w) err=%d\r\n", ferr);
+        }
+        else
+        {
+          lfs_size_t wn = lfs_file_write(&s_lfs_fs.lfs, &file, msg,
+                                         (lfs_size_t)strlen(msg));
+          lfs_file_close(&s_lfs_fs.lfs, &file);
+
+          ferr = lfs_file_opencfg(&s_lfs_fs.lfs, &file, "selftest.txt",
+                                  LFS_O_RDONLY, &fcfg);
+          lfs_size_t rn = 0U;
+          if (ferr == LFS_ERR_OK)
+          {
+            rn = lfs_file_read(&s_lfs_fs.lfs, &file, rb, (lfs_size_t)sizeof(rb));
+            lfs_file_close(&s_lfs_fs.lfs, &file);
+          }
+          if (wn == (lfs_size_t)strlen(msg) && rn == wn &&
+              memcmp(rb, msg, wn) == 0)
+          {
+            printf("[LFS] selftest.txt write+readback OK (%u B)\r\n",
+                   (unsigned)wn);
+          }
+          else
+          {
+            printf("[LFS] verify FAILED (w=%u r=%u)\r\n",
+                   (unsigned)wn, (unsigned)rn);
+          }
+        }
+
+        lfs_dir_t dir;
+        struct lfs_info info;
+        if (lfs_dir_open(&s_lfs_fs.lfs, &dir, "/") == LFS_ERR_OK)
+        {
+          printf("[LFS] root dir:");
+          while (lfs_dir_read(&s_lfs_fs.lfs, &dir, &info) > 0)
+          {
+            printf(" %s(%lu B)", info.name, (unsigned long)info.size);
+          }
+          printf("\r\n");
+          lfs_dir_close(&s_lfs_fs.lfs, &dir);
+        }
+        printf("[LFS] ready, filesystem stays mounted\r\n");
+        lfs_p = &s_lfs_fs.lfs;
+      }
     }
+    WavRecorder_Init(lfs_p);
+    Shell_CLI_Init(lfs_p);
   }
 
   /* VM3011 bring-up via driver (Zephyr port): waits 1 s for ZPL settle,
@@ -242,6 +316,18 @@ int main(void)
   LL_PWR_ClearFlag_WU1();
   HAL_NVIC_SetPriority(EXTI0_IRQn, 3, 0);
   HAL_NVIC_EnableIRQ(EXTI0_IRQn);
+
+  /* KEY (PC12): 按键翻转录音，低电平按下 -> 下降沿触发，可从 STOP2 唤醒 */
+  __HAL_RCC_GPIOC_CLK_ENABLE();
+  {
+    GPIO_InitTypeDef key_io = {0};
+    key_io.Pin = GPIO_PIN_12;
+    key_io.Mode = GPIO_MODE_IT_FALLING;
+    key_io.Pull = GPIO_PULLUP;
+    HAL_GPIO_Init(GPIOC, &key_io);
+  }
+  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 3, 0);
+  HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
   printf("[VM3011] DOUT(PA0) init %s, STOP2 wake armed\r\n",
          (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0) != GPIO_PIN_RESET) ? "HIGH" : "LOW");
   /* USER CODE END 2 */
@@ -267,9 +353,30 @@ int main(void)
     if (s_zpl_evt != 0U)
     {
       s_zpl_evt = 0U;
-      AudioApp_ZplNotify();
+      if (AudioApp_GetKwsEnabled() != 0U)
+      {
+        AudioApp_ZplNotify(); /* KWS 关闭时忽略 ZPL；录音会话由 KEY/命令开启 */
+      }
+    }
+    if (s_key_evt != 0U)
+    {
+      s_key_evt = 0U;
+      if (WavRecorder_active() != 0U)
+      {
+        printf("[KEY] stop\r\n");
+        (void)WavRecorder_stop();
+      }
+      else
+      {
+        printf("[KEY] rec start\r\n");
+        if (WavRecorder_start() == 0)
+        {
+          AudioApp_ZplNotify(); /* 打开音频会话，启动采集流 */
+        }
+      }
     }
 
+    Shell_CLI_Process();
     AudioApp_Process();
   }
   /* USER CODE END 3 */
@@ -365,6 +472,16 @@ void EXTI0_IRQHandler(void)
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_0);
 }
 
+void EXTI15_10_IRQHandler(void)
+{
+  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_12);
+}
+
+void USART1_IRQHandler(void)
+{
+  HAL_UART_IRQHandler(&huart1);
+}
+
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
   if (GPIO_Pin == ZPL_Pin)
@@ -372,6 +489,10 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
     /* Just flag it: also serves as the STOP2 wake flag. Printing is done
      * from the main loop (correct clock/baud there, even after STOP2 wake). */
     s_zpl_evt = 1U;
+  }
+  else if (GPIO_Pin == GPIO_PIN_12)
+  {
+    s_key_evt = 1U;
   }
 }
 /* USER CODE END 4 */
