@@ -17,8 +17,9 @@
 
 /* 1 = ZPL(DOUT) 唤醒 + STOP2 睡眠的省电架构（设计目标形态）。
  * 0 = 连续采集调试模式：SAI 常开、只允许 SLEEP 空闲、永不进 STOP2；
- *     DOUT 事件只打日志。远距离/门限调试期间先置 0，日志连续可见。 */
-#define AUDIO_ZPL_WAKE 0
+ *     DOUT 事件只打日志。远距离/门限调优已完成，VAD 参数在两种
+ *     模式下相同，随时可切回 0 对照测试。 */
+#define AUDIO_ZPL_WAKE 1
 
 #ifdef __cplusplus
 extern "C"

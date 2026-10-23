@@ -1,4 +1,4 @@
 D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Audio/App/audio_app.c:259:13:capture_finish	152	static
 D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Audio/App/audio_app.c:377:6:AudioApp_Init	24	static
-D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Audio/App/audio_app.c:409:6:AudioApp_ZplNotify	0	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Audio/App/audio_app.c:409:6:AudioApp_ZplNotify	24	static
 D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Audio/App/audio_app.c:460:6:AudioApp_Process	48	static

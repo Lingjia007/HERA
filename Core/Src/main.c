@@ -119,7 +119,15 @@ int main(void)
   {
     VM3011_Config_t cfg;
     VM3011_ConfigDefault(&cfg);
-    cfg.wos_dout_thresh = 1U; /* 2x margin (6.0 dBSPL): most sensitive */
+    cfg.wos_dout_thresh = 3U; /* 4x margin (12.0 dB SPL over ambient).
+                               * 1 (6 dB, most sensitive) false-woke constantly
+                               * in a noisy room (VAD floor ~430): after every
+                               * ClearDout the ambient swell re-asserted DOUT
+                               * instantly -> wake/sleep loop. 4x requires the
+                               * event to be >= 12 dB over ambient, which an
+                               * ordinary noise swell does not reach while
+                               * speech does. Reg05 table: 1..7 = 6.0/9.5/
+                               * 12.0/14.0/15.5/16.9/18.0 dB - tune per room. */
     cfg.wos_rms = 1U;         /* 2 Hz WoS comparator: DOUT asserts ~2x
                               * faster than the 1 Hz default - observed:
                               * with 1 Hz the wake arrived so late that the
