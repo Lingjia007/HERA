@@ -2,7 +2,7 @@
   ******************************************************************************
   * @file    echodscnn_data_params.h
   * @author  AST Embedded Analytics Research Platform
-  * @date    2026-10-22T17:48:49+0800
+  * @date    2026-10-23T16:42:30+0800
   * @brief   AI Tool Automatic Code Generator for Embedded NN computing
   ******************************************************************************
   * Copyright (c) 2026 STMicroelectronics.
@@ -28,18 +28,18 @@
 
 
 #define AI_ECHODSCNN_DATA_ACTIVATIONS_SIZES \
-  { 23840, }
-#define AI_ECHODSCNN_DATA_ACTIVATIONS_SIZE     (23840)
+  { 38280, }
+#define AI_ECHODSCNN_DATA_ACTIVATIONS_SIZE     (38280)
 #define AI_ECHODSCNN_DATA_ACTIVATIONS_COUNT    (1)
-#define AI_ECHODSCNN_DATA_ACTIVATION_1_SIZE    (23840)
+#define AI_ECHODSCNN_DATA_ACTIVATION_1_SIZE    (38280)
 
 
 
 #define AI_ECHODSCNN_DATA_WEIGHTS_SIZES \
-  { 175536, }
-#define AI_ECHODSCNN_DATA_WEIGHTS_SIZE         (175536)
+  { 280744, }
+#define AI_ECHODSCNN_DATA_WEIGHTS_SIZE         (280744)
 #define AI_ECHODSCNN_DATA_WEIGHTS_COUNT        (1)
-#define AI_ECHODSCNN_DATA_WEIGHT_1_SIZE        (175536)
+#define AI_ECHODSCNN_DATA_WEIGHT_1_SIZE        (280744)
 
 
 

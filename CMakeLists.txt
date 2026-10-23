@@ -54,6 +54,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     Audio/Frontend/audio_frontend.c
     VM3011/vm3011.c
     VOFA+/VOFA.c
+    W25Q80/platform_w25q80_stm32_impl.c
     Drivers/CMSIS/DSP/Source/TransformFunctions/arm_rfft_init_q15.c
     Drivers/CMSIS/DSP/Source/TransformFunctions/arm_rfft_q15.c
     Drivers/CMSIS/DSP/Source/TransformFunctions/arm_cfft_init_q15.c
@@ -76,6 +77,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     Audio/kws
     VM3011
     VOFA+
+    W25Q80
     PDM2PCM
     Drivers/CMSIS/DSP/Include
 )

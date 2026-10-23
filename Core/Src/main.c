@@ -24,6 +24,7 @@
 #include "rf.h"
 #include "rtc.h"
 #include "sai.h"
+#include "spi.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -32,6 +33,7 @@
 #include <stdio.h>
 #include "audio_app.h"
 #include "vm3011.h"
+#include "platform_w25q80_stm32_impl.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -69,9 +71,9 @@ void PeriphCommonClock_Config(void);
 /* USER CODE END 0 */
 
 /**
- * @brief  The application entry point.
- * @retval int
- */
+  * @brief  The application entry point.
+  * @retval int
+  */
 int main(void)
 {
 
@@ -110,8 +112,56 @@ int main(void)
   MX_SAI1_Init();
   MX_USART1_UART_Init();
   MX_I2C1_Init();
+  MX_SPI1_Init();
   MX_RF_Init();
   /* USER CODE BEGIN 2 */
+  /* W25Q80 SPI Flash 自检：初始化 -> 读 ID -> 读 0x000000 前 16 字节 */
+  {
+    static w25q80_stm32_t s_w25q80;
+    uint8_t buf[16];
+    uint32_t i;
+
+    printf("[W25Q80] selftest start (CS=PA4, SPI1)\r\n");
+
+    /* CS=PA4 已由 MX_GPIO_Init() 配好：开漏输出、初始高，板载上拉拉高。
+     * 拉低为主动驱动、释放靠上拉，2 MHz SPI 下时序无问题，无需再改回推挽。 */
+
+    platform_w25q80_stm32_register(&s_w25q80, &hspi1, GPIOA, GPIO_PIN_4, "w25q80");
+
+    int16_t st = SPI_FLASH_INIT(&s_w25q80.base);
+    printf("[W25Q80] init ret=%d, id(0x90)=0x%04X\r\n", st, SPI_FLASH_READ_ID(&s_w25q80.base));
+    {
+      uint8_t jid[3] = {0};
+      if (platform_w25q80_stm32_read_jedec_id(&s_w25q80, jid) == SPI_FLASH_STATUS_OK)
+      {
+        printf("[W25Q80] jedec(0x9F)=0x%02X 0x%02X 0x%02X (expect EF 40 14)\r\n",
+               jid[0], jid[1], jid[2]);
+      }
+    }
+    if (st == SPI_FLASH_STATUS_OK)
+    {
+      printf("[W25Q80] total=%lu B, sector=%lu B, block=%lu B, page=%u B\r\n",
+             (unsigned long)SPI_FLASH_GET_TOTAL_SIZE(&s_w25q80.base),
+             (unsigned long)SPI_FLASH_GET_SECTOR_SIZE(&s_w25q80.base),
+             (unsigned long)SPI_FLASH_GET_BLOCK_SIZE(&s_w25q80.base),
+             SPI_FLASH_GET_PAGE_SIZE(&s_w25q80.base));
+
+      if (SPI_FLASH_READ(&s_w25q80.base, 0x000000, buf, sizeof(buf)) == SPI_FLASH_STATUS_OK)
+      {
+        printf("[W25Q80] @0x000000:");
+        for (i = 0; i < sizeof(buf); i++)
+        {
+          printf(" %02X", buf[i]);
+        }
+        printf("\r\n");
+      }
+      else
+      {
+        printf("[W25Q80] read failed\r\n");
+      }
+    }
+  }
+
   /* VM3011 bring-up via driver (Zephyr port): waits 1 s for ZPL settle,
    * verifies I2C_CNTRL==0x00 (device detect) and applies the config.
    * Runs BEFORE AudioApp_Init: the audio app stores the handle and clears
@@ -226,27 +276,28 @@ int main(void)
 }
 
 /**
- * @brief System Clock Configuration
- * @retval None
- */
+  * @brief System Clock Configuration
+  * @retval None
+  */
 void SystemClock_Config(void)
 {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
   /** Configure LSE Drive Capability
-   */
+  */
   HAL_PWR_EnableBkUpAccess();
   __HAL_RCC_LSEDRIVE_CONFIG(RCC_LSEDRIVE_MEDIUMHIGH);
 
   /** Configure the main internal regulator output voltage
-   */
+  */
   __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
 
   /** Initializes the RCC Oscillators according to the specified parameters
-   * in the RCC_OscInitTypeDef structure.
-   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI | RCC_OSCILLATORTYPE_HSE | RCC_OSCILLATORTYPE_LSE;
+  * in the RCC_OscInitTypeDef structure.
+  */
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI|RCC_OSCILLATORTYPE_HSE
+                              |RCC_OSCILLATORTYPE_LSE;
   RCC_OscInitStruct.HSEState = RCC_HSE_ON;
   RCC_OscInitStruct.LSEState = RCC_LSE_ON;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
@@ -264,8 +315,10 @@ void SystemClock_Config(void)
   }
 
   /** Configure the SYSCLKSource, HCLK, PCLK1 and PCLK2 clocks dividers
-   */
-  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK4 | RCC_CLOCKTYPE_HCLK2 | RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
+  */
+  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK4|RCC_CLOCKTYPE_HCLK2
+                              |RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
+                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
@@ -280,16 +333,16 @@ void SystemClock_Config(void)
 }
 
 /**
- * @brief Peripherals Common Clock Configuration
- * @retval None
- */
+  * @brief Peripherals Common Clock Configuration
+  * @retval None
+  */
 void PeriphCommonClock_Config(void)
 {
   RCC_PeriphCLKInitTypeDef PeriphClkInitStruct = {0};
 
   /** Initializes the peripherals clock
-   */
-  PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_SMPS | RCC_PERIPHCLK_RFWAKEUP;
+  */
+  PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_SMPS|RCC_PERIPHCLK_RFWAKEUP;
   PeriphClkInitStruct.RFWakeUpClockSelection = RCC_RFWKPCLKSOURCE_HSE_DIV1024;
   PeriphClkInitStruct.SmpsClockSelection = RCC_SMPSCLKSOURCE_HSE;
   PeriphClkInitStruct.SmpsDivSelection = RCC_SMPSCLKDIV_RANGE1;
@@ -324,9 +377,9 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 /* USER CODE END 4 */
 
 /**
- * @brief  This function is executed in case of error occurrence.
- * @retval None
- */
+  * @brief  This function is executed in case of error occurrence.
+  * @retval None
+  */
 void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
@@ -339,12 +392,12 @@ void Error_Handler(void)
 }
 #ifdef USE_FULL_ASSERT
 /**
- * @brief  Reports the name of the source file and the source line number
- *         where the assert_param error has occurred.
- * @param  file: pointer to the source file name
- * @param  line: assert_param error line source number
- * @retval None
- */
+  * @brief  Reports the name of the source file and the source line number
+  *         where the assert_param error has occurred.
+  * @param  file: pointer to the source file name
+  * @param  line: assert_param error line source number
+  * @retval None
+  */
 void assert_failed(uint8_t *file, uint32_t line)
 {
   /* USER CODE BEGIN 6 */

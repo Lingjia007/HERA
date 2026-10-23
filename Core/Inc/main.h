@@ -65,6 +65,8 @@ void Error_Handler(void);
 #define LED_GPIO_Port GPIOC
 #define ZPL_Pin GPIO_PIN_0
 #define ZPL_GPIO_Port GPIOA
+#define SAI1_NSS_Pin GPIO_PIN_4
+#define SAI1_NSS_GPIO_Port GPIOA
 
 /* USER CODE BEGIN Private defines */
 

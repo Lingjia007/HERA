@@ -1,0 +1,17 @@
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/W25Q80/platform_w25q80_stm32_impl.c:108:16:w25q80_deinit	0	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/W25Q80/platform_w25q80_stm32_impl.c:270:17:w25q80_get_sector_size	0	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/W25Q80/platform_w25q80_stm32_impl.c:275:17:w25q80_get_block_size	0	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/W25Q80/platform_w25q80_stm32_impl.c:280:17:w25q80_get_total_size	0	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/W25Q80/platform_w25q80_stm32_impl.c:285:17:w25q80_get_page_size	0	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/W25Q80/platform_w25q80_stm32_impl.c:290:17:w25q80_read_id	0	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/W25Q80/platform_w25q80_stm32_impl.c:113:16:w25q80_read	40	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/W25Q80/platform_w25q80_stm32_impl.c:60:16:wait_busy_impl	40	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/W25Q80/platform_w25q80_stm32_impl.c:264:16:w25q80_sync	0	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/W25Q80/platform_w25q80_stm32_impl.c:296:16:w25q80_wait_busy	0	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/W25Q80/platform_w25q80_stm32_impl.c:145:16:w25q80_write	48	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/W25Q80/platform_w25q80_stm32_impl.c:188:16:w25q80_erase_sector	40	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/W25Q80/platform_w25q80_stm32_impl.c:80:16:w25q80_init	32	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/W25Q80/platform_w25q80_stm32_impl.c:234:16:w25q80_erase_chip	40	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/W25Q80/platform_w25q80_stm32_impl.c:211:16:w25q80_erase_block	32	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/W25Q80/platform_w25q80_stm32_impl.c:319:6:platform_w25q80_stm32_register	4	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/W25Q80/platform_w25q80_stm32_impl.c:339:9:platform_w25q80_stm32_read_jedec_id	32	static
