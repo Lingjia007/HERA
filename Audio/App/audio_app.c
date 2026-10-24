@@ -37,6 +37,12 @@
  *
  * Label order matches the training label_map (12 Chinese keywords),
  * index printed for cross-checking against the model output.
+ *
+ * Two-phase flow: a ZPL wake opens a session in WAIT-WAKE phase - only an
+ * utterance classified as "小艺小艺" (label 7, gated by KWS_MIN_*) enters
+ * the COMMAND phase: a 5 s window in which every VAD-segmented utterance
+ * is recognized as a command; each VAD-detected speech postpones the
+ * window by 5 s, 5 s of quiet closes the session (STOP2, mic back to ZPL).
  ******************************************************************************
  */
 #include "audio_app.h"
@@ -173,9 +179,19 @@ static uint8_t s_skip_blocks;      /* mic warm-up blocks to drop after stream st
 #define ZPL_LISTEN_WINDOW_MS 3000U /* quiet budget after a ZPL wake (noise) */
 #define ZPL_STAY_AWAKE_MS     800U /* extend this much while speech is on   */
 
+/* ---- 两阶段识别 ------------------------------------------------------------
+ * 阶段 1（等唤醒词）：ZPL 声音唤醒开监听，VAD 截段推理，只有 argmax 命中
+ *   "小艺小艺"（且过 KWS_MIN_* 门限）才进入阶段 2；其他语音不唤醒。
+ * 阶段 2（命令窗口）：唤醒后 5s 窗口，VAD 每截到一段语音就跑一次 1s 窗
+ *   推理识别命令词；只要有 VAD 检测（语音活动）窗口就顺延 5s，安静满
+ *   5s 关会话回 STOP2。 */
+#define CMD_WINDOW_MS 5000U /* 唤醒后命令窗口，VAD 检测到语音则顺延   */
+#define KWS_WAKE_LABEL 7U   /* kLabelNames[7] = "小艺小艺"（唤醒词）  */
+
 static VM3011_Dev_t *s_vm;      /* mic handle for the DOUT re-arm (main owns) */
 static uint32_t s_awake_until;  /* HAL_GetTick deadline; 0 = session closed   */
-static uint8_t s_kws_enabled;       /* 0 = KWS/VAD off (record debug mode)    */
+static uint8_t s_cmd_mode;      /* 0 = 等唤醒词；1 = 已唤醒（命令窗口内）     */
+static uint8_t s_kws_enabled = 1U;  /* 1 = KWS 唤醒识别默认开；0 = 录音调试模式 */
 static uint32_t s_hold_awake_until; /* debug hold-awake deadline (CLI alive)   */
 static uint8_t s_usb_stopped;        /* USB disconnected for STOP2 (restarted by UsbMsc_Poll) */
 
@@ -260,8 +276,8 @@ static void capture_append(const int16_t *src, uint32_t n)
  * whole capture is shorter than 1 s, it is right-aligned and the missing
  * head is zero-padded (leading silence is in-distribution for the model).
  * Result: a constant window layout [lead-in | keyword | ~150 ms tail]. */
-static void run_inference(void); /* (defined after the preroll helpers) */
-static void capture_finish(void)
+static int run_inference(void); /* (defined after the preroll helpers) */
+static int capture_finish(void)
 {
   uint32_t tail = (SAMPLE_RATE * 3U) / 20U; /* 150 ms trailing quiet */
   uint32_t end = s_loud_end + tail;
@@ -283,7 +299,26 @@ static void capture_finish(void)
     memmove(s_capture, s_capture + (end - (uint32_t)DESIRED_SAMPLES),
             (size_t)DESIRED_SAMPLES * sizeof(int16_t));
   }
-  run_inference();
+  return run_inference();
+}
+
+/* 单条语音识别结果的两阶段处理：
+ * 命令窗口内：窗口顺延（"有 VAD 检测就延后"），命令词照常打印；
+ * 等唤醒阶段：仅 "小艺小艺" 过门限才进入命令窗口。 */
+static void handle_utterance(int lbl)
+{
+  if (s_cmd_mode != 0U)
+  {
+    s_awake_until = HAL_GetTick() + CMD_WINDOW_MS;
+    return;
+  }
+  if (lbl == (int)KWS_WAKE_LABEL)
+  {
+    s_cmd_mode = 1U;
+    s_awake_until = HAL_GetTick() + CMD_WINDOW_MS;
+    printf("[WAKE] 小艺小艺 -> cmd window %lus\r\n",
+           (unsigned long)(CMD_WINDOW_MS / 1000U));
+  }
 }
 
 /* Rolling idle history: remember the newest audio so the capture window
@@ -320,14 +355,15 @@ static void preroll_reset(void)
 
 /* Full 1 s clip -> 49x40 features -> one inference -> single-shot print:
  * argmax over all 14 labels, margin = top1 - top2 (all classes included).
- * One line per detected utterance, for threshold tuning. */
-static void run_inference(void)
+ * One line per detected utterance, for threshold tuning.
+ * Returns the argmax label index (0/1 = silence/unknown), -1 on AI error. */
+static int run_inference(void)
 {
   audio_frontend_process_clip(&s_fe, s_capture, DESIRED_SAMPLES, s_features);
   memcpy(s_data_ins[0], s_features, AI_ECHODSCNN_IN_1_SIZE_BYTES);
 
   if (ai_run() != 0)
-    return;
+    return -1;
 
   const int8_t *out = (const int8_t *)s_data_outs[0];
   int max_i = 0;
@@ -377,6 +413,8 @@ static void run_inference(void)
   for (int i = 0; i < NUM_LABELS; i++)
     printf("   #%-2d %-12s %d\r\n",
            order[i], kLabelNames[order[i]], out[order[i]]);
+
+  return max_i;
 }
 
 void AudioApp_Init(VM3011_Dev_t *vm)
@@ -409,6 +447,7 @@ void AudioApp_Init(VM3011_Dev_t *vm)
   s_drop_base = 0;
   s_last_block_tick = HAL_GetTick();
   s_awake_until = 0U;
+  s_cmd_mode = 0U;
 }
 
 void AudioApp_ZplNotify(void)
@@ -428,17 +467,23 @@ void AudioApp_ZplNotify(void)
     s_skip_blocks = 3U; /* drop the mic wake transient (~30 ms) */
     s_phase = PH_IDLE;
     s_vad_prev = 0;
+    s_cmd_mode = 0U; /* 新会话从"等唤醒词"开始 */
     s_last_block_tick = now;
     preroll_reset();
   }
   else
   {
     /* Already listening: a re-asserted DOUT (sustained sound) only
-     * refreshes the stay-awake window. */
+     * refreshes the stay-awake window - 只延长、不缩短（命令窗口 5s
+     * 不被 3s 预算覆盖）。 */
     printf("[ZPL] re-arm while listening\r\n");
   }
 
-  s_awake_until = now + ZPL_LISTEN_WINDOW_MS;
+  {
+    uint32_t win = (s_cmd_mode != 0U) ? CMD_WINDOW_MS : ZPL_LISTEN_WINDOW_MS;
+    if ((int32_t)(now + win - s_awake_until) > 0)
+      s_awake_until = now + win;
+  }
 #else
   /* 调试模式（连续采集）：DOUT 事件只记录，采集状态不变。可用于观察
    * ZPL 触发时机与语音的实际对应关系。 */
@@ -453,6 +498,7 @@ void AudioApp_ZplNotify(void)
 static void zpl_sleep(void)
 {
   printf("[ZPL] sleep\r\n");
+  s_cmd_mode = 0U; /* 会话关闭，下次唤醒重新等 "小艺小艺" */
   /* STOP2 后 USB IP 无时钟：断开 DP（PC 视为拔出），唤醒后
    * UsbMsc_Poll 重新枚举。 */
   UsbMsc_NotifySleep();
@@ -608,9 +654,13 @@ void AudioApp_Process(void)
 
     uint8_t act = audio_vad_active();
 #if AUDIO_ZPL_WAKE
-    /* Quiet deadline: stay awake a bit longer while speech is around. */
+    /* Quiet deadline: 命令窗口内每次 VAD 活动顺延 5s（"有检测就延后"）；
+     * 等唤醒阶段只小幅续期（+800ms），说不出唤醒词就尽快回睡。 */
     if (act != 0U || s_phase == PH_CAPTURE)
-      s_awake_until = HAL_GetTick() + ZPL_STAY_AWAKE_MS;
+    {
+      s_awake_until = HAL_GetTick() +
+                      ((s_cmd_mode != 0U) ? CMD_WINDOW_MS : ZPL_STAY_AWAKE_MS);
+    }
 #endif
 
     /* 2 - idle: watch the VAD level, start capture on a rising edge. */
@@ -689,7 +739,7 @@ void AudioApp_Process(void)
      * window anchored to the keyword end and run ONE inference. */
     if (!act && s_speech_len >= VAD_MIN_SPEECH_SAMPLES)
     {
-      capture_finish();
+      handle_utterance(capture_finish());
       s_phase = PH_IDLE;
       preroll_reset(); /* history predates this capture: stale */
       /* May still be the utterance tail (or a follow-up word): only a
@@ -716,7 +766,7 @@ void AudioApp_Process(void)
      * the window; the keyword HEAD may be trimmed, never the tail). */
     if (s_cap_len >= CAPTURE_MAX_SAMPLES)
     {
-      capture_finish();
+      handle_utterance(capture_finish());
       s_phase = PH_IDLE;
       preroll_reset();
       s_vad_prev = audio_vad_active();

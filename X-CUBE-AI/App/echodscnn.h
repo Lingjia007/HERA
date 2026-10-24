@@ -2,7 +2,7 @@
   ******************************************************************************
   * @file    echodscnn.h
   * @author  AST Embedded Analytics Research Platform
-  * @date    2026-10-23T22:34:53+0800
+  * @date    2026-10-24T20:02:24+0800
   * @brief   AI Tool Automatic Code Generator for Embedded NN computing
   ******************************************************************************
   * @attention
@@ -23,7 +23,7 @@
 
 /******************************************************************************/
 #define AI_ECHODSCNN_MODEL_NAME          "echodscnn"
-#define AI_ECHODSCNN_ORIGIN_MODEL_NAME   "model1"
+#define AI_ECHODSCNN_ORIGIN_MODEL_NAME   "model"
 
 /******************************************************************************/
 #define AI_ECHODSCNN_ACTIVATIONS_ALIGNMENT   (4)

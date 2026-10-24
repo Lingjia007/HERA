@@ -167,10 +167,8 @@ int main(void)
         fr = f_mkfs("0:", FM_FAT | FM_SFD, 0U, mkfs_work, sizeof(mkfs_work));
         if (fr == FR_OK)
         {
-          /* PC 可能在 mkfs 期间已读到旧/半格式化 BPB（Windows 缓存）：
-           * 断开重连强制 PC 重新枚举，读到全新 FAT。 */
-          printf("[FAT] formatted -> usb re-enumerate\r\n");
-          UsbMsc_Restart();
+          /* USB U 盘默认不枚举（KWS 默认模式），PC 侧 `usb on` 挂载时
+           * 自然读到全新 FAT，无需重新枚举。 */
           fr = f_mount(&USERFatFs, "0:", 1U);
         }
       }

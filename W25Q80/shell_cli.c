@@ -1,10 +1,12 @@
 /**
  ******************************************************************************
  * @file shell_cli.c
- * @brief USART1 命令行：ls/rm/df/rec/stop/ym/info/help（FAT on W25Q80）。
+ * @brief USART1 命令行：ls/rm/rmall/df/rec/stop/ym/info/help（FAT on W25Q80）。
  *        单字节中断接收 -> 行缓冲 -> 主循环解析。
  *        KEY(PC12) 与 `rec` 命令等效（按键翻转录音）。
- *        USB U 盘挂载期间固件端禁写（rm/rec 拒绝），读命令照常。
+ *        USB U 盘默认不枚举（开机即 KWS 唤醒识别），`usb on|off` 切换；
+ *        挂载期间固件端禁写（rm/rec 拒绝），读命令照常；
+ *        rmall 例外：自动断开 USB 拿回写权限，删完重新枚举。
  ******************************************************************************
  */
 #include "shell_cli.h"
@@ -40,9 +42,20 @@ static void print_menu(void)
     printf(" 5 df usage     6 kws %s\r\n",
            (AudioApp_GetKwsEnabled() != 0U) ? "ON" : "OFF");
     printf(" 7 sleep now    8 info\r\n");
-    printf("usb %s\r\n", UsbMsc_Mounted() ? "U-DISK mounted (MCU readonly)"
-                                         : "U-DISK off (plug usb to mount)");
-    printf("digit+Enter, or cmd: help ls rm df rec stop ym kws sleep\r\n");
+    printf(" 9 rm ALL files\r\n");
+    if (UsbMsc_Mounted())
+    {
+        printf("usb U-DISK mounted (MCU readonly)\r\n");
+    }
+    else if (UsbMsc_Enabled())
+    {
+        printf("usb U-DISK on (waiting pc)\r\n");
+    }
+    else
+    {
+        printf("usb U-DISK off (kws mode, cmd: usb on)\r\n");
+    }
+    printf("digit+Enter, or cmd: help ls rm rmall df rec stop ym kws sleep usb\r\n");
     printf("> ");
 }
 
@@ -115,12 +128,14 @@ static void cmd_help(void)
     printf("menu             show the menu\r\n"
            "ls               list files\r\n"
            "rm <file>        delete file (blocked while usb mounted)\r\n"
+           "rmall            delete ALL files (blocked while usb mounted)\r\n"
            "df               fs usage\r\n"
            "rec              toggle recording (KEY/PC12 same)\r\n"
            "stop             stop recording\r\n"
            "ym <file>        send file via YMODEM (backup of usb)\r\n"
            "kws on|off       toggle speech recognition\r\n"
            "sleep            enter STOP2 now (KEY/sound wakes)\r\n"
+           "usb on|off       mount/unmount u-disk (default off)\r\n"
            "info             system info\r\n");
 }
 
@@ -166,6 +181,61 @@ static void cmd_rm(char *name)
     printf("rm %s: %s\r\n", name, (e == FR_OK) ? "ok" : "failed");
 }
 
+static void cmd_rmall(void)
+{
+    DIR d;
+    FILINFO info;
+    uint32_t cnt = 0;
+    uint32_t fail = 0;
+    uint8_t usb_was = 0;
+
+    if (f_opendir(&d, "0:") != FR_OK)
+    {
+        printf("fs not mounted\r\n");
+        return;
+    }
+    (void)f_closedir(&d);
+
+    if (WavRecorder_active())
+    {
+        printf("recording -> stop first\r\n");
+        (void)WavRecorder_stop();
+    }
+    if (UsbMsc_Mounted())
+    {
+        /* PC 弹出不会清 configured 状态，只能固件主动断开拿回写权限；
+         * PC 端未同步的写入本来就在删除范围内，直接断开是安全的。 */
+        printf("usb mounted -> disconnect for write access\r\n");
+        UsbMsc_Disconnect();
+        usb_was = 1U;
+    }
+    while (f_readdir(&d, &info) == FR_OK && info.fname[0] != '\0')
+    {
+        if (!(info.fattrib & AM_DIR))
+        {
+            char path[80];
+
+            (void)snprintf(path, sizeof(path), "0:%s", info.fname);
+            if (f_unlink(path) == FR_OK)
+            {
+                cnt++;
+            }
+            else
+            {
+                printf("rm %s: failed\r\n", info.fname);
+                fail++;
+            }
+        }
+    }
+    (void)f_closedir(&d);
+    printf("rm all: %lu removed, %lu failed\r\n",
+           (unsigned long)cnt, (unsigned long)fail);
+    if (usb_was != 0U)
+    {
+        UsbMsc_Restart(); /* PC 重新枚举，看到清空后的盘 */
+    }
+}
+
 static void cmd_df(void)
 {
     FATFS *fs = NULL;
@@ -197,14 +267,35 @@ static void cmd_rec(void)
     }
 }
 
+static void cmd_usb(char *arg)
+{
+    if (arg != NULL && strcmp(arg, "on") == 0)
+    {
+        UsbMsc_SetEnabled(1U);
+    }
+    else if (arg != NULL && strcmp(arg, "off") == 0)
+    {
+        UsbMsc_SetEnabled(0U);
+    }
+    printf("usb %s\r\n",
+           UsbMsc_Mounted() ? "mounted (MCU readonly)"
+                            : (UsbMsc_Enabled() ? "on (waiting pc)" : "off"));
+}
+
 static void cmd_info(void)
 {
     printf("mcu: STM32WB55, pcm: %u Hz mono S16\r\n", 16000U);
     printf("flash: W25Q80 1MB, fs: FAT12 512B sector\r\n");
     printf("kws: %s, key: PC12 toggle record\r\n",
            (AudioApp_GetKwsEnabled() != 0U) ? "on" : "off");
-    printf("usb: %s\r\n", UsbMsc_Mounted() ? "U-disk mounted (MCU readonly)"
-                                         : "idle");
+    if (UsbMsc_Mounted())
+    {
+        printf("usb: U-disk mounted (MCU readonly)\r\n");
+    }
+    else
+    {
+        printf("usb: %s\r\n", UsbMsc_Enabled() ? "on (waiting pc)" : "off (kws mode)");
+    }
 }
 
 void Shell_CLI_Process(void)
@@ -251,7 +342,7 @@ void Shell_CLI_Process(void)
     {
         /* 空行 */
     }
-    else if (strlen(cmd) == 1U && cmd[0] >= '1' && cmd[0] <= '8')
+    else if (strlen(cmd) == 1U && cmd[0] >= '1' && cmd[0] <= '9')
     {
         /* 数字菜单项 */
         switch (cmd[0])
@@ -280,6 +371,9 @@ void Shell_CLI_Process(void)
         case '8':
             cmd_info();
             break;
+        case '9':
+            cmd_rmall();
+            break;
         default:
             break;
         }
@@ -300,6 +394,10 @@ void Shell_CLI_Process(void)
     else if (strcmp(cmd, "rm") == 0)
     {
         cmd_rm(arg);
+    }
+    else if (strcmp(cmd, "rmall") == 0)
+    {
+        cmd_rmall();
     }
     else if (strcmp(cmd, "df") == 0)
     {
@@ -342,6 +440,10 @@ void Shell_CLI_Process(void)
     else if (strcmp(cmd, "sleep") == 0)
     {
         AudioApp_RequestSleep();
+    }
+    else if (strcmp(cmd, "usb") == 0)
+    {
+        cmd_usb(arg);
     }
     else if (strcmp(cmd, "info") == 0)
     {

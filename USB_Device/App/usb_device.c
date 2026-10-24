@@ -79,9 +79,9 @@ void MX_USB_Device_Init(void)
   if (USBD_MSC_RegisterStorage(&hUsbDeviceFS, &USBD_Storage_Interface_fops_FS) != USBD_OK) {
     Error_Handler();
   }
-  if (USBD_Start(&hUsbDeviceFS) != USBD_OK) {
-    Error_Handler();
-  }
+  /* U 盘默认不枚举（开机即 KWS 唤醒识别模式）：只注册类/存储不 Start，
+   * DP 上拉保持低，PC 看不到设备。CLI `usb on` -> UsbMsc_SetEnabled(1) ->
+   * UsbMsc_Poll 里 USBD_Start 拉上拉后 PC 才挂载。 */
   /* USER CODE BEGIN USB_Device_Init_PostTreatment */
 
   /* USER CODE END USB_Device_Init_PostTreatment */

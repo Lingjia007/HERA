@@ -1,25 +1,25 @@
 ST Edge AI Core v2.2.0-20266 2adc00962
-Created date          : 2026-10-23 22:34:54
-Parameters            : generate --target stm32wb --name echodscnn -m D:/edgedownload/STM32WB55XX-HERA/16k/model1.tflite --compression none --verbosity 1 --workspace C:/Users/31254/AppData/Local/Temp/mxAI_workspace719526829470011043437667717672941 --output C:/Users/31254/.stm32cubemx/echodscnn_output
+Created date          : 2026-10-24 20:02:26
+Parameters            : generate --target stm32wb --name echodscnn -m D:/edgedownload/STM32WB55XX-HERA/16k/model.tflite --compression none --verbosity 1 --workspace C:/Users/31254/AppData/Local/Temp/mxAI_workspace3740916968350017882408628787799229 --output C:/Users/31254/.stm32cubemx/echodscnn_output
 
 Exec/report summary (generate)
 ----------------------------------------------------------------------------------------------------------------------------
-model file         :   D:\edgedownload\STM32WB55XX-HERA\16k\model1.tflite                                                   
+model file         :   D:\edgedownload\STM32WB55XX-HERA\16k\model.tflite                                                    
 type               :   tflite                                                                                               
 c_name             :   echodscnn                                                                                            
 compression        :   none                                                                                                 
 options            :   allocate-inputs, allocate-outputs                                                                    
 optimization       :   balanced                                                                                             
 target/series      :   stm32wb                                                                                              
-workspace dir      :   C:\Users\31254\AppData\Local\Temp\mxAI_workspace719526829470011043437667717672941                    
+workspace dir      :   C:\Users\31254\AppData\Local\Temp\mxAI_workspace3740916968350017882408628787799229                   
 output dir         :   C:\Users\31254\.stm32cubemx\echodscnn_output                                                         
 model_fmt          :   ss/sa per channel                                                                                    
-model_name         :   model1                                                                                               
-model_hash         :   0x20e803504c6b558ac41b16cd1ce807bb                                                                   
+model_name         :   model                                                                                                
+model_hash         :   0x3f6611cb349f51925ae77fd807b59528                                                                   
 params #           :   169,704 items (171.42 KiB)                                                                           
 ----------------------------------------------------------------------------------------------------------------------------
 input 1/1          :   'serving_default_input_10', int8(1x1960), 1.91 KBytes, QLinear(0.099561706,-128,int8), activations   
-output 1/1         :   'gemm_42', int8(1x14), 14 Bytes, QLinear(0.176307276,13,int8), activations                           
+output 1/1         :   'gemm_42', int8(1x14), 14 Bytes, QLinear(0.183210149,10,int8), activations                           
 macc               :   6,588,322                                                                                            
 weights (ro)       :   175,536 B (171.42 KiB) (1 segment) / -503,280(-74.1%) vs float model                                 
 activations (rw)   :   23,840 B (23.28 KiB) (1 segment) *                                                                   
@@ -27,7 +27,7 @@ ram (total)        :   23,840 B (23.28 KiB) = 23,840 + 0 + 0
 ----------------------------------------------------------------------------------------------------------------------------
 (*) 'input'/'output' buffers are allocated in the activations buffer
 
-Model name - model1
+Model name - model
 ------ ------------------------------------------------ ----------------------- --------------- ----------- -------------------------------- --- ----------------- ---------------------- ---------------------------------------- 
 m_id   layer (type,original)                            oshape                  param/size             macc                     connected to   | c_size            c_macc                 c_type                                   
 ------ ------------------------------------------------ ----------------------- --------------- ----------- -------------------------------- --- ----------------- ---------------------- ---------------------------------------- 
@@ -145,7 +145,7 @@ model/c-model: macc=6,594,370/6,588,322 -6,048(-0.1%) weights=175,536/175,536  a
 
 Generated C-graph summary
 ------------------------------------------------------------------------------------------------------------------------
-model name            : model1
+model name            : model
 c-name                : echodscnn
 c-node #              : 37
 c-array #             : 82

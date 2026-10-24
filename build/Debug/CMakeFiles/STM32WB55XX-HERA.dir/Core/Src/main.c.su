@@ -1,8 +1,8 @@
-D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Core/Src/main.c:343:6:SystemClock_Config	120	static
-D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Core/Src/main.c:407:6:PeriphCommonClock_Config	88	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Core/Src/main.c:341:6:SystemClock_Config	120	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Core/Src/main.c:405:6:PeriphCommonClock_Config	88	static
 D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Core/Src/main.c:85:5:main	88	static
-D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Core/Src/main.c:431:6:EXTI0_IRQHandler	0	static
-D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Core/Src/main.c:436:6:EXTI15_10_IRQHandler	0	static
-D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Core/Src/main.c:441:6:USART1_IRQHandler	0	static
-D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Core/Src/main.c:446:6:HAL_GPIO_EXTI_Callback	0	static
-D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Core/Src/main.c:465:6:Error_Handler	0	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Core/Src/main.c:429:6:EXTI0_IRQHandler	0	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Core/Src/main.c:434:6:EXTI15_10_IRQHandler	0	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Core/Src/main.c:439:6:USART1_IRQHandler	0	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Core/Src/main.c:444:6:HAL_GPIO_EXTI_Callback	0	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Core/Src/main.c:463:6:Error_Handler	0	static

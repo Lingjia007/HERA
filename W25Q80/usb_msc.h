@@ -16,11 +16,18 @@
 /* PC 已挂载 U 盘（USB configured）？挂载期间固件端不得写文件系统 */
 uint8_t UsbMsc_Mounted(void);
 
-/* 进 STOP2 前调用：断开 USB（PC 视为拔出），唤醒后由 UsbMsc_Poll 重启 */
+/* U 盘功能开关当前状态（默认 0：开机即 KWS 唤醒识别，不枚举 U 盘） */
+uint8_t UsbMsc_Enabled(void);
+
+/* U 盘功能开关：1 = 枚举挂载 U 盘；0 = 断开并禁用自动重连（CLI `usb on/off`） */
+void UsbMsc_SetEnabled(uint8_t en);
+
+/* 进 STOP2 前调用：断开 USB（PC 视为拔出），唤醒后由 UsbMsc_Poll 重启。
+ * 仅在功能开启时有动作。 */
 void UsbMsc_NotifySleep(void);
 
-/* 强制断开+重连（PC 重新枚举）。用于固件改写了盘内容（如开机 mkfs）
- * 后清掉 PC 端缓存的旧 BPB/容量。 */
+/* 断开+重连（PC 重新枚举）。受功能开关约束：关着时为空操作。
+ * 用于固件改写了盘内容（如 rmall）后清掉 PC 端缓存的旧 BPB/容量。 */
 void UsbMsc_Restart(void);
 
 /* 只断开、不自动重连（录音独占 Flash 期间用；停止后调 Restart 重连）。 */

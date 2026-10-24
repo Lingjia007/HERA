@@ -209,7 +209,7 @@ ProjectManager.ToolChainLocation=
 ProjectManager.UAScriptAfterPath=
 ProjectManager.UAScriptBeforePath=
 ProjectManager.UnderRoot=false
-ProjectManager.functionlistsort=1-SystemClock_Config-RCC-false-HAL-false,2-MX_GPIO_Init-GPIO-false-HAL-true,3-MX_DMA_Init-DMA-false-HAL-true,4-MX_IPCC_Init-IPCC-false-HAL-true,5-MX_RTC_Init-RTC-false-HAL-true,6-APPE_Init-STM32_WPAN-false-HAL-false,7-MX_SAI1_Init-SAI1-false-HAL-true,8-MX_USART1_UART_Init-USART1-false-HAL-true,9-MX_I2C1_Init-I2C1-false-HAL-true,10-MX_SPI1_Init-SPI1-false-HAL-true,11-MX_RF_Init-RF-false-HAL-true,0-MX_HSEM_Init-HSEM-false-HAL-true
+ProjectManager.functionlistsort=1-SystemClock_Config-RCC-false-HAL-false,2-MX_GPIO_Init-GPIO-false-HAL-true,3-MX_DMA_Init-DMA-false-HAL-true,4-MX_IPCC_Init-IPCC-false-HAL-true,5-MX_RTC_Init-RTC-false-HAL-true,6-APPE_Init-STM32_WPAN-false-HAL-false,7-MX_SAI1_Init-SAI1-false-HAL-true,8-MX_USART1_UART_Init-USART1-false-HAL-true,9-MX_I2C1_Init-I2C1-false-HAL-true,10-MX_SPI1_Init-SPI1-false-HAL-true,11-MX_FATFS_Init-FATFS-false-HAL-false,12-MX_USB_Device_Init-USB_DEVICE-false-HAL-false,13-MX_RF_Init-RF-false-HAL-true,0-MX_HSEM_Init-HSEM-false-HAL-true
 RCC.ADCFreq_Value=64000000
 RCC.AHB2CLKDivider=RCC_SYSCLK_DIV2
 RCC.AHBFreq_Value=64000000
@@ -334,7 +334,7 @@ STMicroelectronics.X-CUBE-AI.10.2.1.ModelMacc-0095a26695cd6a6f03bf6867bdaabdeb97
 STMicroelectronics.X-CUBE-AI.10.2.1.ModelName-0095a26695cd6a6f03bf6867bdaabdeb970d62a2d36d90248dc6531c786912c8=echodscnn
 STMicroelectronics.X-CUBE-AI.10.2.1.ModelNameList=echodscnn
 STMicroelectronics.X-CUBE-AI.10.2.1.ModelRamOccupation-0095a26695cd6a6f03bf6867bdaabdeb970d62a2d36d90248dc6531c786912c8=34944
-STMicroelectronics.X-CUBE-AI.10.2.1.ModelStructureFile-0095a26695cd6a6f03bf6867bdaabdeb970d62a2d36d90248dc6531c786912c8=D\:\\edgedownload\\STM32WB55XX-HERA\\16k\\model1.tflite
+STMicroelectronics.X-CUBE-AI.10.2.1.ModelStructureFile-0095a26695cd6a6f03bf6867bdaabdeb970d62a2d36d90248dc6531c786912c8=D\:\\edgedownload\\STM32WB55XX-HERA\\16k\\model.tflite
 STMicroelectronics.X-CUBE-AI.10.2.1.ModelType-0095a26695cd6a6f03bf6867bdaabdeb970d62a2d36d90248dc6531c786912c8=STM32Cube.AI MCU runtime
 STMicroelectronics.X-CUBE-AI.10.2.1.ReadyForCodeGeneration=true
 STMicroelectronics.X-CUBE-AI.10.2.1.StackSize=0x800
