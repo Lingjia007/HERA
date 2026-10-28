@@ -82,51 +82,33 @@ static uint8_t s_tensor_arena[TFLM_NETWORK_TENSOR_AREA_SIZE]
 static uint32_t s_tflm; /* interpreter handle, 0 = not created */
 static struct tflm_c_tensor_info s_in, s_out;
 
-/* Capture span ceiling: the capture keeps following the utterance until
- * the VAD closes (or this cap), then the model's fixed 1 s window is
- * cropped out. 1.35 s = the 500 ms preroll + 850 ms of live capture,
- * which covers the observed ~520 ms VAD spans + 300 ms hangover; the
- * full 1.5 s ceiling did not fit in RAM1 next to the TFLM arena. */
-#define CAPTURE_MAX_SAMPLES ((SAMPLE_RATE * 27U) / 20U)
-
-/* 1-second utterance capture span. The capture FOLLOWS the utterance
- * (up to CAPTURE_MAX_SAMPLES below); the fixed 1 s model window is cropped
- * out afterwards, anchored to the utterance end (capture_finish). */
-static int16_t s_capture[CAPTURE_MAX_SAMPLES];
+/* ---- Window lives in the capture ring --------------------------------------
+ * No dedicated capture buffer: the SAI FIFO ring (audio_stream.c) is sized to
+ * AS_RING_CAPACITY = 101 x 160 = 16160 samples (~1.01 s) and keeps rolling in
+ * IDLE, so it ALWAYS holds the most recent ~1 s of audio - including the
+ * fricative onsets before the VAD rising edge (x/sh of 上一首/下一首 sit
+ * below the VAD open threshold; up to ~730 ms of pre-trigger history is
+ * reachable, vs the 500 ms the old dedicated pre-roll buffer provided).
+ * capture_finish anchors the fixed 1 s model window to the utterance end
+ * (last VAD-loud block + 150 ms tail) via ring slots - no copies, no prepend.
+ * The 1.35 s "capture span ceiling" is gone: a long utterance simply means
+ * the window covers its last second (the keyword HEAD may be trimmed for
+ * utterances longer than the ring, never the tail - same guarantee as
+ * before, the cap below only bounds the session, not memory). */
+#define CAPTURE_CAP_SAMPLES (SAMPLE_RATE * 4U) /* safety cap: 4 s of VAD-open */
 
 /* Scratch for the consume_no_cpy wrap fallback (never taken with the
  * current all-160-sample-aligned ring geometry). */
 static int16_t s_blk[AS_DMA_HALF_FRAMES];
 
-/* ---- Pre-roll idle history -------------------------------------------------
- * Keyword onsets are fricatives (上一首 "shàng", 下一首 "xià"): x/sh noise
- * energy sits far below the VAD open threshold, so the VAD only opens at
- * the vowel - the decisive FIRST syllable then lies BEFORE the capture
- * window and the two words differ only in their truncated remnant
- * (observed margins of 2-3). Keep the last 500 ms of idle audio in a
- * rolling buffer and PREPEND it to the capture on the rising edge,
- * recovering the fricative onset: 250 ms proved too short for a mid-word
- * VAD open (observed speech spans ~520 ms for ~900 ms keywords). Training
- * places keywords at random window positions, so the shifted layout stays
- * in-distribution.
- * The history lives in the TAIL of s_capture (PREROLL_OFF) instead of a
- * separate buffer: it is written/copied only while idle, and s_capture is
- * dead while idle - so both share one allocation (16 KB saved). During a
- * capture the growing utterance may overwrite the tail region; the history
- * has already been copied to the head by then and is reset at finish. */
-#define PREROLL_SAMPLES (SAMPLE_RATE / 2) /* 500 ms */
-#define PREROLL_OFF (CAPTURE_MAX_SAMPLES - PREROLL_SAMPLES)
-static uint32_t s_preroll_w;    /* write index = oldest sample once full */
-static uint32_t s_preroll_fill; /* valid history samples, 0..PREROLL_SAMPLES */
-
 /* ---- Utterance state machine ------------------------------------------------
  * PH_IDLE    : drain the ring, watch VAD level; rising edge -> capture.
- * PH_CAPTURE : append 10 ms blocks while the VAD stays active, up to
- *              CAPTURE_MAX_SAMPLES; when the VAD closes (hangover included)
- *              with real speech inside -> crop the fixed 1 s window
- *              anchored to the utterance end (capture_finish) -> run ONE
- *              inference -> idle. VAD closed with almost no speech ->
- *              noise blip -> discard. */
+ * PH_CAPTURE : count 10 ms blocks while the VAD stays active (audio stays in
+ *              the rolling ring, nothing is copied); when the VAD closes
+ *              (hangover included) with real speech inside -> anchor the
+ *              fixed 1 s window to the utterance end (capture_finish) ->
+ *              run ONE inference -> idle. VAD closed with almost no speech
+ *              -> noise blip -> discard. */
 typedef enum
 {
   PH_IDLE = 0,
@@ -134,7 +116,7 @@ typedef enum
 } phase_t;
 static phase_t s_phase;
 static uint8_t s_vad_prev;         /* VAD level at the previous poll (edge detect) */
-static uint32_t s_cap_len;         /* samples captured in s_capture               */
+static uint32_t s_cap_len;         /* samples consumed since the rising edge     */
 static uint32_t s_speech_len;      /* captured samples that were VAD-loud          */
 static uint32_t s_loud_end;        /* cap_len just past the last VAD-loud block    */
 static uint32_t s_peak_e;          /* peak block energy inside the capture (tuning) */
@@ -281,62 +263,53 @@ static const int16_t *consume_block(void)
   return s_blk;
 }
 
-/* Append n samples to the capture buffer. Gain is already applied by the
- * PDM2PCM filter (24 dB) in audio_stream.c (SAI IRQ), no gain here. */
-static void capture_append(const int16_t *src, uint32_t n)
-{
-  uint32_t room = (uint32_t)CAPTURE_MAX_SAMPLES - s_cap_len;
-  if (n > room)
-    n = room;
-  memcpy(s_capture + s_cap_len, src, (size_t)n * sizeof(int16_t));
-  s_cap_len += n;
-}
-
-/* Crop the model's FIXED 1 s window out of the captured span, then run the
- * inference on it. The window is anchored to the utterance END:
+/* Anchor the model's FIXED 1 s window inside the rolling capture ring, then
+ * run the inference on it. The window is anchored to the utterance END:
  *   end = (last VAD-loud block) + 150 ms tail, clamped to the capture,
  * so the keyword tail is NEVER truncated no matter where the trigger
  * opened - only lead-in silence ahead of the keyword gets cut. The window
- * is placed at s_capture + LM_PAD, so the logmel frontend can reflect-pad
- * IN PLACE using the LM_PAD int16 scratch on both sides (see logmel.h).
- * If the whole capture is shorter than 1 s, it is right-aligned and the
- * missing head is zero-padded (leading silence is in-distribution).
- * Result: a constant window layout [lead-in | keyword | ~150 ms tail]. */
-static int run_inference(void); /* (defined after the preroll helpers) */
+ * data is NOT copied: logmel reads it through ring slots (reflect padding
+ * is computed on the fly by the accessor, see logmel_process_window_ring).
+ * If the captured span is shorter than 1 s the missing head is zero-padded
+ * (leading silence is in-distribution) - same layout as before:
+ * [lead-in | keyword | ~150 ms tail]. */
+static int run_inference(const int16_t *base, uint32_t cap, uint32_t slot0,
+                         uint32_t lead_zeros);
 static int capture_finish(void)
 {
   uint32_t tail = (SAMPLE_RATE * 3U) / 20U; /* 150 ms trailing quiet */
   uint32_t end = s_loud_end + tail;
-  int16_t *win = s_capture + LM_PAD;
+  AudioCaptureRingBuff_t *rg = AudioStream_get_ring();
+  uint32_t cap = (uint32_t)rg->nbSamples * rg->nbFrames; /* 16160 */
 
   if (end < (uint32_t)DESIRED_SAMPLES)
     end = (uint32_t)DESIRED_SAMPLES; /* always feed a full 1 s window */
   if (end > s_cap_len)
     end = s_cap_len; /* clamp to what was actually captured */
 
-  if (s_cap_len <= (uint32_t)DESIRED_SAMPLES)
-  {
-    /* Shorter than 1 s: right-align to the window end, zero-pad the head. */
-    uint32_t shift = (uint32_t)DESIRED_SAMPLES - s_cap_len;
-    memmove(win + shift, s_capture, (size_t)s_cap_len * sizeof(int16_t));
-    memset(win, 0, (size_t)shift * sizeof(int16_t));
-  }
-  else
-  {
-    /* Window fully inside: slide [end - 1 s, end) down to the window slot. */
-    memmove(win, s_capture + (end - (uint32_t)DESIRED_SAMPLES),
-            (size_t)DESIRED_SAMPLES * sizeof(int16_t));
-  }
+  /* Ring slot arithmetic: readSampleIndex is the slot just past the last
+   * consumed sample; the window ends (cap_len - end) samples earlier. */
+  uint32_t gap = s_cap_len - end;
+  uint32_t slot_end = (rg->readSampleIndex + cap - (gap % cap)) % cap;
+  uint32_t slot0 = (slot_end + cap - (uint32_t)DESIRED_SAMPLES) % cap;
+
+  /* Zero-pad count for the window head: samples that predate either the
+   * stream start or the ring coverage (normal path: 0; short capture:
+   * 1 s - end; stuck-VAD safety path: whatever fell out of the ring). */
+  uint32_t inring = (s_cap_len < cap) ? s_cap_len : cap;
+  int32_t lead32 = (int32_t)DESIRED_SAMPLES - (int32_t)end +
+                   (int32_t)s_cap_len - (int32_t)inring;
+  uint32_t lead_zeros = (lead32 > 0) ? (uint32_t)lead32 : 0U;
 
   /* 推理期间本次识别已不需要新音频：停掉 SAI（PDM 时钟停，mic 短暂回
    * ZPL），省下每 10 ms 一次的 DMA/PDM2PCM/VAD/ring 中断对 CPU 的抢占
    * （缩短推理），也杜绝推理期间的 ring overrun 丢样本。推完立即恢复
    * 采集、刷新 watchdog 基准并丢弃 mic ZPL->NORMAL 唤醒瞬态。 */
   AudioStream_stop();
-  int r = run_inference();
+  int r = run_inference((const int16_t *)rg->pData, cap, slot0, lead_zeros);
   AudioStream_start();
   s_last_block_tick = HAL_GetTick();
-  s_skip_blocks = 3U; /* ~30 ms 瞬态，不喂 VAD/preroll */
+  s_skip_blocks = 3U; /* ~30 ms 瞬态，不喂 VAD/环 */
   return r;
 }
 
@@ -359,51 +332,20 @@ static void handle_utterance(int lbl)
   }
 }
 
-/* Rolling idle history: remember the newest audio so the capture window
- * can be extended backwards across the fricative onset on VAD open.
- * Writes into the tail of s_capture (see PREROLL_OFF above). */
-static void preroll_write(const int16_t *src, uint32_t n)
-{
-  uint32_t total = n;
-  while (n)
-  {
-    uint32_t room = PREROLL_SAMPLES - s_preroll_w;
-    uint32_t k = (n < room) ? n : room;
-    memcpy(s_capture + PREROLL_OFF + s_preroll_w, src,
-           (size_t)k * sizeof(int16_t));
-    s_preroll_w += k;
-    if (s_preroll_w == PREROLL_SAMPLES)
-      s_preroll_w = 0;
-    src += k;
-    n -= k;
-  }
-  if (s_preroll_fill < PREROLL_SAMPLES)
-  {
-    s_preroll_fill += total;
-    if (s_preroll_fill > PREROLL_SAMPLES)
-      s_preroll_fill = PREROLL_SAMPLES;
-  }
-}
-
-/* Drop the history (stale once a capture consumed the stream): re-anchors
- * fill/write so the next idle samples start from index 0. */
-static void preroll_reset(void)
-{
-  s_preroll_w = 0;
-  s_preroll_fill = 0;
-}
-
 /* Full 1 s clip -> 40x101 logmel int8 features -> one TFLM inference ->
  * single-shot print: argmax over all 14 labels, margin = top1 - top2.
  * One line per detected utterance, for threshold tuning.
- * Returns the argmax label index (0/1 = silence/unknown), -1 on AI error. */
-static int run_inference(void)
+ * Returns the argmax label index (0/1 = silence/unknown), -1 on AI error.
+ * The window is read through ring slots (base/cap/slot0/lead_zeros, see
+ * capture_finish); the frontend writes straight into the model input
+ * tensor (same [40][101] mel-major int8 layout, byte size checked in
+ * AudioApp_Init). No staging buffer needed. */
+static int run_inference(const int16_t *base, uint32_t cap, uint32_t slot0,
+                         uint32_t lead_zeros)
 {
   uint32_t t0 = HAL_GetTick();
-  /* Frontend writes straight into the model input tensor: same [40][101]
-   * mel-major int8 layout, byte size checked in AudioApp_Init (s_in.bytes
-   * == LM_N_MELS * LM_N_FRAMES). No staging buffer needed. */
-  logmel_process_window(s_capture + LM_PAD, (int8_t *)s_in.data);
+  logmel_process_window_ring(base, cap, slot0, lead_zeros,
+                             (int8_t *)s_in.data);
   uint32_t fe_ms = HAL_GetTick() - t0; /* logmel frontend only */
 
   if (tflm_c_invoke(s_tflm) != kTfLiteOk)
@@ -517,7 +459,6 @@ void AudioApp_ZplNotify(void)
     s_vad_prev = 0;
     s_cmd_mode = 0U; /* 新会话从"等唤醒词"开始 */
     s_last_block_tick = now;
-    preroll_reset();
   }
   else
   {
@@ -661,7 +602,6 @@ void AudioApp_Process(void)
         s_last_block_tick = now;
         s_phase = PH_IDLE;
         s_vad_prev = 0;
-        preroll_reset();
         return;
       }
 
@@ -680,7 +620,7 @@ void AudioApp_Process(void)
 
     /* Mic ZPL -> NORMAL warm-up: the first blocks after a stream start are
      * a wake transient, not audio (observed e~5000 vs floor~480). It must
-     * not fake-open the VAD nor poison the floor / preroll history. */
+     * not fake-open the VAD nor poison the floor history. */
     if (s_skip_blocks > 0U)
     {
       s_skip_blocks--;
@@ -730,26 +670,9 @@ void AudioApp_Process(void)
         s_loud_end = 0;
         s_peak_e = 0;
         s_drop_base = AudioStream_get_ring()->droppedSamples;
-        /* Prepend the idle history, oldest sample first: the capture starts
-         * as [history | trigger block | following blocks], so the fricative
-         * onset that failed to open the VAD is included; the fixed 1 s
-         * model window is cropped later (capture_finish). */
-        {
-          uint32_t pre_n = (s_preroll_fill < (uint32_t)DESIRED_SAMPLES)
-                               ? s_preroll_fill
-                               : (uint32_t)DESIRED_SAMPLES;
-          uint32_t start = (s_preroll_fill >= PREROLL_SAMPLES)
-                               ? s_preroll_w
-                               : 0;
-          uint32_t first = PREROLL_SAMPLES - start;
-          if (first > pre_n)
-            first = pre_n;
-          memcpy(s_capture + s_cap_len, s_capture + PREROLL_OFF + start,
-                 (size_t)first * sizeof(int16_t));
-          memcpy(s_capture + s_cap_len + first, s_capture + PREROLL_OFF,
-                 (size_t)(pre_n - first) * sizeof(int16_t));
-          s_cap_len += pre_n;
-        }
+        /* No history copy needed: the rolling ring already holds the last
+         * ~1 s of idle audio, so the fricative onset before this edge is
+         * inside the window that capture_finish will anchor. */
       }
       else if (!act && prev)
       {
@@ -759,23 +682,23 @@ void AudioApp_Process(void)
       }
       else
       {
-        preroll_write(blk, AS_DMA_HALF_FRAMES);
-        continue; /* still idle - keep the pre-roll history rolling */
+        continue; /* still idle - the ring keeps the history rolling */
       }
     }
 
-    /* 3 - capture: append this block (the trigger block included).
-     * Speech content counts only blocks that were truly loud (above the VAD
-     * hold threshold), so the 300 ms hangover tail is not counted.
+    /* 3 - capture: count this block (the trigger block included). The audio
+     * itself stays in the rolling ring - nothing is copied. Speech content
+     * counts only blocks that were truly loud (above the VAD hold
+     * threshold), so the 300 ms hangover tail is not counted.
      * s_loud_end tracks the capture-local end of the last loud block - the
-     * fixed model window is later cropped relative to it (capture_finish).
+     * fixed model window is later anchored relative to it (capture_finish).
      * Peak block energy is tracked for VAD threshold tuning. */
     {
       uint32_t en = audio_vad_energy();
       if (en > s_peak_e)
         s_peak_e = en;
     }
-    capture_append(blk, AS_DMA_HALF_FRAMES);
+    s_cap_len += AS_DMA_HALF_FRAMES;
     if (audio_vad_loud())
     {
       s_speech_len += AS_DMA_HALF_FRAMES;
@@ -792,7 +715,6 @@ void AudioApp_Process(void)
     {
       handle_utterance(capture_finish());
       s_phase = PH_IDLE;
-      preroll_reset(); /* history predates this capture: stale */
       /* May still be the utterance tail (or a follow-up word): only a
        * fresh OFF -> ON edge starts a new capture. */
       s_vad_prev = audio_vad_active();
@@ -808,18 +730,16 @@ void AudioApp_Process(void)
              (unsigned long)(s_speech_len * 1000UL / SAMPLE_RATE),
              (unsigned long)s_peak_e);
       s_phase = PH_IDLE;
-      preroll_reset(); /* history predates the discarded capture: stale */
       continue;
     }
 
-    /* Safety cap: speech still running at the buffer limit - take what
-     * there is (capture_finish keeps the last loud block + tail inside
-     * the window; the keyword HEAD may be trimmed, never the tail). */
-    if (s_cap_len >= CAPTURE_MAX_SAMPLES)
+    /* Safety cap: VAD stuck open for 4 s - take what there is
+     * (capture_finish keeps the last loud block + tail inside the window;
+     * the keyword HEAD may be trimmed, never the tail). */
+    if (s_cap_len >= CAPTURE_CAP_SAMPLES)
     {
       handle_utterance(capture_finish());
       s_phase = PH_IDLE;
-      preroll_reset();
       s_vad_prev = audio_vad_active();
       if (!s_vad_prev)
         printf("[VAD] OFF active=%lums\r\n",

@@ -9,6 +9,8 @@
  *     右:  win[N+i]  = win[N-2-i]      (i = 0..P-1)
  *  2) 每帧算完 mel 后直接按 LM_MODEL_IN_SCALE/ZP 量化 int8，省去
  *     4040 float 特征缓冲（约 16KB RAM）。
+ *  3) 环形窗口变体 logmel_process_window_ring(): 窗口不落盘，直接从
+ *     捕获环按槽位取数，reflect 填充现算（数值与线性版逐位一致）。
  *
  * RAM 占用: s_fft_in/s_fft_out/s_pow/s_mel ≈ 5.3KB 静态（Hann 窗直接索引
  *     tables.h 的 flash 常量 LM_HANN480，不在 RAM 里建副本）。
@@ -51,6 +53,34 @@ static inline int8_t lm_quant1(float x)
     return (int8_t)v;
 }
 
+/* 帧尾段（FFT -> 功率谱 -> mel 投影 -> log -> 量化散写，第 t 帧），
+ * 线性版与环形版共享，保证两条路径数值逐位一致。 */
+static void lm_frame_tail(int t, int8_t *q)
+{
+    arm_rfft_fast_f32(&S_rfft, s_fft_in, s_fft_out, 0);  /* CMSIS 实 FFT */
+
+    /* 打包格式: out[0]=DC, out[1]=Nyquist, 之后 Re/Im 交替 */
+    s_pow[0] = s_fft_out[0] * s_fft_out[0];
+    s_pow[LM_N_BINS - 1] = s_fft_out[1] * s_fft_out[1];
+    for (int k = 1; k < LM_N_BINS - 1; k++)
+        s_pow[k] = s_fft_out[2 * k] * s_fft_out[2 * k] +
+                   s_fft_out[2 * k + 1] * s_fft_out[2 * k + 1];
+
+    for (int b = 0; b < LM_N_MELS; b++) {  /* 稀疏 mel 投影 */
+        const lm_band_t *bd = &LM_BANDS[b];
+        float m = 0.0f;
+        for (int j = 0; j < bd->width; j++)
+            m += bd->w[j] * s_pow[bd->start_bin + j];
+        s_mel[b] = m;
+    }
+
+    /* +eps 后向量快速 log，再量化并按 [mel][t] 布局散写 */
+    arm_offset_f32(s_mel, 1e-6f, s_mel, LM_N_MELS);
+    arm_vlog_f32(s_mel, s_mel, LM_N_MELS);
+    for (int b = 0; b < LM_N_MELS; b++)
+        q[b * LM_N_FRAMES + t] = lm_quant1(s_mel[b]);
+}
+
 void logmel_process_window(int16_t *win, int8_t *q)
 {
     lm_setup();
@@ -73,28 +103,43 @@ void logmel_process_window(int16_t *win, int8_t *q)
             s_fft_in[i] = (float)src[i] * (1.0f / 32768.0f) * g;
         }
 
-        arm_rfft_fast_f32(&S_rfft, s_fft_in, s_fft_out, 0);  /* CMSIS 实 FFT */
+        lm_frame_tail(t, q);
+    }
+}
 
-        /* 打包格式: out[0]=DC, out[1]=Nyquist, 之后 Re/Im 交替 */
-        s_pow[0] = s_fft_out[0] * s_fft_out[0];
-        s_pow[LM_N_BINS - 1] = s_fft_out[1] * s_fft_out[1];
-        for (int k = 1; k < LM_N_BINS - 1; k++)
-            s_pow[k] = s_fft_out[2 * k] * s_fft_out[2 * k] +
-                       s_fft_out[2 * k + 1] * s_fft_out[2 * k + 1];
+void logmel_process_window_ring(const int16_t *base, uint32_t cap,
+                                uint32_t slot0, uint32_t lead_zeros,
+                                int8_t *q)
+{
+    lm_setup();
 
-        for (int b = 0; b < LM_N_MELS; b++) {  /* 稀疏 mel 投影 */
-            const lm_band_t *bd = &LM_BANDS[b];
-            float m = 0.0f;
-            for (int j = 0; j < bd->width; j++)
-                m += bd->w[j] * s_pow[bd->start_bin + j];
-            s_mel[b] = m;
+    for (int t = 0; t < LM_N_FRAMES; t++) {
+        /* 环形取数 + reflect 现算: 帧内位置 i 的窗口虚索引
+         * j = t*HOP + i - PAD（0 = 窗口首样本）。reflect 语义与线性版
+         * 就地填充一致: j<0 取 -j，j>=N 取 2N-2-j。 */
+        for (int i = 0; i < LM_N_FFT; i++)
+        {
+            int j = t * LM_HOP + i - LM_PAD;
+            if (j < 0)
+                j = -j;                          /* 左 reflect: -k -> +k */
+            else if (j >= LM_DESIRED)
+                j = 2 * LM_DESIRED - 2 - j;      /* 右 reflect: N+k -> N-2-k */
+
+            float v = 0.0f;
+            if (j >= (int)lead_zeros) {          /* 落在真实捕获数据内 */
+                uint32_t slot = slot0 + (uint32_t)j;
+                if (slot >= cap)
+                    slot -= cap;                 /* j < 16000 < cap，单次回绕 */
+                v = (float)base[slot];
+            }
+
+            /* 窗增益按帧内位置 i（与线性版一致，reflect 样本同样加窗） */
+            float g = (i >= LM_WIN_LO && i < LM_WIN_HI)
+                          ? LM_HANN480[i - LM_WIN_LO] : 0.0f;
+            s_fft_in[i] = v * (1.0f / 32768.0f) * g;
         }
 
-        /* +eps 后向量快速 log，再量化并按 [mel][t] 布局散写 */
-        arm_offset_f32(s_mel, 1e-6f, s_mel, LM_N_MELS);
-        arm_vlog_f32(s_mel, s_mel, LM_N_MELS);
-        for (int b = 0; b < LM_N_MELS; b++)
-            q[b * LM_N_FRAMES + t] = lm_quant1(s_mel[b]);
+        lm_frame_tail(t, q);
     }
 }
 

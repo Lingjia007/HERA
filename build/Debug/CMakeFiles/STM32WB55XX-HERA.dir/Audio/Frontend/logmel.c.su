@@ -1,2 +1,4 @@
-D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Audio/Frontend/logmel.c:54:6:logmel_process_window	64	static
-D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Audio/Frontend/logmel.c:101:6:logmel_quantize	4	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Audio/Frontend/logmel.c:58:13:lm_frame_tail	24	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Audio/Frontend/logmel.c:84:6:logmel_process_window	32	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Audio/Frontend/logmel.c:110:6:logmel_process_window_ring	48	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Audio/Frontend/logmel.c:146:6:logmel_quantize	4	static
