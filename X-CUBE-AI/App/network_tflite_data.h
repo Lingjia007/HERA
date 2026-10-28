@@ -18,7 +18,7 @@ extern const uint8_t g_tflm_network_model_data[];
 extern const int g_tflm_network_model_data_len;
 
 #undef TFLM_NETWORK_TENSOR_AREA_SIZE
-#define TFLM_NETWORK_TENSOR_AREA_SIZE 66560
+#define TFLM_NETWORK_TENSOR_AREA_SIZE 52736
 
 #undef TFLM_NETWORK_NAME
 #define TFLM_NETWORK_NAME "echodscnn"

@@ -10,7 +10,8 @@
  *  2) 每帧算完 mel 后直接按 LM_MODEL_IN_SCALE/ZP 量化 int8，省去
  *     4040 float 特征缓冲（约 16KB RAM）。
  *
- * RAM 占用: s_win/s_fft_in/s_fft_out/s_pow/s_mel ≈ 7.3KB 静态。
+ * RAM 占用: s_fft_in/s_fft_out/s_pow/s_mel ≈ 5.3KB 静态（Hann 窗直接索引
+ *     tables.h 的 flash 常量 LM_HANN480，不在 RAM 里建副本）。
  * 上板 Cortex-M4F: -DARM_MATH_CM4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard。
  */
 #include "logmel.h"
@@ -19,21 +20,22 @@
 #include <string.h>
 
 /* ---- 内部静态缓冲（单线程） ------------------------------------------ */
-static float s_win[LM_N_FFT];                  /* 16 零 | hann480 | 16 零 */
 static float s_fft_in[LM_N_FFT], s_fft_out[LM_N_FFT];
 static float s_pow[LM_N_BINS];
 static float s_mel[LM_N_MELS];                 /* 每帧 mel 和，供向量 log */
 static arm_rfft_fast_instance_f32 S_rfft;
 static int   s_ready = 0;
 
+/* 窗函数布局（原 s_win 缓冲已省）: 16 零 | hann480 | 16 零，
+ * 等价于对 LM_HANN480 直接做偏移索引。 */
+#define LM_WIN_LO ((LM_N_FFT - LM_WIN) / 2)
+#define LM_WIN_HI (LM_WIN_LO + LM_WIN)
+
 static void lm_setup(void)
 {
     if (s_ready)
         return;
     arm_rfft_fast_init_f32(&S_rfft, LM_N_FFT);
-    memset(s_win, 0, sizeof(s_win));
-    memcpy(s_win + (LM_N_FFT - LM_WIN) / 2, LM_HANN480,
-           LM_WIN * sizeof(float));
     s_ready = 1;
 }
 
@@ -62,9 +64,14 @@ void logmel_process_window(int16_t *win, int8_t *q)
     for (int t = 0; t < LM_N_FRAMES; t++) {
         const int16_t *src = win - LM_PAD + t * LM_HOP;
 
-        /* 融合循环: int16 -> float（×2^-15, 精确）+ Hann 加窗, 单遍完成 */
+        /* 融合循环: int16 -> float（×2^-15, 精确）+ Hann 加窗, 单遍完成。
+         * 窗增益直接索引 flash 常量 LM_HANN480（两侧 i 越界处增益为 0）。 */
         for (int i = 0; i < LM_N_FFT; i++)
-            s_fft_in[i] = (float)src[i] * (1.0f / 32768.0f) * s_win[i];
+        {
+            float g = (i >= LM_WIN_LO && i < LM_WIN_HI)
+                          ? LM_HANN480[i - LM_WIN_LO] : 0.0f;
+            s_fft_in[i] = (float)src[i] * (1.0f / 32768.0f) * g;
+        }
 
         arm_rfft_fast_f32(&S_rfft, s_fft_in, s_fft_out, 0);  /* CMSIS 实 FFT */
 

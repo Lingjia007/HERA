@@ -956,19 +956,11 @@
 	[
 		{
 			"backtrace" : 4,
-			"id" : "USB_Device_Library::@768a070a0fe75716b479"
+			"id" : "tensorflow::@768a070a0fe75716b479"
 		},
 		{
 			"backtrace" : 5,
 			"id" : "tflm_runtime::@6890427a1f51a3e7e1df"
-		},
-		{
-			"backtrace" : 4,
-			"id" : "STM32_Drivers::@768a070a0fe75716b479"
-		},
-		{
-			"backtrace" : 4,
-			"id" : "tensorflow::@768a070a0fe75716b479"
 		},
 		{
 			"backtrace" : 4,
@@ -977,6 +969,14 @@
 		{
 			"backtrace" : 4,
 			"id" : "STM32_WPAN::@768a070a0fe75716b479"
+		},
+		{
+			"backtrace" : 4,
+			"id" : "STM32_Drivers::@768a070a0fe75716b479"
+		},
+		{
+			"backtrace" : 4,
+			"id" : "USB_Device_Library::@768a070a0fe75716b479"
 		},
 		{
 			"backtrace" : 4,

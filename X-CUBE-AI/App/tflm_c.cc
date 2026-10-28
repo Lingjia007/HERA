@@ -46,9 +46,6 @@
 #include "tensorflow/lite/micro//memory_helpers.h"
 #include "tensorflow/lite/micro/memory_planner/greedy_memory_planner.h"
 
-/* KWS-optimized int8 kernels (broadcast ADD/MUL + LUT LOGISTIC) */
-#include "kws_opt_kernels.h"
-
 
 #define TF_MAJOR_VERSION      0
 #define TF_MINOR_VERSION      0
@@ -367,17 +364,17 @@ TfLiteStatus tflm_c_create(const uint8_t *model_data,
   _resolver.AddReshape();
   _resolver.AddMean();
   _resolver.AddPad();
-  _resolver.AddLogistic(tflite::Register_KWS_LOGISTIC_INT8());
+  _resolver.AddLogistic();
   _resolver.AddMaxPool2D(tflite::Register_MAX_POOL_2D_INT8()); // Register_MAX_POOL_2D_INT8
   _resolver.AddResizeNearestNeighbor();
   _resolver.AddResizeBilinear();
   _resolver.AddTranspose();
-  _resolver.AddMul(tflite::Register_KWS_MUL_INT8());
+  _resolver.AddMul();
   _resolver.AddSub();
   _resolver.AddShape();
   _resolver.AddTransposeConv();
   _resolver.AddPack();
-  _resolver.AddAdd(tflite::Register_KWS_ADD_INT8());
+  _resolver.AddAdd();
   _resolver.AddQuantize();
   _resolver.AddDequantize();
   _resolver.AddStridedSlice();

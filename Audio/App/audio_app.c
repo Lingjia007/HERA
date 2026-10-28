@@ -82,10 +82,6 @@ static uint8_t s_tensor_arena[TFLM_NETWORK_TENSOR_AREA_SIZE]
 static uint32_t s_tflm; /* interpreter handle, 0 = not created */
 static struct tflm_c_tensor_info s_in, s_out;
 
-/* Frontend output: one 1 s clip -> 40x101 int8 logmel features
- * (quantized inside the frontend with the model input scale/zp). */
-static int8_t s_features[LM_N_MELS * LM_N_FRAMES];
-
 /* Capture span ceiling: the capture keeps following the utterance until
  * the VAD closes (or this cap), then the model's fixed 1 s window is
  * cropped out. 1.35 s = the 500 ms preroll + 850 ms of live capture,
@@ -112,9 +108,14 @@ static int16_t s_blk[AS_DMA_HALF_FRAMES];
  * recovering the fricative onset: 250 ms proved too short for a mid-word
  * VAD open (observed speech spans ~520 ms for ~900 ms keywords). Training
  * places keywords at random window positions, so the shifted layout stays
- * in-distribution. */
+ * in-distribution.
+ * The history lives in the TAIL of s_capture (PREROLL_OFF) instead of a
+ * separate buffer: it is written/copied only while idle, and s_capture is
+ * dead while idle - so both share one allocation (16 KB saved). During a
+ * capture the growing utterance may overwrite the tail region; the history
+ * has already been copied to the head by then and is reset at finish. */
 #define PREROLL_SAMPLES (SAMPLE_RATE / 2) /* 500 ms */
-static int16_t s_preroll[PREROLL_SAMPLES];
+#define PREROLL_OFF (CAPTURE_MAX_SAMPLES - PREROLL_SAMPLES)
 static uint32_t s_preroll_w;    /* write index = oldest sample once full */
 static uint32_t s_preroll_fill; /* valid history samples, 0..PREROLL_SAMPLES */
 
@@ -359,7 +360,8 @@ static void handle_utterance(int lbl)
 }
 
 /* Rolling idle history: remember the newest audio so the capture window
- * can be extended backwards across the fricative onset on VAD open. */
+ * can be extended backwards across the fricative onset on VAD open.
+ * Writes into the tail of s_capture (see PREROLL_OFF above). */
 static void preroll_write(const int16_t *src, uint32_t n)
 {
   uint32_t total = n;
@@ -367,7 +369,8 @@ static void preroll_write(const int16_t *src, uint32_t n)
   {
     uint32_t room = PREROLL_SAMPLES - s_preroll_w;
     uint32_t k = (n < room) ? n : room;
-    memcpy(s_preroll + s_preroll_w, src, (size_t)k * sizeof(int16_t));
+    memcpy(s_capture + PREROLL_OFF + s_preroll_w, src,
+           (size_t)k * sizeof(int16_t));
     s_preroll_w += k;
     if (s_preroll_w == PREROLL_SAMPLES)
       s_preroll_w = 0;
@@ -397,9 +400,11 @@ static void preroll_reset(void)
 static int run_inference(void)
 {
   uint32_t t0 = HAL_GetTick();
-  logmel_process_window(s_capture + LM_PAD, s_features);
+  /* Frontend writes straight into the model input tensor: same [40][101]
+   * mel-major int8 layout, byte size checked in AudioApp_Init (s_in.bytes
+   * == LM_N_MELS * LM_N_FRAMES). No staging buffer needed. */
+  logmel_process_window(s_capture + LM_PAD, (int8_t *)s_in.data);
   uint32_t fe_ms = HAL_GetTick() - t0; /* logmel frontend only */
-  memcpy(s_in.data, s_features, s_in.bytes);
 
   if (tflm_c_invoke(s_tflm) != kTfLiteOk)
   {
@@ -739,9 +744,9 @@ void AudioApp_Process(void)
           uint32_t first = PREROLL_SAMPLES - start;
           if (first > pre_n)
             first = pre_n;
-          memcpy(s_capture + s_cap_len, s_preroll + start,
+          memcpy(s_capture + s_cap_len, s_capture + PREROLL_OFF + start,
                  (size_t)first * sizeof(int16_t));
-          memcpy(s_capture + s_cap_len + first, s_preroll,
+          memcpy(s_capture + s_cap_len + first, s_capture + PREROLL_OFF,
                  (size_t)(pre_n - first) * sizeof(int16_t));
           s_cap_len += pre_n;
         }

@@ -39,9 +39,12 @@ extern "C"
 /* PCM frames per DMA half-buffer (~10 ms) */
 #define AS_DMA_HALF_FRAMES 160
 
-/* Ring buffer geometry: 4 frames x 3200 samples = 12800 samples (~800 ms) */
+/* Ring buffer geometry: 2 frames x 3200 samples = 6400 samples (~400 ms).
+ * The FIFO only bridges DMA IRQ -> main loop (one 10 ms block per poll);
+ * inference runs with the SAI stopped, so no deep buffering is needed.
+ * On-device logs show drop=0 at 400 ms even with USB/CLI activity. */
 #define AS_RING_NB_SAMPLES 3200
-#define AS_RING_NB_FRAMES 4
+#define AS_RING_NB_FRAMES 2
 
   /* Initialize the ring buffer, the PDM2PCM filter and the VAD. */
   void AudioStream_init(void);

@@ -414,11 +414,6 @@ class MicroMutableOpResolver : public MicroOpResolver {
                       ParseLogistic);
   }
 
-  /* Custom-registration overload (as in newer upstream tflite-micro). */
-  TfLiteStatus AddLogistic(const TFLMRegistration& registration) {
-    return AddBuiltin(BuiltinOperator_LOGISTIC, registration, ParseLogistic);
-  }
-
   TfLiteStatus AddLogSoftmax() {
     return AddBuiltin(BuiltinOperator_LOG_SOFTMAX,
                       tflite::Register_LOG_SOFTMAX(), ParseLogSoftmax);
