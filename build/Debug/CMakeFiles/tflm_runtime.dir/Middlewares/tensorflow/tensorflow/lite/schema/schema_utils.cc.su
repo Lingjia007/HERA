@@ -1,0 +1,2 @@
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/schema/schema_utils.cc:22:17:tflite::BuiltinOperator tflite::GetBuiltinCode(const OperatorCode*)	0	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/schema/schema_utils.cc:31:17:tflite::BuiltinOperator tflite::GetBuiltinCode(const OperatorCodeT*)	0	static

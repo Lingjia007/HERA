@@ -1,0 +1,7 @@
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/kernels/op_macros.h:24:13:void AbortImpl()	8	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/kernels/internal/types.h:314:12:int tflite::MatchingFlatSize(const RuntimeShape&, const RuntimeShape&)	16	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/micro/kernels/activations_common.cc:36:6:void tflite::ReluQuantized(const ReluOpData&, const RuntimeShape&, const RuntimeShape&, const int8_t*, int8_t*)	32	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/micro/kernels/activations_common.cc:82:6:void tflite::ReluFloat(const RuntimeShape&, const float*, const RuntimeShape&, float*)	16	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/micro/kernels/activations_common.cc:93:6:void tflite::Relu6Float(const RuntimeShape&, const float*, const RuntimeShape&, float*)	16	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/micro/kernels/activations_common.cc:105:14:TfLiteStatus tflite::ReluPrepare(TfLiteContext*, TfLiteNode*)	96	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/micro/kernels/activations_common.cc:127:14:TfLiteStatus tflite::Relu6Prepare(TfLiteContext*, TfLiteNode*)	40	static

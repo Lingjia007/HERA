@@ -1,0 +1,5 @@
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/micro/kernels/broadcast_args.cc:31:14:TfLiteStatus tflite::{anonymous}::BroadcastArgsPrepare(TfLiteContext*, TfLiteNode*)	48	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/kernels/op_macros.h:24:13:void AbortImpl()	8	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/kernels/internal/runtime_shape.h:96:7:int tflite::RuntimeShape::FlatSize() const	8	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/micro/kernels/broadcast_args.cc:62:14:TfLiteStatus tflite::{anonymous}::BroadcastArgsEval(TfLiteContext*, TfLiteNode*)	200	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/micro/kernels/broadcast_args.cc:86:18:TFLMRegistration tflite::Register_BROADCAST_ARGS()	16	static

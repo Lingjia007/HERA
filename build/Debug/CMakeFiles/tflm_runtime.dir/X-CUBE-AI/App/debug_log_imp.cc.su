@@ -1,0 +1,2 @@
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/X-CUBE-AI/App/debug_log_imp.cc:27:17:void DebugLog(const char*, va_list)	264	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/X-CUBE-AI/App/debug_log_imp.cc:59:5:int DebugVsnprintf(char*, size_t, const char*, va_list)	0	static

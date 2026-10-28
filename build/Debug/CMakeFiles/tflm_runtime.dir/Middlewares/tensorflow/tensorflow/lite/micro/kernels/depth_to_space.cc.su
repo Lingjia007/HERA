@@ -1,0 +1,6 @@
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/micro/kernels/depth_to_space.cc:96:14:TfLiteStatus tflite::{anonymous}::DepthToSpacePrepare(TfLiteContext*, TfLiteNode*)	64	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/kernels/op_macros.h:24:13:void AbortImpl()	8	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/kernels/internal/runtime_shape.h:109:3:tflite::RuntimeShape::RuntimeShape(int, const tflite::RuntimeShape&, int)	24	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/kernels/internal/runtime_shape.h:133:12:int tflite::Offset(const RuntimeShape&, int, int, int, int)	16	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/micro/kernels/depth_to_space.cc:100:14:TfLiteStatus tflite::{anonymous}::DepthToSpaceEval(TfLiteContext*, TfLiteNode*)	288	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/micro/kernels/depth_to_space.cc:138:18:TFLMRegistration tflite::Register_DEPTH_TO_SPACE()	16	static

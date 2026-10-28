@@ -1,0 +1,4 @@
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/micro/kernels/exp.cc:30:14:TfLiteStatus tflite::{anonymous}::ExpPrepare(TfLiteContext*, TfLiteNode*)	40	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/kernels/op_macros.h:24:13:void AbortImpl()	8	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/micro/kernels/exp.cc:54:14:TfLiteStatus tflite::{anonymous}::ExpEval(TfLiteContext*, TfLiteNode*)	80	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/micro/kernels/exp.cc:75:18:TFLMRegistration tflite::Register_EXP()	16	static

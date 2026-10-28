@@ -1,0 +1,7 @@
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/kernels/op_macros.h:24:13:void AbortImpl()	8	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/kernels/padding.h:44:12:int tflite::ComputeOutSize(TfLitePadding, int, int, int, int)	0	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/micro/kernels/conv_common.cc:38:12:tflite::ConvParams tflite::ConvParamsFloat(const TfLiteConvParams&, const OpDataConv&)	16	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/micro/kernels/conv_common.cc:55:12:tflite::ConvParams tflite::ConvParamsQuantized(const TfLiteConvParams&, const OpDataConv&)	16	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/micro/kernels/conv_common.cc:75:7:void* tflite::ConvInit(TfLiteContext*, const char*, size_t)	8	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/micro/kernels/conv_common.cc:80:14:TfLiteStatus tflite::CalculateOpDataConv(TfLiteContext*, TfLiteNode*, const TfLiteConvParams&, int, int, int, int, int, int, TfLiteType, OpDataConv*)	96	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/micro/kernels/conv_common.cc:139:14:TfLiteStatus tflite::ConvPrepare(TfLiteContext*, TfLiteNode*)	136	static

@@ -4,7 +4,7 @@
  * @brief   ZPL-gated single-shot KWS: the VM3011 ZPL wake line (DOUT) opens
  *          a listening session -> SAI PDM capture + PDM2PCM in the SAI IRQ
  *          -> ring buffer -> energy VAD -> 1 s utterance capture -> full
- *          mel frontend -> echodscnn inference -> single-shot print
+ *          mel frontend -> TFLM (bcresnet) inference -> single-shot print
  *          (USART1). When the session goes quiet, the SAI stops, DOUT is
  *          cleared and the MCU returns to STOP2 until the next ZPL wake.
  *
@@ -24,7 +24,7 @@
  *   -> main loop: consume 10 ms blocks, watch the VAD level; on a rising
  *      edge (OFF -> ON) capture audio into a 1 s buffer,
  *      then run ONE inference on the full 1 s window:
- *      mel (49x40 int8) -> echodscnn (int8 1960 in, 14 logits out)
+ *      logmel (40x101 int8) -> TFLM int8 net (4040 in, 14 logits out)
  *      -> argmax + margin print.
  *
  * The model got too big for the 160 ms sliding-window cadence, so inference
@@ -48,10 +48,10 @@
 #include "audio_app.h"
 #include "audio_stream.h"
 #include "audio_vad.h"
-#include "audio_frontend.h"
+#include "logmel.h"
 #include "audio_params.h"
-#include "echodscnn.h"
-#include "echodscnn_data_params.h"
+#include "tflm_c.h"
+#include "network_tflite_data.h"
 #include "main.h"
 #include "app_conf.h"
 #include "stm32_lpm.h"
@@ -61,9 +61,10 @@
 #include <string.h>
 #include <stdio.h>
 
-/* ---- AI model: echodscnn 14-label classifier -------------------------------
- * Label order matches the model output (training label_map): 0=_silence_,
- * 1=_unknown_, then the 12 keywords. Must match AI_ECHODSCNN_OUT_1_SIZE (14). */
+/* ---- AI model: native TFLM runtime (tflm_c wrapper) ------------------------
+ * 14-label int8 classifier, input [1,40,101] logmel int8, output [1,14] int8
+ * logits. Label order matches the model output (training label_map):
+ * 0=_silence_, 1=_unknown_, then the 12 keywords. */
 #define NUM_LABELS 14
 
 static const char *const kLabelNames[NUM_LABELS] = {
@@ -75,28 +76,22 @@ static const char *const kLabelNames[NUM_LABELS] = {
     "接听电话", "播放音乐",
     "调大音量", "调小音量"};
 
-/* Activations buffer (io buffers are allocated inside it). */
-AI_ALIGNED(32)
-static uint8_t pool0[AI_ECHODSCNN_DATA_ACTIVATION_1_SIZE];
+/* Tensor arena (tensor memory) + TFLM interpreter handle. */
+static uint8_t s_tensor_arena[TFLM_NETWORK_TENSOR_AREA_SIZE]
+    __attribute__((aligned(16)));
+static uint32_t s_tflm; /* interpreter handle, 0 = not created */
+static struct tflm_c_tensor_info s_in, s_out;
 
-static ai_handle s_net = AI_HANDLE_NULL;
-static ai_buffer *s_ai_input;
-static ai_buffer *s_ai_output;
-
-/* IO data pointers (inside pool0: io buffers are allocated in activations). */
-static ai_i8 *s_data_ins[AI_ECHODSCNN_IN_NUM];
-static ai_i8 *s_data_outs[AI_ECHODSCNN_OUT_NUM];
-
-/* Frontend context: one 1 s clip -> 49x40 int8 features.
- * noise_estimate persists across utterances (ambient tracking). */
-static AudioFrontend s_fe;
-static int8_t s_features[SPECTROGRAM_LENGTH * NUM_CHANNELS];
+/* Frontend output: one 1 s clip -> 40x101 int8 logmel features
+ * (quantized inside the frontend with the model input scale/zp). */
+static int8_t s_features[LM_N_MELS * LM_N_FRAMES];
 
 /* Capture span ceiling: the capture keeps following the utterance until
  * the VAD closes (or this cap), then the model's fixed 1 s window is
- * cropped out. 1.5 s covers the 500 ms preroll + a ~1 s keyword + the
- * 300 ms VAD hangover tail with headroom. */
-#define CAPTURE_MAX_SAMPLES (SAMPLE_RATE + (SAMPLE_RATE / 2))
+ * cropped out. 1.35 s = the 500 ms preroll + 850 ms of live capture,
+ * which covers the observed ~520 ms VAD spans + 300 ms hangover; the
+ * full 1.5 s ceiling did not fit in RAM1 next to the TFLM arena. */
+#define CAPTURE_MAX_SAMPLES ((SAMPLE_RATE * 27U) / 20U)
 
 /* 1-second utterance capture span. The capture FOLLOWS the utterance
  * (up to CAPTURE_MAX_SAMPLES below); the fixed 1 s model window is cropped
@@ -195,49 +190,77 @@ static uint8_t s_kws_enabled = 1U;  /* 1 = KWS 唤醒识别默认开；0 = 录�
 static uint32_t s_hold_awake_until; /* debug hold-awake deadline (CLI alive)   */
 static uint8_t s_usb_stopped;        /* USB disconnected for STOP2 (restarted by UsbMsc_Poll) */
 
-static void ai_log_err(const ai_error err, const char *fct)
+/* ---- Per-node profiler ----------------------------------------------------
+ * Prints the wall time of every NN operator on each invoke: locates the hot
+ * operator when inference feels slow. get_time granularity is 1 ms. Set
+ * KWS_NODE_PROFILER to 0 once the diagnosis is done (stdout spam). */
+#define KWS_NODE_PROFILER 0
+#if KWS_NODE_PROFILER
+static uint64_t prof_get_time(int mode)
 {
-  if (fct)
-    printf("AI - Error (%s) - type=0x%02x code=0x%02x\r\n", fct,
-           err.type, err.code);
-  else
-    printf("AI - Error - type=0x%02x code=0x%02x\r\n", err.type, err.code);
+  (void)mode;
+  return (uint64_t)HAL_GetTick();
 }
-
-/* Create and initialize the network instance. */
-static int ai_boostrap(void)
+static int prof_notify(const void *cookie, uint32_t flags,
+                       const struct tflm_c_node *node)
 {
-  ai_error err;
-
-  err = ai_echodscnn_create_and_init(&s_net, (ai_handle[]){pool0}, NULL);
-  if (err.type != AI_ERROR_NONE)
-  {
-    ai_log_err(err, "ai_echodscnn_create_and_init");
-    return -1;
-  }
-
-  s_ai_input = ai_echodscnn_inputs_get(s_net, NULL);
-  s_ai_output = ai_echodscnn_outputs_get(s_net, NULL);
-
-  for (int idx = 0; idx < AI_ECHODSCNN_IN_NUM; idx++)
-    s_data_ins[idx] = (ai_i8 *)s_ai_input[idx].data;
-  for (int idx = 0; idx < AI_ECHODSCNN_OUT_NUM; idx++)
-    s_data_outs[idx] = (ai_i8 *)s_ai_output[idx].data;
-
+  (void)cookie;
+  (void)flags;
+  printf("  ai#%-3u %-24s %lums\r\n", node->node_info.idx,
+         node->node_info.name != NULL ? node->node_info.name : "?",
+         (unsigned long)node->node_info.dur);
   return 0;
 }
+static struct tflm_c_observer_options s_prof_opts = {
+    prof_notify, prof_get_time, NULL, OBSERVER_FLAGS_TIME_ONLY};
+#endif
 
-static int ai_run(void)
+/* Create the TFLM interpreter, bind input/output tensors and sanity-check
+ * their geometry against the frontend (40x101 int8 in, 14 int8 out). */
+static int ai_boostrap(void)
 {
-  ai_i32 batch;
-
-  batch = ai_echodscnn_run(s_net, s_ai_input, s_ai_output);
-  if (batch != 1)
+  TfLiteStatus st = tflm_c_create(g_tflm_network_model_data, s_tensor_arena,
+                                  TFLM_NETWORK_TENSOR_AREA_SIZE, &s_tflm);
+  if (st != kTfLiteOk || s_tflm == 0U)
   {
-    ai_log_err(ai_echodscnn_get_error(s_net), "ai_echodscnn_run");
+    printf("AI - tflm_c_create failed (%d)\r\n", (int)st);
+    s_tflm = 0U;
     return -1;
   }
 
+  if (tflm_c_input(s_tflm, 0, &s_in) != kTfLiteOk ||
+      tflm_c_output(s_tflm, 0, &s_out) != kTfLiteOk)
+  {
+    printf("AI - tensor binding failed\r\n");
+    tflm_c_destroy(s_tflm);
+    s_tflm = 0U;
+    return -1;
+  }
+
+#if KWS_NODE_PROFILER
+  (void)tflm_c_observer_register(s_tflm, &s_prof_opts);
+  (void)tflm_c_observer_start(s_tflm);
+#endif
+
+  printf("[TFLM] %s arena=%u used=%d in=%uB(%u,%u,%u) sc=%g zp=%d "
+         "out=%uB nodes=%d\r\n",
+         TFLM_NETWORK_NAME, (unsigned)TFLM_NETWORK_TENSOR_AREA_SIZE,
+         tflm_c_arena_used_bytes(s_tflm), (unsigned)s_in.bytes,
+         s_in.shape.size >= 1 ? s_in.shape.data[0] : 0,
+         s_in.shape.size >= 2 ? s_in.shape.data[1] : 0,
+         s_in.shape.size >= 3 ? s_in.shape.data[2] : 0,
+         (double)s_in.scale, s_in.zero_point, (unsigned)s_out.bytes,
+         tflm_c_operators_size(s_tflm));
+
+  if (s_in.bytes != LM_N_MELS * LM_N_FRAMES ||
+      s_out.bytes != NUM_LABELS)
+  {
+    printf("AI - tensor size mismatch! expect in=%d out=%d\r\n",
+           LM_N_MELS * LM_N_FRAMES, NUM_LABELS);
+    tflm_c_destroy(s_tflm);
+    s_tflm = 0U;
+    return -1;
+  }
   return 0;
 }
 
@@ -272,15 +295,19 @@ static void capture_append(const int16_t *src, uint32_t n)
  * inference on it. The window is anchored to the utterance END:
  *   end = (last VAD-loud block) + 150 ms tail, clamped to the capture,
  * so the keyword tail is NEVER truncated no matter where the trigger
- * opened - only lead-in silence ahead of the keyword gets cut. If the
- * whole capture is shorter than 1 s, it is right-aligned and the missing
- * head is zero-padded (leading silence is in-distribution for the model).
+ * opened - only lead-in silence ahead of the keyword gets cut. The window
+ * is placed at s_capture + LM_PAD, so the logmel frontend can reflect-pad
+ * IN PLACE using the LM_PAD int16 scratch on both sides (see logmel.h).
+ * If the whole capture is shorter than 1 s, it is right-aligned and the
+ * missing head is zero-padded (leading silence is in-distribution).
  * Result: a constant window layout [lead-in | keyword | ~150 ms tail]. */
 static int run_inference(void); /* (defined after the preroll helpers) */
 static int capture_finish(void)
 {
   uint32_t tail = (SAMPLE_RATE * 3U) / 20U; /* 150 ms trailing quiet */
   uint32_t end = s_loud_end + tail;
+  int16_t *win = s_capture + LM_PAD;
+
   if (end < (uint32_t)DESIRED_SAMPLES)
     end = (uint32_t)DESIRED_SAMPLES; /* always feed a full 1 s window */
   if (end > s_cap_len)
@@ -290,16 +317,26 @@ static int capture_finish(void)
   {
     /* Shorter than 1 s: right-align to the window end, zero-pad the head. */
     uint32_t shift = (uint32_t)DESIRED_SAMPLES - s_cap_len;
-    memmove(s_capture + shift, s_capture, (size_t)s_cap_len * sizeof(int16_t));
-    memset(s_capture, 0, (size_t)shift * sizeof(int16_t));
+    memmove(win + shift, s_capture, (size_t)s_cap_len * sizeof(int16_t));
+    memset(win, 0, (size_t)shift * sizeof(int16_t));
   }
   else
   {
-    /* Window fully inside: slide [end - 1 s, end) down to the buffer start. */
-    memmove(s_capture, s_capture + (end - (uint32_t)DESIRED_SAMPLES),
+    /* Window fully inside: slide [end - 1 s, end) down to the window slot. */
+    memmove(win, s_capture + (end - (uint32_t)DESIRED_SAMPLES),
             (size_t)DESIRED_SAMPLES * sizeof(int16_t));
   }
-  return run_inference();
+
+  /* 推理期间本次识别已不需要新音频：停掉 SAI（PDM 时钟停，mic 短暂回
+   * ZPL），省下每 10 ms 一次的 DMA/PDM2PCM/VAD/ring 中断对 CPU 的抢占
+   * （缩短推理），也杜绝推理期间的 ring overrun 丢样本。推完立即恢复
+   * 采集、刷新 watchdog 基准并丢弃 mic ZPL->NORMAL 唤醒瞬态。 */
+  AudioStream_stop();
+  int r = run_inference();
+  AudioStream_start();
+  s_last_block_tick = HAL_GetTick();
+  s_skip_blocks = 3U; /* ~30 ms 瞬态，不喂 VAD/preroll */
+  return r;
 }
 
 /* 单条语音识别结果的两阶段处理：
@@ -353,19 +390,28 @@ static void preroll_reset(void)
   s_preroll_fill = 0;
 }
 
-/* Full 1 s clip -> 49x40 features -> one inference -> single-shot print:
- * argmax over all 14 labels, margin = top1 - top2 (all classes included).
+/* Full 1 s clip -> 40x101 logmel int8 features -> one TFLM inference ->
+ * single-shot print: argmax over all 14 labels, margin = top1 - top2.
  * One line per detected utterance, for threshold tuning.
  * Returns the argmax label index (0/1 = silence/unknown), -1 on AI error. */
 static int run_inference(void)
 {
-  audio_frontend_process_clip(&s_fe, s_capture, DESIRED_SAMPLES, s_features);
-  memcpy(s_data_ins[0], s_features, AI_ECHODSCNN_IN_1_SIZE_BYTES);
+  uint32_t t0 = HAL_GetTick();
+  logmel_process_window(s_capture + LM_PAD, s_features);
+  uint32_t fe_ms = HAL_GetTick() - t0; /* logmel frontend only */
+  memcpy(s_in.data, s_features, s_in.bytes);
 
-  if (ai_run() != 0)
+  if (tflm_c_invoke(s_tflm) != kTfLiteOk)
+  {
+    printf("AI - tflm_c_invoke failed\r\n");
     return -1;
+  }
+  /* NN only (subtract the frontend); fe+nn printed once per utterance. */
+  uint32_t infer_ms = HAL_GetTick() - t0 - fe_ms;
+  printf("[KWS] time logmel=%lums nn=%lums\r\n",
+         (unsigned long)fe_ms, (unsigned long)infer_ms);
 
-  const int8_t *out = (const int8_t *)s_data_outs[0];
+  const int8_t *out = (const int8_t *)s_out.data;
   int max_i = 0;
   for (int i = 1; i < NUM_LABELS; i++)
     if (out[i] > out[max_i])
@@ -381,20 +427,20 @@ static int run_inference(void)
   uint32_t dropped = AudioStream_get_ring()->droppedSamples - s_drop_base;
 
   if (max_i > 1 && out[max_i] >= KWS_MIN_SCORE && margin >= KWS_MIN_MARGIN)
-    printf("[KWS] RESULT #%-2d %-8s score=%d margin=%d speech=%lums peak_e=%lu drop=%lu\r\n",
+    printf("[KWS] RESULT #%-2d %-8s score=%d margin=%d speech=%lums peak_e=%lu drop=%lu infer=%lums\r\n",
            max_i, kLabelNames[max_i], out[max_i], margin,
            (unsigned long)speech_ms, (unsigned long)s_peak_e,
-           (unsigned long)dropped);
+           (unsigned long)dropped, (unsigned long)infer_ms);
   else if (max_i > 1)
-    printf("[KWS] weak   #%-2d %-8s score=%d margin=%d speech=%lums peak_e=%lu drop=%lu\r\n",
+    printf("[KWS] weak   #%-2d %-8s score=%d margin=%d speech=%lums peak_e=%lu drop=%lu infer=%lums\r\n",
            max_i, kLabelNames[max_i], out[max_i], margin,
            (unsigned long)speech_ms, (unsigned long)s_peak_e,
-           (unsigned long)dropped);
+           (unsigned long)dropped, (unsigned long)infer_ms);
   else
-    printf("[KWS] reject  #%-2d %-9s score=%d margin=%d speech=%lums peak_e=%lu drop=%lu\r\n",
+    printf("[KWS] reject  #%-2d %-9s score=%d margin=%d speech=%lums peak_e=%lu drop=%lu infer=%lums\r\n",
            max_i, kLabelNames[max_i], out[max_i], margin,
            (unsigned long)speech_ms, (unsigned long)s_peak_e,
-           (unsigned long)dropped);
+           (unsigned long)dropped, (unsigned long)infer_ms);
 
   /* Complete model output: one line per class, score-descending. */
   int order[NUM_LABELS];
@@ -419,14 +465,11 @@ static int run_inference(void)
 
 void AudioApp_Init(VM3011_Dev_t *vm)
 {
-  printf("\r\n=== micro_speech ZPL wake single-shot ===\r\n");
+  printf("\r\n=== logmel + TFLM ZPL wake single-shot ===\r\n");
 
   s_vm = vm;
 
   ai_boostrap();
-
-  /* Frontend for full 1 s clips (noise_estimate persists between clips). */
-  audio_frontend_init(&s_fe);
 
   /* AudioStream_init sets up the ring + PDM filter + VAD. */
   AudioStream_init();
@@ -557,7 +600,7 @@ void AudioApp_Process(void)
   UTIL_LPM_SetOffMode(1U << CFG_LPM_APP, UTIL_LPM_DISABLE);
 
 #if AUDIO_ZPL_WAKE
-  if (s_awake_until == 0U || !s_net)
+  if (s_awake_until == 0U || s_tflm == 0U)
   {
     /* Debug hold-awake window (CLI activity) or USB U-disk mounted: veto
      * STOP2 so the shell / the disk stay usable; the sequencer idles in
@@ -588,7 +631,7 @@ void AudioApp_Process(void)
 #else
   /* 连续采集调试模式：SAI 常开，只允许 SLEEP 空闲，永不进 STOP2。 */
   UTIL_LPM_SetStopMode(1U << CFG_LPM_APP, UTIL_LPM_DISABLE);
-  if (!s_net)
+  if (s_tflm == 0U)
     return;
 #endif
 
@@ -734,10 +777,13 @@ void AudioApp_Process(void)
       s_loud_end = s_cap_len;
     }
 
-    /* 4 - utterance finished: the VAD is fully closed (300 ms hangover
-     * included in 'act') after real speech inside -> crop the fixed 1 s
-     * window anchored to the keyword end and run ONE inference. */
-    if (!act && s_speech_len >= VAD_MIN_SPEECH_SAMPLES)
+    /* 4 - utterance finished: the fixed 1 s window is complete once the
+     * 150 ms quiet tail after the last loud block is inside the capture -
+     * infer IMMEDIATELY instead of waiting out the VAD 300 ms hangover
+     * (that trailing audio would not enter the window anyway):
+     * 感知延迟直接少 150 ms。 */
+    if (s_speech_len >= VAD_MIN_SPEECH_SAMPLES &&
+        s_cap_len >= s_loud_end + ((SAMPLE_RATE * 3U) / 20U))
     {
       handle_utterance(capture_finish());
       s_phase = PH_IDLE;

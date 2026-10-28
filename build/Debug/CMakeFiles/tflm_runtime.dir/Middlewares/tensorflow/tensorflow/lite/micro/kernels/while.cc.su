@@ -1,0 +1,4 @@
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/micro/kernels/while.cc:44:14:TfLiteStatus tflite::{anonymous}::WhilePrepare(TfLiteContext*, TfLiteNode*)	48	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/micro/kernels/while.cc:77:14:TfLiteStatus tflite::{anonymous}::WhileEval(TfLiteContext*, TfLiteNode*)	40	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/micro/kernels/while.cc:39:7:void* tflite::{anonymous}::WhileInit(TfLiteContext*, const char*, size_t)	8	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/micro/kernels/while.cc:129:18:TFLMRegistration tflite::Register_WHILE()	16	static

@@ -1,0 +1,4 @@
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/micro/kernels/split_v.cc:74:14:TfLiteStatus tflite::{anonymous}::SplitVPrepare(TfLiteContext*, TfLiteNode*)	32	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/kernels/op_macros.h:24:13:void AbortImpl()	8	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/micro/kernels/split_v.cc:88:14:TfLiteStatus tflite::{anonymous}::SplitVEval(TfLiteContext*, TfLiteNode*)	64	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/micro/kernels/split_v.cc:123:18:TFLMRegistration tflite::Register_SPLIT_V()	16	static

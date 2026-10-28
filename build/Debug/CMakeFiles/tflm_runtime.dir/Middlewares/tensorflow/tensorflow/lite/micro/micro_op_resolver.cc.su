@@ -1,0 +1,1 @@
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/micro/micro_op_resolver.cc:24:14:TfLiteStatus tflite::GetRegistrationFromOpCode(const OperatorCode*, const MicroOpResolver&, const TFLMRegistration**)	24	static

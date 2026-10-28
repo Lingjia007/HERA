@@ -1,0 +1,2 @@
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/micro/kernels/quantize.cc:28:7:void* tflite::{anonymous}::InitQuantizeReference(TfLiteContext*, const char*, size_t)	8	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/micro/kernels/quantize.cc:37:18:TFLMRegistration tflite::Register_QUANTIZE()	16	static

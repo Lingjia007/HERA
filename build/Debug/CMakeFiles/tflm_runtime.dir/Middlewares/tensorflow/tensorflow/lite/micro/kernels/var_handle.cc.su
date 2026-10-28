@@ -1,0 +1,4 @@
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/micro/kernels/var_handle.cc:75:14:TfLiteStatus tflite::{anonymous}::VarHandleEval(TfLiteContext*, TfLiteNode*)	8	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/micro/kernels/var_handle.cc:44:14:TfLiteStatus tflite::{anonymous}::VarHandlePrepare(TfLiteContext*, TfLiteNode*)	24	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/micro/kernels/var_handle.cc:39:7:void* tflite::{anonymous}::VarHandleInit(TfLiteContext*, const char*, size_t)	8	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/micro/kernels/var_handle.cc:89:18:TFLMRegistration tflite::Register_VAR_HANDLE()	16	static

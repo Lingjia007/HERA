@@ -1,0 +1,7 @@
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/micro/kernels/space_to_batch_nd.cc:48:14:TfLiteStatus tflite::{anonymous}::SpaceToBatchNDPrepare(TfLiteContext*, TfLiteNode*)	40	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/kernels/op_macros.h:24:13:void AbortImpl()	8	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/micro/kernels/space_to_batch_nd.cc:42:7:void* tflite::{anonymous}::SpaceToBatchNDInit(TfLiteContext*, const char*, size_t)	8	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/kernels/internal/runtime_shape.h:133:12:int tflite::Offset(const RuntimeShape&, int, int, int, int)	16	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/kernels/internal/reference/space_to_batch_nd.h:28:21:tflite::RuntimeShape tflite::reference_ops::ExtendShapeSpaceToBatch(const tflite::RuntimeShape&)	48	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/micro/kernels/space_to_batch_nd.cc:71:14:TfLiteStatus tflite::{anonymous}::SpaceToBatchNDEval(TfLiteContext*, TfLiteNode*)	448	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/micro/kernels/space_to_batch_nd.cc:118:18:TFLMRegistration tflite::Register_SPACE_TO_BATCH_ND()	16	static

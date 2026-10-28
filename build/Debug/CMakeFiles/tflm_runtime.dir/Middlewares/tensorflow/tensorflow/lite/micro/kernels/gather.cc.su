@@ -1,0 +1,4 @@
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/micro/kernels/gather.cc:100:14:TfLiteStatus tflite::{anonymous}::GatherPrepare(TfLiteContext*, TfLiteNode*)	64	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/kernels/op_macros.h:24:13:void AbortImpl()	8	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/micro/kernels/gather.cc:191:14:TfLiteStatus tflite::{anonymous}::GatherEval(TfLiteContext*, TfLiteNode*)	96	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/micro/kernels/gather.cc:220:18:TFLMRegistration tflite::Register_GATHER()	16	static

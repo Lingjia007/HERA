@@ -1,0 +1,6 @@
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/kernels/op_macros.h:24:13:void AbortImpl()	8	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/kernels/kernel_util.h:194:16:int64_t tflite::NumElements(const TfLiteTensor*)	32	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/micro/kernels/embedding_lookup.cc:68:14:TfLiteStatus tflite::{anonymous}::EmbeddingLookUpPrepare(TfLiteContext*, TfLiteNode*)	56	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/micro/kernels/embedding_lookup.cc:123:14:TfLiteStatus tflite::{anonymous}::EvalSimple(const OpData&, const TfLiteEvalTensor*, const TfLiteEvalTensor*, TfLiteEvalTensor*)	32	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/micro/kernels/embedding_lookup.cc:181:14:TfLiteStatus tflite::{anonymous}::EmbeddingLookUpEval(TfLiteContext*, TfLiteNode*)	32	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/micro/kernels/embedding_lookup.cc:209:18:TFLMRegistration tflite::Register_EMBEDDING_LOOKUP()	16	static

@@ -1,0 +1,4 @@
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/micro/micro_context.cc:42:15:TfLiteTensor* tflite::MicroContext::AllocateTempInputTensor(const TfLiteNode*, int)	4	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/micro/micro_context.cc:52:15:TfLiteTensor* tflite::MicroContext::AllocateTempOutputTensor(const TfLiteNode*, int)	4	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/micro/micro_context.cc:62:15:TfLiteTensor* tflite::MicroContext::AllocateTempIntermediateTensor(const TfLiteNode*, int)	4	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/micro/micro_context.cc:72:6:)	12	static

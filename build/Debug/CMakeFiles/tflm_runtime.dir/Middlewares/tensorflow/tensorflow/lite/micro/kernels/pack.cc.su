@@ -1,0 +1,3 @@
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/kernels/op_macros.h:24:13:void AbortImpl()	8	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/micro/kernels/pack.cc:72:14:TfLiteStatus tflite::{anonymous}::PackEval(TfLiteContext*, TfLiteNode*)	56	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/micro/kernels/pack.cc:108:18:TFLMRegistration tflite::Register_PACK()	16	static

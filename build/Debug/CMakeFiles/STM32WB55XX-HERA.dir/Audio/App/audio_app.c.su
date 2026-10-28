@@ -1,8 +1,8 @@
-D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Audio/App/audio_app.c:280:12:capture_finish	144	static
-D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Audio/App/audio_app.c:420:6:AudioApp_Init	24	static
-D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Audio/App/audio_app.c:453:6:AudioApp_ZplNotify	24	static
-D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Audio/App/audio_app.c:515:6:AudioApp_SetKwsEnabled	0	static
-D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Audio/App/audio_app.c:521:9:AudioApp_GetKwsEnabled	0	static
-D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Audio/App/audio_app.c:526:6:AudioApp_HoldAwake	8	static
-D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Audio/App/audio_app.c:533:6:AudioApp_RequestSleep	16	static
-D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Audio/App/audio_app.c:552:6:AudioApp_Process	56	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Audio/App/audio_app.c:305:12:capture_finish	152	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Audio/App/audio_app.c:466:6:AudioApp_Init	96	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Audio/App/audio_app.c:496:6:AudioApp_ZplNotify	24	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Audio/App/audio_app.c:558:6:AudioApp_SetKwsEnabled	0	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Audio/App/audio_app.c:564:9:AudioApp_GetKwsEnabled	0	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Audio/App/audio_app.c:569:6:AudioApp_HoldAwake	8	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Audio/App/audio_app.c:576:6:AudioApp_RequestSleep	16	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Audio/App/audio_app.c:595:6:AudioApp_Process	56	static

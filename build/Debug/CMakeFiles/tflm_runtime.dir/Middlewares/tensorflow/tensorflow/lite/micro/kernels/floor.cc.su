@@ -1,0 +1,3 @@
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/kernels/op_macros.h:24:13:void AbortImpl()	8	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/micro/kernels/floor.cc:29:14:TfLiteStatus tflite::{anonymous}::FloorEval(TfLiteContext*, TfLiteNode*)	96	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/micro/kernels/floor.cc:44:18:TFLMRegistration tflite::Register_FLOOR()	16	static

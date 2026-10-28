@@ -1,0 +1,11 @@
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/core/c/common.cc:163:8:size_t TfLiteIntArrayGetSizeInBytes(int)	0	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/core/c/common.cc:167:5:int TfLiteIntArrayEqual(const TfLiteIntArray*, const TfLiteIntArray*)	8	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/core/c/common.cc:171:5:int TfLiteIntArrayEqualsArray(const TfLiteIntArray*, int, const int*)	8	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/core/c/common.cc:190:5:int TfLiteFloatArrayGetSizeInBytes(int)	0	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/core/c/common.cc:450:13:const char* TfLiteTypeGetName(TfLiteType)	0	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/core/c/common.cc:496:16:TfLiteDelegate TfLiteDelegateCreate()	8	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/core/c/common.cc:499:26:TfLiteAllocationStrategy TfLiteTensorGetAllocationStrategy(const TfLiteTensor*)	0	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/core/c/common.cc:525:20:TfLiteRunStability TfLiteTensorGetBufferAddressStability(const TfLiteTensor*)	0	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/core/c/common.cc:551:20:TfLiteRunStability TfLiteTensorGetDataStability(const TfLiteTensor*)	0	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/core/c/common.cc:579:15:TfLiteRunStep TfLiteTensorGetDataKnownStep(const TfLiteTensor*)	0	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/core/c/common.cc:608:15:TfLiteRunStep TfLiteTensorGetShapeKnownStep(const TfLiteTensor*)	0	static

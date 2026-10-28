@@ -51,7 +51,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     Audio/App/audio_stream.c
     Audio/App/audio_vad.c
     Audio/App/audio_app.c
-    Audio/Frontend/audio_frontend.c
+    Audio/Frontend/logmel.c
     VM3011/vm3011.c
     VOFA+/VOFA.c
     W25Q80/platform_w25q80_stm32_impl.c
@@ -69,9 +69,56 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     Drivers/CMSIS/DSP/Source/TransformFunctions/arm_bitreversal2.c
     Drivers/CMSIS/DSP/Source/CommonTables/arm_common_tables.c
     Drivers/CMSIS/DSP/Source/CommonTables/arm_const_structs.c
+    Drivers/CMSIS/DSP/Source/TransformFunctions/arm_rfft_fast_f32.c
+    Drivers/CMSIS/DSP/Source/TransformFunctions/arm_rfft_fast_init_f32.c
+    Drivers/CMSIS/DSP/Source/TransformFunctions/arm_cfft_f32.c
+    Drivers/CMSIS/DSP/Source/TransformFunctions/arm_cfft_init_f32.c
+    Drivers/CMSIS/DSP/Source/TransformFunctions/arm_cfft_radix8_f32.c
+    Drivers/CMSIS/DSP/Source/BasicMathFunctions/arm_offset_f32.c
+    Drivers/CMSIS/DSP/Source/FastMathFunctions/arm_vlog_f32.c
     Drivers/CMSIS/DSP/Source/StatisticsFunctions/arm_absmax_q15.c
     Drivers/CMSIS/DSP/Source/BasicMathFunctions/arm_shift_q15.c
 )
+
+# ---- Native TFLM runtime (tflm_c C wrapper over TFLite-Micro C++) ----------
+set(TFLM_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/tensorflow)
+file(GLOB TFLM_CORE_SOURCES
+    ${TFLM_DIR}/tensorflow/lite/core/api/*.cc
+    ${TFLM_DIR}/tensorflow/lite/core/c/*.cc
+    ${TFLM_DIR}/tensorflow/lite/schema/*.cc
+    ${TFLM_DIR}/tensorflow/lite/kernels/internal/*.cc
+    ${TFLM_DIR}/tensorflow/lite/kernels/internal/reference/*.cc
+    ${TFLM_DIR}/tensorflow/lite/kernels/kernel_util.cc
+    ${TFLM_DIR}/tensorflow/lite/micro/*.cc
+    ${TFLM_DIR}/tensorflow/lite/micro/arena_allocator/*.cc
+    ${TFLM_DIR}/tensorflow/lite/micro/memory_planner/*.cc
+    ${TFLM_DIR}/tensorflow/lite/micro/tflite_bridge/*.cc
+    ${TFLM_DIR}/tensorflow/lite/micro/kernels/*.cc
+    ${TFLM_DIR}/tensorflow/lite/micro/kernels/cmsis_nn/*.cc
+)
+# Test-only helpers and platform stubs never referenced by the app.
+list(FILTER TFLM_CORE_SOURCES EXCLUDE REGEX
+    "test_helper|mock_micro_graph|kernel_runner|system_setup")
+
+add_library(tflm_runtime STATIC ${TFLM_CORE_SOURCES})
+target_sources(tflm_runtime PRIVATE
+    X-CUBE-AI/App/tflm_c.cc
+    X-CUBE-AI/App/kws_opt_kernels.cc
+    X-CUBE-AI/App/debug_log_imp.cc
+)
+# USE_PRINTF: route TFLM DebugLog through the app's printf (-> USART1).
+target_compile_definitions(tflm_runtime PRIVATE USE_PRINTF)
+target_link_libraries(tflm_runtime PUBLIC stm32cubemx)
+# -Os: the hot arm_* CMSIS-NN kernels are compiled by the stm32cubemx
+# target (already -O3); -O3 here would only bloat the glue layer (+92 KB,
+# overflows the 512 KB budget) with no measurable gain.
+set_source_files_properties(${TFLM_CORE_SOURCES}
+    X-CUBE-AI/App/tflm_c.cc X-CUBE-AI/App/debug_log_imp.cc
+    PROPERTIES COMPILE_OPTIONS "-Os")
+
+# KWS 自定义热点内核（广播 ADD/MUL + LUT LOGISTIC）单独用 -O3，文件小、FLASH 增量 ~1KB
+set_source_files_properties(X-CUBE-AI/App/kws_opt_kernels.cc
+    PROPERTIES COMPILE_OPTIONS "-O3")
 
 # Add include paths
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
@@ -105,6 +152,7 @@ set_source_files_properties(
 # Add linked libraries
 target_link_libraries(${CMAKE_PROJECT_NAME}
     stm32cubemx
+    tflm_runtime
 
     # Add user defined libraries
     # PDM2PCM decimation filter (hard-float toolchain)

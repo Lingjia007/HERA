@@ -1,0 +1,2 @@
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/micro/tflite_bridge/flatbuffer_conversions_bridge.cc:24:14:TfLiteStatus tflite::ConvertTensorType(TensorType, TfLiteType*)	16	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Middlewares/tensorflow/tensorflow/lite/micro/tflite_bridge/flatbuffer_conversions_bridge.cc:28:14:TfLiteStatus tflite::CallBuiltinParseFunction(TfLiteBridgeBuiltinParseFunction, const Operator*, BuiltinDataAllocator*, void**)	24	static
