@@ -54091,7 +54091,7 @@ SYSTEM_DRIVER_CONTEXT
                 [!provide]                        PROVIDE (__arm32_tls_tcb_offset = MAX (0x8, __tls_align))
                 [!provide]                        PROVIDE (__arm64_tls_tcb_offset = MAX (0x10, __tls_align))
 
-.bss            0x20000360    0x1c0cc load address 0x0806a024
+.bss            0x20000360    0x1accc load address 0x0806a024
  *(.bss)
  *(.bss*)
  .bss.completed.1
@@ -54298,107 +54298,107 @@ SYSTEM_DRIVER_CONTEXT
  .bss.s_tflm    0x2000c5f0        0x4 CMakeFiles/STM32WB55XX-HERA.dir/Audio/App/audio_app.c.obj
  *fill*         0x2000c5f4        0xc 
  .bss.s_tensor_arena
-                0x2000c600     0xce00 CMakeFiles/STM32WB55XX-HERA.dir/Audio/App/audio_app.c.obj
- .bss.s_ready   0x20019400        0x4 CMakeFiles/STM32WB55XX-HERA.dir/Audio/Frontend/logmel.c.obj
- .bss.S_rfft    0x20019404       0x18 CMakeFiles/STM32WB55XX-HERA.dir/Audio/Frontend/logmel.c.obj
- .bss.s_mel     0x2001941c       0xa0 CMakeFiles/STM32WB55XX-HERA.dir/Audio/Frontend/logmel.c.obj
- .bss.s_pow     0x200194bc      0x404 CMakeFiles/STM32WB55XX-HERA.dir/Audio/Frontend/logmel.c.obj
+                0x2000c600     0xba00 CMakeFiles/STM32WB55XX-HERA.dir/Audio/App/audio_app.c.obj
+ .bss.s_ready   0x20018000        0x4 CMakeFiles/STM32WB55XX-HERA.dir/Audio/Frontend/logmel.c.obj
+ .bss.S_rfft    0x20018004       0x18 CMakeFiles/STM32WB55XX-HERA.dir/Audio/Frontend/logmel.c.obj
+ .bss.s_mel     0x2001801c       0xa0 CMakeFiles/STM32WB55XX-HERA.dir/Audio/Frontend/logmel.c.obj
+ .bss.s_pow     0x200180bc      0x404 CMakeFiles/STM32WB55XX-HERA.dir/Audio/Frontend/logmel.c.obj
  .bss.s_fft_out
-                0x200198c0      0x800 CMakeFiles/STM32WB55XX-HERA.dir/Audio/Frontend/logmel.c.obj
- .bss.s_fft_in  0x2001a0c0      0x800 CMakeFiles/STM32WB55XX-HERA.dir/Audio/Frontend/logmel.c.obj
+                0x200184c0      0x800 CMakeFiles/STM32WB55XX-HERA.dir/Audio/Frontend/logmel.c.obj
+ .bss.s_fft_in  0x20018cc0      0x800 CMakeFiles/STM32WB55XX-HERA.dir/Audio/Frontend/logmel.c.obj
  .bss.s_init_fails
-                0x2001a8c0        0x1 CMakeFiles/STM32WB55XX-HERA.dir/W25Q80/w25_disk.c.obj
+                0x200194c0        0x1 CMakeFiles/STM32WB55XX-HERA.dir/W25Q80/w25_disk.c.obj
  .bss.s_cache_dirty
-                0x2001a8c1        0x1 CMakeFiles/STM32WB55XX-HERA.dir/W25Q80/w25_disk.c.obj
+                0x200194c1        0x1 CMakeFiles/STM32WB55XX-HERA.dir/W25Q80/w25_disk.c.obj
  .bss.s_cache_valid
-                0x2001a8c2        0x1 CMakeFiles/STM32WB55XX-HERA.dir/W25Q80/w25_disk.c.obj
- *fill*         0x2001a8c3        0x1 
+                0x200194c2        0x1 CMakeFiles/STM32WB55XX-HERA.dir/W25Q80/w25_disk.c.obj
+ *fill*         0x200194c3        0x1 
  .bss.s_cache_row
-                0x2001a8c4        0x4 CMakeFiles/STM32WB55XX-HERA.dir/W25Q80/w25_disk.c.obj
- .bss.s_cache   0x2001a8c8     0x1000 CMakeFiles/STM32WB55XX-HERA.dir/W25Q80/w25_disk.c.obj
- .bss.s_inited  0x2001b8c8        0x1 CMakeFiles/STM32WB55XX-HERA.dir/W25Q80/w25_disk.c.obj
- .bss.s_bound   0x2001b8c9        0x1 CMakeFiles/STM32WB55XX-HERA.dir/W25Q80/w25_disk.c.obj
- *fill*         0x2001b8ca        0x2 
- .bss.s_flash   0x2001b8cc       0x2c CMakeFiles/STM32WB55XX-HERA.dir/W25Q80/w25_disk.c.obj
+                0x200194c4        0x4 CMakeFiles/STM32WB55XX-HERA.dir/W25Q80/w25_disk.c.obj
+ .bss.s_cache   0x200194c8     0x1000 CMakeFiles/STM32WB55XX-HERA.dir/W25Q80/w25_disk.c.obj
+ .bss.s_inited  0x2001a4c8        0x1 CMakeFiles/STM32WB55XX-HERA.dir/W25Q80/w25_disk.c.obj
+ .bss.s_bound   0x2001a4c9        0x1 CMakeFiles/STM32WB55XX-HERA.dir/W25Q80/w25_disk.c.obj
+ *fill*         0x2001a4ca        0x2 
+ .bss.s_flash   0x2001a4cc       0x2c CMakeFiles/STM32WB55XX-HERA.dir/W25Q80/w25_disk.c.obj
  .bss.s_enabled
-                0x2001b8f8        0x1 CMakeFiles/STM32WB55XX-HERA.dir/W25Q80/usb_msc.c.obj
+                0x2001a4f8        0x1 CMakeFiles/STM32WB55XX-HERA.dir/W25Q80/usb_msc.c.obj
  .bss.s_stopped
-                0x2001b8f9        0x1 CMakeFiles/STM32WB55XX-HERA.dir/W25Q80/usb_msc.c.obj
+                0x2001a4f9        0x1 CMakeFiles/STM32WB55XX-HERA.dir/W25Q80/usb_msc.c.obj
  .bss.s_prev_state
-                0x2001b8fa        0x1 CMakeFiles/STM32WB55XX-HERA.dir/W25Q80/usb_msc.c.obj
+                0x2001a4fa        0x1 CMakeFiles/STM32WB55XX-HERA.dir/W25Q80/usb_msc.c.obj
  .bss.s_prev_mounted
-                0x2001b8fb        0x1 CMakeFiles/STM32WB55XX-HERA.dir/W25Q80/usb_msc.c.obj
+                0x2001a4fb        0x1 CMakeFiles/STM32WB55XX-HERA.dir/W25Q80/usb_msc.c.obj
  .bss.s_need_start
-                0x2001b8fc        0x1 CMakeFiles/STM32WB55XX-HERA.dir/W25Q80/usb_msc.c.obj
+                0x2001a4fc        0x1 CMakeFiles/STM32WB55XX-HERA.dir/W25Q80/usb_msc.c.obj
  .bss.s_menu_pending
-                0x2001b8fd        0x1 CMakeFiles/STM32WB55XX-HERA.dir/W25Q80/shell_cli.c.obj
+                0x2001a4fd        0x1 CMakeFiles/STM32WB55XX-HERA.dir/W25Q80/shell_cli.c.obj
  .bss.s_line_rdy
-                0x2001b8fe        0x1 CMakeFiles/STM32WB55XX-HERA.dir/W25Q80/shell_cli.c.obj
- *fill*         0x2001b8ff        0x1 
- .bss.s_len     0x2001b900        0x2 CMakeFiles/STM32WB55XX-HERA.dir/W25Q80/shell_cli.c.obj
- .bss.s_line    0x2001b902       0x40 CMakeFiles/STM32WB55XX-HERA.dir/W25Q80/shell_cli.c.obj
- .bss.s_rx      0x2001b942        0x1 CMakeFiles/STM32WB55XX-HERA.dir/W25Q80/shell_cli.c.obj
+                0x2001a4fe        0x1 CMakeFiles/STM32WB55XX-HERA.dir/W25Q80/shell_cli.c.obj
+ *fill*         0x2001a4ff        0x1 
+ .bss.s_len     0x2001a500        0x2 CMakeFiles/STM32WB55XX-HERA.dir/W25Q80/shell_cli.c.obj
+ .bss.s_line    0x2001a502       0x40 CMakeFiles/STM32WB55XX-HERA.dir/W25Q80/shell_cli.c.obj
+ .bss.s_rx      0x2001a542        0x1 CMakeFiles/STM32WB55XX-HERA.dir/W25Q80/shell_cli.c.obj
  .bss.s_rec_usb_disc
-                0x2001b943        0x1 CMakeFiles/STM32WB55XX-HERA.dir/W25Q80/wav_recorder.c.obj
- .bss.s_seq     0x2001b944        0x4 CMakeFiles/STM32WB55XX-HERA.dir/W25Q80/wav_recorder.c.obj
+                0x2001a543        0x1 CMakeFiles/STM32WB55XX-HERA.dir/W25Q80/wav_recorder.c.obj
+ .bss.s_seq     0x2001a544        0x4 CMakeFiles/STM32WB55XX-HERA.dir/W25Q80/wav_recorder.c.obj
  .bss.s_samples
-                0x2001b948        0x4 CMakeFiles/STM32WB55XX-HERA.dir/W25Q80/wav_recorder.c.obj
- .bss.s_active  0x2001b94c        0x1 CMakeFiles/STM32WB55XX-HERA.dir/W25Q80/wav_recorder.c.obj
- .bss.s_fs_ok   0x2001b94d        0x1 CMakeFiles/STM32WB55XX-HERA.dir/W25Q80/wav_recorder.c.obj
- *fill*         0x2001b94e        0x2 
- .bss.s_file    0x2001b950      0x230 CMakeFiles/STM32WB55XX-HERA.dir/W25Q80/wav_recorder.c.obj
- .bss.s_pkt     0x2001bb80      0x405 CMakeFiles/STM32WB55XX-HERA.dir/W25Q80/ymodem_tx.c.obj
- *fill*         0x2001bf85        0x3 
+                0x2001a548        0x4 CMakeFiles/STM32WB55XX-HERA.dir/W25Q80/wav_recorder.c.obj
+ .bss.s_active  0x2001a54c        0x1 CMakeFiles/STM32WB55XX-HERA.dir/W25Q80/wav_recorder.c.obj
+ .bss.s_fs_ok   0x2001a54d        0x1 CMakeFiles/STM32WB55XX-HERA.dir/W25Q80/wav_recorder.c.obj
+ *fill*         0x2001a54e        0x2 
+ .bss.s_file    0x2001a550      0x230 CMakeFiles/STM32WB55XX-HERA.dir/W25Q80/wav_recorder.c.obj
+ .bss.s_pkt     0x2001a780      0x405 CMakeFiles/STM32WB55XX-HERA.dir/W25Q80/ymodem_tx.c.obj
+ *fill*         0x2001ab85        0x3 
  .bss._ZGVZ13tflm_c_createE9_resolver
-                0x2001bf88        0x4 libtflm_runtime.a(tflm_c.cc.obj)
+                0x2001ab88        0x4 libtflm_runtime.a(tflm_c.cc.obj)
  .bss._ZZ13tflm_c_createE9_resolver
-                0x2001bf8c      0x348 libtflm_runtime.a(tflm_c.cc.obj)
+                0x2001ab8c      0x348 libtflm_runtime.a(tflm_c.cc.obj)
  .bss._ZN12_GLOBAL__N_1L15error_reporter_E
-                0x2001c2d4        0x4 libtflm_runtime.a(micro_error_reporter.cc.obj)
+                0x2001aed4        0x4 libtflm_runtime.a(micro_error_reporter.cc.obj)
  .bss._ZN12_GLOBAL__N_1L27micro_error_reporter_bufferE
-                0x2001c2d8        0x4 libtflm_runtime.a(micro_error_reporter.cc.obj)
+                0x2001aed8        0x4 libtflm_runtime.a(micro_error_reporter.cc.obj)
  .bss._ZN12_GLOBAL__N_1L13__new_handlerE
-                0x2001c2dc        0x4 C:/Tools/arm-gnu-toolchain-15.2.rel1-mingw-w64-i686-arm-none-eabi/bin/../lib/gcc/arm-none-eabi/15.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\libstdc++_nano.a(new_handler.o)
+                0x2001aedc        0x4 C:/Tools/arm-gnu-toolchain-15.2.rel1-mingw-w64-i686-arm-none-eabi/bin/../lib/gcc/arm-none-eabi/15.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\libstdc++_nano.a(new_handler.o)
  .bss.__malloc_sbrk_start
-                0x2001c2e0        0x4 C:/Tools/arm-gnu-toolchain-15.2.rel1-mingw-w64-i686-arm-none-eabi/bin/../lib/gcc/arm-none-eabi/15.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\libg_nano.a(libc_a-mallocr.o)
-                0x2001c2e0                __malloc_sbrk_start
+                0x2001aee0        0x4 C:/Tools/arm-gnu-toolchain-15.2.rel1-mingw-w64-i686-arm-none-eabi/bin/../lib/gcc/arm-none-eabi/15.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\libg_nano.a(libc_a-mallocr.o)
+                0x2001aee0                __malloc_sbrk_start
  .bss.__malloc_free_list
-                0x2001c2e4        0x4 C:/Tools/arm-gnu-toolchain-15.2.rel1-mingw-w64-i686-arm-none-eabi/bin/../lib/gcc/arm-none-eabi/15.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\libg_nano.a(libc_a-mallocr.o)
-                0x2001c2e4                __malloc_free_list
- .bss.__sf      0x2001c2e8      0x138 C:/Tools/arm-gnu-toolchain-15.2.rel1-mingw-w64-i686-arm-none-eabi/bin/../lib/gcc/arm-none-eabi/15.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\libg_nano.a(libc_a-findfp.o)
-                0x2001c2e8                __sf
+                0x2001aee4        0x4 C:/Tools/arm-gnu-toolchain-15.2.rel1-mingw-w64-i686-arm-none-eabi/bin/../lib/gcc/arm-none-eabi/15.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\libg_nano.a(libc_a-mallocr.o)
+                0x2001aee4                __malloc_free_list
+ .bss.__sf      0x2001aee8      0x138 C:/Tools/arm-gnu-toolchain-15.2.rel1-mingw-w64-i686-arm-none-eabi/bin/../lib/gcc/arm-none-eabi/15.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\libg_nano.a(libc_a-findfp.o)
+                0x2001aee8                __sf
  .bss.__stdio_exit_handler
-                0x2001c420        0x4 C:/Tools/arm-gnu-toolchain-15.2.rel1-mingw-w64-i686-arm-none-eabi/bin/../lib/gcc/arm-none-eabi/15.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\libg_nano.a(libc_a-findfp.o)
-                0x2001c420                __stdio_exit_handler
- .bss.errno     0x2001c424        0x4 C:/Tools/arm-gnu-toolchain-15.2.rel1-mingw-w64-i686-arm-none-eabi/bin/../lib/gcc/arm-none-eabi/15.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\libg_nano.a(libc_a-reent.o)
-                0x2001c424                errno
+                0x2001b020        0x4 C:/Tools/arm-gnu-toolchain-15.2.rel1-mingw-w64-i686-arm-none-eabi/bin/../lib/gcc/arm-none-eabi/15.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\libg_nano.a(libc_a-findfp.o)
+                0x2001b020                __stdio_exit_handler
+ .bss.errno     0x2001b024        0x4 C:/Tools/arm-gnu-toolchain-15.2.rel1-mingw-w64-i686-arm-none-eabi/bin/../lib/gcc/arm-none-eabi/15.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\libg_nano.a(libc_a-reent.o)
+                0x2001b024                errno
  .bss.__lock___malloc_recursive_mutex
-                0x2001c428        0x1 C:/Tools/arm-gnu-toolchain-15.2.rel1-mingw-w64-i686-arm-none-eabi/bin/../lib/gcc/arm-none-eabi/15.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\libg_nano.a(libc_a-lock.o)
-                0x2001c428                __lock___malloc_recursive_mutex
+                0x2001b028        0x1 C:/Tools/arm-gnu-toolchain-15.2.rel1-mingw-w64-i686-arm-none-eabi/bin/../lib/gcc/arm-none-eabi/15.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\libg_nano.a(libc_a-lock.o)
+                0x2001b028                __lock___malloc_recursive_mutex
  .bss.__lock___sfp_recursive_mutex
-                0x2001c429        0x1 C:/Tools/arm-gnu-toolchain-15.2.rel1-mingw-w64-i686-arm-none-eabi/bin/../lib/gcc/arm-none-eabi/15.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\libg_nano.a(libc_a-lock.o)
-                0x2001c429                __lock___sfp_recursive_mutex
+                0x2001b029        0x1 C:/Tools/arm-gnu-toolchain-15.2.rel1-mingw-w64-i686-arm-none-eabi/bin/../lib/gcc/arm-none-eabi/15.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\libg_nano.a(libc_a-lock.o)
+                0x2001b029                __lock___sfp_recursive_mutex
  *(COMMON)
-                0x2001c42c                        . = ALIGN (0x4)
- *fill*         0x2001c42a        0x2 
-                0x2001c42c                        _ebss = .
-                0x2001c42c                        __bss_end__ = _ebss
+                0x2001b02c                        . = ALIGN (0x4)
+ *fill*         0x2001b02a        0x2 
+                0x2001b02c                        _ebss = .
+                0x2001b02c                        __bss_end__ = _ebss
                 [!provide]                        PROVIDE (__bss_end = .)
                 [!provide]                        PROVIDE (__non_tls_bss_start = ADDR (.bss))
                 [!provide]                        PROVIDE (__bss_start = __tbss_start)
                 [!provide]                        PROVIDE (__bss_size = (__bss_end - __bss_start))
 
 ._user_heap_stack
-                0x2001c42c     0x1804 load address 0x0806a024
-                0x2001c430                        . = ALIGN (0x8)
- *fill*         0x2001c42c        0x4 
+                0x2001b02c     0x1804 load address 0x0806a024
+                0x2001b030                        . = ALIGN (0x8)
+ *fill*         0x2001b02c        0x4 
                 [!provide]                        PROVIDE (end = .)
-                0x2001c430                        PROVIDE (_end = .)
-                0x2001cc30                        . = (. + _Min_Heap_Size)
- *fill*         0x2001c430      0x800 
-                0x2001dc30                        . = (. + _Min_Stack_Size)
- *fill*         0x2001cc30     0x1000 
-                0x2001dc30                        . = ALIGN (0x8)
+                0x2001b030                        PROVIDE (_end = .)
+                0x2001b830                        . = (. + _Min_Heap_Size)
+ *fill*         0x2001b030      0x800 
+                0x2001c830                        . = (. + _Min_Stack_Size)
+ *fill*         0x2001b830     0x1000 
+                0x2001c830                        . = ALIGN (0x8)
 
 /DISCARD/
  libc.a:*(*)

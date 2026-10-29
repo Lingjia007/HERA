@@ -39,7 +39,7 @@ ENTRY(Reset_Handler)
 /* Specify the memory areas */
 MEMORY
 {
-FLASH (rx)                 : ORIGIN = 0x08000000, LENGTH = 512K
+FLASH (rx)                 : ORIGIN = 0x08000000, LENGTH = 832K /* SFSA=0xd0: CPU2 top 192K, M4 = 832K */
 RAM1 (xrw)                 : ORIGIN = 0x20000008, LENGTH = 0x2FFF8
 RAM_SHARED (xrw)           : ORIGIN = 0x20030000, LENGTH = 10K
 }
