@@ -225,8 +225,8 @@ static int ai_boostrap(void)
   (void)tflm_c_observer_start(s_tflm);
 #endif
 
-  printf("[TFLM] %s arena=%u used=%d in=%uB(%u,%u,%u) sc=%g zp=%d "
-         "out=%uB nodes=%d\r\n",
+  printf("[TFLM] %s arena=%u used=%ld in=%uB(%lu,%lu,%lu) sc=%g zp=%d "
+         "out=%uB nodes=%ld\r\n",
          TFLM_NETWORK_NAME, (unsigned)TFLM_NETWORK_TENSOR_AREA_SIZE,
          tflm_c_arena_used_bytes(s_tflm), (unsigned)s_in.bytes,
          s_in.shape.size >= 1 ? s_in.shape.data[0] : 0,
