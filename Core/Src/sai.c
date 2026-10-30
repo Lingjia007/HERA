@@ -52,9 +52,6 @@ void MX_SAI1_Init(void)
   hsai_BlockA1.Init.MckOverSampling = SAI_MCK_OVERSAMPLING_DISABLE;
   hsai_BlockA1.Init.FIFOThreshold = SAI_FIFOTHRESHOLD_1QF;
   hsai_BlockA1.Init.AudioFrequency = SAI_AUDIO_FREQUENCY_MCKDIV;
-  /* NODIV=1: PDM CK pin = PLLSAI1P (64 MHz) / (2 x Mckdiv).
-   * Mckdiv = 16 -> 2 MHz, inside the VM3011 normal-mode range
-   * (1.1 MHz < CLK < 4 MHz); 2 MHz / 128 = 15.625 kHz PCM. */
   hsai_BlockA1.Init.Mckdiv = 16;
   hsai_BlockA1.Init.MonoStereoMode = SAI_STEREOMODE;
   hsai_BlockA1.Init.CompandingMode = SAI_NOCOMPANDING;
@@ -121,14 +118,14 @@ void HAL_SAI_MspInit(SAI_HandleTypeDef *saiHandle)
     GPIO_InitStruct.Pin = GPIO_PIN_3;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
     GPIO_InitStruct.Alternate = GPIO_AF3_SAI1;
     HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
     GPIO_InitStruct.Pin = GPIO_PIN_3;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_MEDIUM;
     GPIO_InitStruct.Alternate = GPIO_AF3_SAI1;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 

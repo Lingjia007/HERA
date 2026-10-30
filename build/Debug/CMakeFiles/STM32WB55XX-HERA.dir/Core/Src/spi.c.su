@@ -1,3 +1,4 @@
-D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Core/Src/spi.c:30:6:MX_SPI1_Init	8	static
-D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Core/Src/spi.c:64:6:HAL_SPI_MspInit	40	static
-D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Core/Src/spi.c:95:6:HAL_SPI_MspDeInit	0	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Core/Src/spi.c:33:6:MX_SPI1_Init	8	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Core/Src/spi.c:67:6:MX_SPI2_Init	8	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Core/Src/spi.c:101:6:HAL_SPI_MspInit	48	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Core/Src/spi.c:206:6:HAL_SPI_MspDeInit	8	static

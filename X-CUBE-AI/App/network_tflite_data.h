@@ -18,10 +18,7 @@ extern const uint8_t g_tflm_network_model_data[];
 extern const int g_tflm_network_model_data_len;
 
 #undef TFLM_NETWORK_TENSOR_AREA_SIZE
-/* Constraint 1: planner metadata = 40B x (#tensors 227 + scratch) must fit the
- * pre-plan temp region (arena - ~36.3KB fixed). 47616 -> 283 slots.
- * Constraint 2: overlay plan size = used(39428) - persistent must fit. */
-#define TFLM_NETWORK_TENSOR_AREA_SIZE 47616
+#define TFLM_NETWORK_TENSOR_AREA_SIZE 52736
 
 #undef TFLM_NETWORK_NAME
 #define TFLM_NETWORK_NAME "echodscnn"

@@ -127,6 +127,7 @@ int main(void)
     Error_Handler();
   }
   MX_USB_Device_Init();
+  MX_SPI2_Init();
   MX_RF_Init();
   /* USER CODE BEGIN 2 */
   /* W25Q80 SPI Flash 自检 + FAT 挂载（USB U 盘与 CLI/录音共用同一卷） */
@@ -423,13 +424,7 @@ void PeriphCommonClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
-/**
- * @brief EXTI line 0: VM3011 DOUT (ZPL FLAG) edge detected
- */
-void EXTI0_IRQHandler(void)
-{
-  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_0);
-}
+/* Note: EXTI0_IRQHandler is generated in stm32wbxx_it.c (ZPL_Pin). */
 
 void EXTI15_10_IRQHandler(void)
 {
