@@ -41,6 +41,8 @@
 #include "usb_msc.h"
 #include "shell_cli.h"
 #include "wav_recorder.h"
+#include "sd_stm32_hal.h"
+#include "sd_diskio.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -64,6 +66,8 @@
 static VM3011_Dev_t s_vm;
 static volatile uint8_t s_zpl_evt; /* 1 = ZPL (PA0) edge pending; also the STOP2 wake flag */
 static volatile uint8_t s_key_evt; /* 1 = KEY (PC12) falling edge pending */
+static uint8_t s_sd_attached;      /* 1 = SD IO 绑定成功（SPI2 可用） */
+static uint8_t s_sd_mounted;       /* 1 = SD 卡已初始化（可含挂载） */
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -75,7 +79,239 @@ void PeriphCommonClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+/* ---- MicroSD (SPI2) 测试：初始化 + 裸块自检 + FatFs 文件写读 ----
+ * 上电跑一次；主循环里插拔卡后重测（见 while(1)）。 */
 
+/* 线路诊断：裸发 CMD0 打印原始应答字节 + 静态电平采样。
+ * 判读：
+ *  - resp 全 FF        -> 卡沉默：查接线（CS=D3!、CMD=MOSI!）、供电、共地、卡座接触
+ *  - resp 含 01        -> 卡在应答：通信链路通，重跑即可
+ *  - MISO(PB14) 静态恒 LOW -> D0 对地短路或被别的器件拉死
+ *  - MISO(PB14) 静态浮空(读数不稳) 且 resp 全 FF -> D0 断线（最常见） */
+static void SD_Debug_Cmd0(void)
+{
+  uint8_t frame[6] = {0x40U, 0x00U, 0x00U, 0x00U, 0x00U, 0x95U};
+  uint8_t rx[12] = {0};
+  int i;
+
+  printf("[SD] diag: MISO(PB14) idle=%d (1=HIGH), CS(PB12) idle=%d\r\n",
+         (GPIOB->IDR & GPIO_PIN_14) ? 1 : 0,
+         (GPIOB->IDR & SPI2_NSS_Pin) ? 1 : 0);
+
+  g_sd_card.io.cs_low(g_sd_card.io.context);
+  (void)g_sd_card.io.send(g_sd_card.io.context, frame, 6U);
+  for (i = 0; i < 12; i++)
+  {
+    rx[i] = g_sd_card.io.spi_byte(g_sd_card.io.context, 0xFFU);
+  }
+  g_sd_card.io.cs_high(g_sd_card.io.context);
+
+  printf("[SD] diag: CMD0 raw resp:");
+  for (i = 0; i < 12; i++)
+  {
+    printf(" %02X", rx[i]);
+  }
+  printf("\r\n");
+  if (rx[0] == 0xFFU && rx[11] == 0xFFU)
+  {
+    printf("[SD] diag: card SILENT (no R1) - wiring/power/seat issue, not a fw bug\r\n");
+  }
+  else if (rx[0] == 0x01U)
+  {
+    printf("[SD] diag: R1=0x01 received - card is alive!\r\n");
+  }
+}
+
+/* 打印 SD 卡目录树（递归，ASCII tree 风格）。
+ * depth 限嵌套层数、count 限总条目数防串口刷屏。 */
+#define SD_TREE_MAX_DEPTH    5U
+#define SD_TREE_MAX_ENTRIES  500U
+
+static void SD_Tree_Print(const char *path, const char *prefix,
+                          uint32_t depth, uint32_t *count)
+{
+  DIR d;
+  FILINFO cur;
+  char sub[72];
+  char child_prefix[40];
+  FRESULT fr;
+  uint32_t total, idx;
+  size_t plen = strlen(path);
+
+  if (depth >= SD_TREE_MAX_DEPTH)
+  {
+    printf("%s|-- (depth limit)\r\n", prefix);
+    return;
+  }
+
+  fr = f_opendir(&d, path);
+  if (fr != FR_OK)
+  {
+    printf("[SD] tree: opendir '%s' failed (%d)\r\n", path, (int)fr);
+    return;
+  }
+
+  /* 第一遍：统计有效条目数（跳过卷标）。单 FILINFO 双遍遍历，
+   * 避免 lookahead 双 FILINFO 的栈占用（LFN 模式 FILINFO ~88B）。 */
+  total = 0U;
+  for (fr = f_readdir(&d, &cur); fr == FR_OK && cur.fname[0] != 0U;
+       fr = f_readdir(&d, &cur))
+  {
+    if ((cur.fattrib & 0x08U) == 0U) /* 0x08 = 卷标（R0.12c 无 AM_VOL 宏） */
+    {
+      total++;
+    }
+  }
+  f_rewinddir(&d);
+
+  /* 第二遍：打印 */
+  idx = 0U;
+  for (fr = f_readdir(&d, &cur); fr == FR_OK && cur.fname[0] != 0U;
+       fr = f_readdir(&d, &cur))
+  {
+    int is_last;
+
+    if ((cur.fattrib & 0x08U) != 0U)
+    {
+      continue; /* 跳过卷标 */
+    }
+    if (*count >= SD_TREE_MAX_ENTRIES)
+    {
+      printf("%s... (truncated at %u entries)\r\n", prefix, (unsigned)*count);
+      break;
+    }
+
+    idx++;
+    is_last = (idx == total);
+    (*count)++;
+    printf("%s%s-- %s", prefix, is_last ? "`" : "|", cur.fname);
+
+    if ((cur.fattrib & AM_DIR) != 0U)
+    {
+      printf("/\r\n");
+      (void)snprintf(sub, sizeof(sub), "%s%s%s",
+                     path, (plen > 0U && path[plen - 1U] == '/') ? "" : "/",
+                     cur.fname);
+      {
+        size_t n = strlen(prefix); /* memcpy 拼接避免 -Wformat-truncation */
+        if (n + 5U <= sizeof(child_prefix))
+        {
+          (void)memcpy(child_prefix, prefix, n);
+          (void)memcpy(child_prefix + n, is_last ? "    " : "|   ", 4U);
+          child_prefix[n + 4U] = '\0';
+        }
+        else
+        {
+          child_prefix[0] = '\0';
+        }
+      }
+      SD_Tree_Print(sub, child_prefix, depth + 1U, count);
+    }
+    else
+    {
+      printf("  (%lu B)\r\n", (unsigned long)cur.fsize);
+    }
+  }
+
+  (void)f_closedir(&d);
+}
+
+static void SD_Test_Run(void)
+{
+  static const char msg[] = "STM32WB55 SPI2 SD card RW test\r\n";
+  const SD_CardInfo *ci;
+  char path[24];
+  char rdbuf[64];
+  UINT bw = 0U, br = 0U;
+  FIL f;
+  FRESULT fr;
+  int r;
+
+  r = SD_Init_Card(&g_sd_card);
+  if (r <= 0)
+  {
+    printf("[SD] init FAILED ret=%d (-1 err/-2 timeout/-5 no card)\r\n", r);
+    SD_Debug_Cmd0(); /* 线路诊断：区分接线断/卡沉默/卡应答 */
+    return;
+  }
+  ci = SD_Get_Info_Card(&g_sd_card);
+  printf("[SD] init OK: %s, %lu MB, %lu blocks x 512 B, SCK=%lu Hz\r\n",
+         (r == SD_TYPE_V2HC) ? "SDHC/SDXC" : ((r == SD_TYPE_V2) ? "SDSC v2" : "SDSC v1"),
+         (unsigned long)ci->capacity_mb, (unsigned long)ci->block_count,
+         (unsigned long)g_sd_card.io.get_sck_hz(g_sd_card.io.context));
+
+  /* 裸块读写自检（block 8192：保存->写图案->读回比对->还原，数据无损） */
+  r = SD_Self_Test_Card(&g_sd_card, 8192U);
+  printf("[SD] block selftest (blk 8192): %s (%d)\r\n",
+         (r == SD_OK) ? "PASS" : "FAIL", r);
+
+  /* FatFs 挂载（卷路径由 FATFS_LinkDriver 分配，如 "1:"） */
+  fr = f_mount(&SDFatFs, SDPath, 1U);
+  if (fr == FR_NO_FILESYSTEM)
+  {
+    printf("[SD] no FAT filesystem - f_mkfs skipped (format on PC to keep data)\r\n");
+    s_sd_mounted = 1U; /* 卡本身读写正常，仅无文件系统 */
+    return;
+  }
+  if (fr != FR_OK)
+  {
+    printf("[SD] f_mount FAILED (%d)\r\n", (int)fr);
+    return;
+  }
+  s_sd_mounted = 1U;
+
+  /* 文件写入 -> 读回比对 */
+  (void)snprintf(path, sizeof(path), "%sSD_TEST.TXT", SDPath);
+  fr = f_open(&f, path, FA_CREATE_ALWAYS | FA_WRITE);
+  if (fr != FR_OK)
+  {
+    printf("[SD] f_open(create) FAILED (%d)\r\n", (int)fr);
+    return;
+  }
+  fr = f_write(&f, msg, sizeof(msg) - 1U, &bw);
+  (void)f_close(&f);
+  if (fr != FR_OK || bw != sizeof(msg) - 1U)
+  {
+    printf("[SD] f_write FAILED (%d, wrote %u)\r\n", (int)fr, (unsigned)bw);
+    return;
+  }
+
+  fr = f_open(&f, path, FA_READ);
+  if (fr != FR_OK)
+  {
+    printf("[SD] f_open(read) FAILED (%d)\r\n", (int)fr);
+    return;
+  }
+  fr = f_read(&f, rdbuf, sizeof(msg) - 1U, &br);
+  (void)f_close(&f);
+  if (fr == FR_OK && br == sizeof(msg) - 1U && memcmp(rdbuf, msg, br) == 0)
+  {
+    printf("[SD] file RW test '%s': PASS (%u bytes roundtrip)\r\n", path, (unsigned)br);
+  }
+  else
+  {
+    printf("[SD] file RW test FAILED (fr=%d, read %u)\r\n", (int)fr, (unsigned)br);
+  }
+
+  {
+    DWORD free_clst = 0U;
+    FATFS *fs = &SDFatFs;
+    if (f_getfree(SDPath, &free_clst, &fs) == FR_OK)
+    {
+      printf("[SD] free: %lu KB of %lu KB\r\n",
+             (unsigned long)(free_clst * fs->csize / 2U),
+             (unsigned long)((fs->n_fatent - 2U) * fs->csize / 2U));
+    }
+  }
+
+  /* 打印 SD 卡目录树 */
+  {
+    uint32_t count = 0U;
+    printf("[SD] tree '%s':\r\n", SDPath);
+    SD_Tree_Print(SDPath, "", 0U, &count);
+    printf("[SD] tree end (%u entries)\r\n", (unsigned)count);
+  }
+}
 /* USER CODE END 0 */
 
 /**
@@ -280,6 +516,38 @@ int main(void)
   HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
   printf("[VM3011] DOUT(PA0) init %s, STOP2 wake armed\r\n",
          (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0) != GPIO_PIN_RESET) ? "HIGH" : "LOW");
+
+  /* ---- MicroSD (SPI2: PB13-SCK / PB14-MISO / PB15-MOSI / PB12-CS) ---- */
+  {
+    static SD_STM32_HAL s_sd_hal;
+    int r;
+
+    s_sd_hal.spi = &hspi2;
+    s_sd_hal.cs_port = SPI2_NSS_GPIO_Port;
+    s_sd_hal.cs_pin = SPI2_NSS_Pin;
+    s_sd_hal.low_prescaler = SPI_BAUDRATEPRESCALER_256; /* 64M/256=250 kHz <400 kHz */
+    s_sd_hal.high_prescaler = SPI_BAUDRATEPRESCALER_8;  /* 64M/8=8 MHz */
+
+    r = SD_STM32_HAL_Attach(&g_sd_card, &s_sd_hal);
+    printf("[SD] SPI2 attach ret=%d (0=OK)\r\n", r);
+    if (r == SD_OK)
+    {
+      s_sd_attached = 1U;
+      if (FATFS_LinkDriver(&SD_Driver, SDPath) != 0U)
+      {
+        printf("[SD] FATFS_LinkDriver FAILED\r\n");
+      }
+      else
+      {
+        printf("[SD] FatFs volume '%s' linked (W25Q80 stays '0:')\r\n", SDPath);
+        SD_Test_Run();
+      }
+    }
+    else
+    {
+      printf("[SD] attach FAILED - check SPI2 config (soft NSS, no CRC, mode0)\r\n");
+    }
+  }
   /* USER CODE END 2 */
 
   while(LL_HSEM_1StepLock(HSEM, CFG_HW_CLK48_CONFIG_SEMID));
@@ -295,6 +563,7 @@ int main(void)
     MX_APPE_Process();
 
     /* USER CODE BEGIN 3 */
+#if 0 /* ---- MicroSD (SPI2) 测试期间：屏蔽原有业务逻辑，恢复时置 1 ---- */
     /* ZPL event detection: EXTI edge flag and/or the STOP2 wake flag
      * (WUF1). Either way, open/extend an audio listening session. */
     if (LL_PWR_IsActiveFlag_WU1() != 0U)
@@ -331,6 +600,33 @@ int main(void)
     Shell_CLI_Process();
     UsbMsc_Poll();      /* STOP2 唤醒后重启 USB 枚举；挂载沿停录音 */
     AudioApp_Process();
+#endif /* ---- 原业务屏蔽结束 ---- */
+
+    /* SD 卡插拔监测（500 ms 轮询）：拔卡卸载卷，插卡自动重新初始化+测试 */
+    if (s_sd_attached != 0U)
+    {
+      static uint32_t s_last_poll;
+      uint32_t now = HAL_GetTick();
+      if ((uint32_t)(now - s_last_poll) >= 500U)
+      {
+        int present;
+        s_last_poll = now;
+        present = SD_Card_IsPresent_Card(&g_sd_card);
+        if (present == 0 && s_sd_mounted != 0U)
+        {
+          printf("[SD] card removed\r\n");
+          (void)f_mount(NULL, SDPath, 0U);
+          s_sd_mounted = 0U;
+          /* 不做 SD_DeInit_Card：保持 SPI2 就绪，插卡后 SD_Init_Card
+           * 内部 set_speed(LOW) 会按需重初始化外设。 */
+        }
+        else if (present != 0 && s_sd_mounted == 0U)
+        {
+          printf("[SD] card inserted\r\n");
+          SD_Test_Run();
+        }
+      }
+    }
   }
   /* USER CODE END 3 */
 }

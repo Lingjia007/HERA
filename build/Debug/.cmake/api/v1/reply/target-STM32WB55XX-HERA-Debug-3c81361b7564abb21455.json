@@ -36,7 +36,7 @@
 			{
 				"command" : 1,
 				"file" : 0,
-				"line" : 163,
+				"line" : 170,
 				"parent" : 0
 			},
 			{
@@ -45,25 +45,25 @@
 			{
 				"command" : 2,
 				"file" : 1,
-				"line" : 353,
+				"line" : 354,
 				"parent" : 3
 			},
 			{
 				"command" : 2,
 				"file" : 0,
-				"line" : 153,
+				"line" : 160,
 				"parent" : 0
 			},
 			{
 				"command" : 3,
 				"file" : 0,
-				"line" : 124,
+				"line" : 127,
 				"parent" : 0
 			},
 			{
 				"command" : 4,
 				"file" : 1,
-				"line" : 347,
+				"line" : 348,
 				"parent" : 3
 			},
 			{
@@ -75,7 +75,7 @@
 			{
 				"command" : 5,
 				"file" : 0,
-				"line" : 146,
+				"line" : 150,
 				"parent" : 0
 			}
 		]
@@ -181,6 +181,10 @@
 				{
 					"backtrace" : 6,
 					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/W25Q80"
+				},
+				{
+					"backtrace" : 6,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/MicroSD"
 				},
 				{
 					"backtrace" : 6,
@@ -388,9 +392,6 @@
 				36,
 				37,
 				38,
-				45,
-				46,
-				47,
 				48,
 				49,
 				50,
@@ -405,7 +406,10 @@
 				59,
 				60,
 				61,
-				62
+				62,
+				63,
+				64,
+				65
 			]
 		},
 		{
@@ -507,6 +511,10 @@
 				{
 					"backtrace" : 6,
 					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/W25Q80"
+				},
+				{
+					"backtrace" : 6,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/MicroSD"
 				},
 				{
 					"backtrace" : 6,
@@ -777,6 +785,10 @@
 				},
 				{
 					"backtrace" : 6,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/MicroSD"
+				},
+				{
+					"backtrace" : 6,
 					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/PDM2PCM"
 				},
 				{
@@ -948,12 +960,23 @@
 				41,
 				42,
 				43,
-				44
+				44,
+				45,
+				46,
+				47
 			]
 		}
 	],
 	"dependencies" : 
 	[
+		{
+			"backtrace" : 4,
+			"id" : "tensorflow::@768a070a0fe75716b479"
+		},
+		{
+			"backtrace" : 4,
+			"id" : "Utilities::@768a070a0fe75716b479"
+		},
 		{
 			"backtrace" : 5,
 			"id" : "tflm_runtime::@6890427a1f51a3e7e1df"
@@ -965,14 +988,6 @@
 		{
 			"backtrace" : 4,
 			"id" : "USB_Device_Library::@768a070a0fe75716b479"
-		},
-		{
-			"backtrace" : 4,
-			"id" : "tensorflow::@768a070a0fe75716b479"
-		},
-		{
-			"backtrace" : 4,
-			"id" : "Utilities::@768a070a0fe75716b479"
 		},
 		{
 			"backtrace" : 4,
@@ -1093,7 +1108,10 @@
 				59,
 				60,
 				61,
-				62
+				62,
+				63,
+				64,
+				65
 			]
 		},
 		{
@@ -1107,9 +1125,6 @@
 			"name" : "Object Libraries",
 			"sourceIndexes" : 
 			[
-				63,
-				64,
-				65,
 				66,
 				67,
 				68,
@@ -1282,7 +1297,11 @@
 				235,
 				236,
 				237,
-				238
+				238,
+				239,
+				240,
+				241,
+				242
 			]
 		}
 	],
@@ -1556,6 +1575,24 @@
 			"backtrace" : 8,
 			"compileGroupIndex" : 2,
 			"path" : "W25Q80/ymodem_tx.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 8,
+			"compileGroupIndex" : 2,
+			"path" : "MicroSD/SD_reader.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 8,
+			"compileGroupIndex" : 2,
+			"path" : "MicroSD/sd_stm32_hal.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 8,
+			"compileGroupIndex" : 2,
+			"path" : "MicroSD/sd_diskio.c",
 			"sourceGroupIndex" : 0
 		},
 		{
@@ -2720,6 +2757,12 @@
 			"backtrace" : 4,
 			"isGenerated" : true,
 			"path" : "build/Debug/cmake/stm32cubemx/CMakeFiles/FatFs.dir/__/__/Middlewares/Third_Party/FatFs/src/option/syscall.c.obj",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 4,
+			"isGenerated" : true,
+			"path" : "build/Debug/cmake/stm32cubemx/CMakeFiles/FatFs.dir/__/__/Middlewares/Third_Party/FatFs/src/option/ffunicode.c.obj",
 			"sourceGroupIndex" : 2
 		}
 	],

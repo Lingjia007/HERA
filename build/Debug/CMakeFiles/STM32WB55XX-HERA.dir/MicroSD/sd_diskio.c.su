@@ -1,0 +1,5 @@
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/MicroSD/sd_diskio.c:21:16:sd_status	0	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/MicroSD/sd_diskio.c:78:16:sd_ioctl	0	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/MicroSD/sd_diskio.c:57:16:sd_write	16	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/MicroSD/sd_diskio.c:37:16:sd_read	16	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/MicroSD/sd_diskio.c:27:16:sd_initialize	8	static

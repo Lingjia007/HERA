@@ -60,6 +60,9 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     W25Q80/shell_cli.c
     W25Q80/wav_recorder.c
     W25Q80/ymodem_tx.c
+    MicroSD/SD_reader.c
+    MicroSD/sd_stm32_hal.c
+    MicroSD/sd_diskio.c
     Drivers/CMSIS/DSP/Source/TransformFunctions/arm_rfft_init_q15.c
     Drivers/CMSIS/DSP/Source/TransformFunctions/arm_rfft_q15.c
     Drivers/CMSIS/DSP/Source/TransformFunctions/arm_cfft_init_q15.c
@@ -130,6 +133,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     VM3011
     VOFA+
     W25Q80
+    MicroSD
     PDM2PCM
     Drivers/CMSIS/DSP/Include
 )
@@ -147,6 +151,9 @@ set_source_files_properties(
     W25Q80/w25_disk.c W25Q80/usb_msc.c
     W25Q80/shell_cli.c W25Q80/wav_recorder.c W25Q80/ymodem_tx.c
     W25Q80/platform_w25q80_stm32_impl.c
+    MicroSD/SD_reader.c
+    MicroSD/sd_stm32_hal.c
+    MicroSD/sd_diskio.c
     PROPERTIES COMPILE_OPTIONS "-Os")
 
 # Add linked libraries

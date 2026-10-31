@@ -1,0 +1,12 @@
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/MicroSD/sd_stm32_hal.c:132:17:io_enter_critical	0	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/MicroSD/sd_stm32_hal.c:140:13:io_exit_critical	0	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/MicroSD/sd_stm32_hal.c:118:13:io_deinit	40	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/MicroSD/sd_stm32_hal.c:36:13:io_cs_low	0	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/MicroSD/sd_stm32_hal.c:116:17:io_tick	0	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/MicroSD/sd_stm32_hal.c:101:17:io_sck_hz	8	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/MicroSD/sd_stm32_hal.c:27:12:io_send	8	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/MicroSD/sd_stm32_hal.c:17:12:io_receive	24	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/MicroSD/sd_stm32_hal.c:7:16:io_byte	32	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/MicroSD/sd_stm32_hal.c:42:13:io_cs_high	8	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/MicroSD/sd_stm32_hal.c:49:12:io_set_speed	16	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/MicroSD/sd_stm32_hal.c:146:5:SD_STM32_HAL_Attach	64	static
