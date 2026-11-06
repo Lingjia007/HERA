@@ -63,6 +63,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     MicroSD/SD_reader.c
     MicroSD/sd_stm32_hal.c
     MicroSD/sd_diskio.c
+    MicroSD/ffunicode.c
     Drivers/CMSIS/DSP/Source/TransformFunctions/arm_rfft_init_q15.c
     Drivers/CMSIS/DSP/Source/TransformFunctions/arm_rfft_q15.c
     Drivers/CMSIS/DSP/Source/TransformFunctions/arm_cfft_init_q15.c

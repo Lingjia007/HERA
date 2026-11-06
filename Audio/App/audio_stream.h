@@ -6,13 +6,16 @@
  * Hardware assumptions (matching CubeMX-generated sai.c and the
  * NUCLEO-U385RG-Q SAI_AudioRecord_PDM reference example):
  *   - SAI1_Block_A master RX, free protocol, PDM enabled, 1 microphone pair,
- *     8-bit slots (2 per frame), PDM CK = 2 MHz
+ *     8-bit slots (2 per frame), PDM CK = 2.048 MHz
+ *     (external kernel clock ~24.576 MHz / MCKDIV 12, see sai.c - changing
+ *     MCKDIV changes the PCM output rate: PCM = PDM_CK / 128)
  *   - DMA1_Channel1, circular, byte alignment
  *
  * Each 8-bit slot word carries 8 consecutive PDM bits, and the two slots of
  * a microphone pair are interleaved byte-wise in the DMA stream. PDM2PCM
- * decimates by 128 (2 MHz per microphone -> 15.625 kHz PCM) and applies the
- * high-pass filter and 24 dB gain, so no DC removal / extra gain is done here.
+ * decimates by 128 (2.048 MHz per microphone -> exactly 16 kHz PCM) and
+ * applies the high-pass filter and 24 dB gain, so no DC removal / extra
+ * gain is done here.
  *
  * Pipeline: DMA half/full IRQ -> PDM_Filter (slot 0 mic) -> 10 ms mono block
  * -> energy VAD -> ring buffer. Main loop consumes from the ring.
@@ -32,7 +35,8 @@ extern "C"
 #define AS_SAMPLE_RATE_HZ 16000
 
 /* PDM half-buffer: 5120 bytes = 2560 bytes (20480 PDM bits) per microphone
- * = 160 PCM samples at x128 decimation (~10 ms at 2 MHz PDM per mic). */
+ * = 160 PCM samples at x128 decimation (exactly 10 ms at 2.048 MHz PDM
+ * per mic -> 16 kHz PCM). */
 #define AS_PDM_HALF_BYTES 5120U
 #define AS_PDM_BUF_BYTES (2U * AS_PDM_HALF_BYTES)
 

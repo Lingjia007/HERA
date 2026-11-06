@@ -563,7 +563,7 @@ int main(void)
     MX_APPE_Process();
 
     /* USER CODE BEGIN 3 */
-#if 0 /* ---- MicroSD (SPI2) 测试期间：屏蔽原有业务逻辑，恢复时置 1 ---- */
+#if 1 /* ---- MicroSD (SPI2) 测试结束：恢复原有业务逻辑 ---- */
     /* ZPL event detection: EXTI edge flag and/or the STOP2 wake flag
      * (WUF1). Either way, open/extend an audio listening session. */
     if (LL_PWR_IsActiveFlag_WU1() != 0U)

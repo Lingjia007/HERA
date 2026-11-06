@@ -82,7 +82,8 @@ void AudioStream_init(void)
   __HAL_RCC_CRC_CLK_ENABLE();
 
   /* Same PDM filter setup as the SAI_AudioRecord_PDM reference example,
-   * adapted to the VM3011 2 MHz PDM clock: x128 decimation, 24 dB. */
+   * adapted to the VM3011 2.048 MHz PDM clock: x128 decimation -> exactly
+   * 16 kHz PCM, 24 dB. */
   s_pdm.bit_order = PDM_FILTER_BIT_ORDER_MSB;
   s_pdm.endianness = PDM_FILTER_ENDIANNESS_LE;
   s_pdm.high_pass_tap = 2122358088U;

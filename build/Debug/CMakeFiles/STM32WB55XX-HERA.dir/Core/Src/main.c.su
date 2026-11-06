@@ -1,5 +1,5 @@
-D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Core/Src/main.c:130:13:SD_Tree_Print	312	static
-D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Core/Src/main.c:219:13:SD_Test_Run	1496	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Core/Src/main.c:130:13:SD_Tree_Print	240	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Core/Src/main.c:219:13:SD_Test_Run	1296	static
 D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Core/Src/main.c:638:6:SystemClock_Config	120	static
 D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Core/Src/main.c:702:6:PeriphCommonClock_Config	88	static
 D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/Core/Src/main.c:321:5:main	80	static
