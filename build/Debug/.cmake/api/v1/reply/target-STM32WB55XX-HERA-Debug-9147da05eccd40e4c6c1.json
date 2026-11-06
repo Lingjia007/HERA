@@ -976,14 +976,6 @@
 		},
 		{
 			"backtrace" : 4,
-			"id" : "USB_Device_Library::@768a070a0fe75716b479"
-		},
-		{
-			"backtrace" : 5,
-			"id" : "tflm_runtime::@6890427a1f51a3e7e1df"
-		},
-		{
-			"backtrace" : 4,
 			"id" : "tensorflow::@768a070a0fe75716b479"
 		},
 		{
@@ -997,6 +989,14 @@
 		{
 			"backtrace" : 4,
 			"id" : "FatFs::@768a070a0fe75716b479"
+		},
+		{
+			"backtrace" : 5,
+			"id" : "tflm_runtime::@6890427a1f51a3e7e1df"
+		},
+		{
+			"backtrace" : 4,
+			"id" : "USB_Device_Library::@768a070a0fe75716b479"
 		}
 	],
 	"id" : "STM32WB55XX-HERA::@6890427a1f51a3e7e1df",

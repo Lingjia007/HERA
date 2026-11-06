@@ -19,7 +19,7 @@
  * the slot selected by the input/output pointer offset. */
 #define AS_PDM_MIC_CHANNEL 0U
 
-/* Circular DMA buffer, byte units: 2 x 5120 bytes (~20 ms of PDM data).
+/* Circular DMA buffer, byte units: 2 x 2560 bytes (~10 ms of PDM data).
  * The two 8-bit slots (microphone pair) are interleaved byte-wise. */
 static uint8_t s_pdm_buf[AS_PDM_BUF_BYTES] __attribute__((aligned(4)));
 
@@ -91,7 +91,7 @@ void AudioStream_init(void)
   s_pdm.out_ptr_channels = 2;
   s_pdm_error = PDM_Filter_Init(&s_pdm);
 
-  s_pdm_cfg.decimation_factor = PDM_FILTER_DEC_FACTOR_128;
+  s_pdm_cfg.decimation_factor = PDM_FILTER_DEC_FACTOR_64;
   s_pdm_cfg.output_samples_number = AS_DMA_HALF_FRAMES;
   s_pdm_cfg.mic_gain = 24;
   if (s_pdm_error == 0U)

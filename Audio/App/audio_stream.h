@@ -34,10 +34,10 @@ extern "C"
 /* ---- Audio geometry ------------------------------------------------------ */
 #define AS_SAMPLE_RATE_HZ 16000
 
-/* PDM half-buffer: 5120 bytes = 2560 bytes (20480 PDM bits) per microphone
- * = 160 PCM samples at x128 decimation (exactly 10 ms at 2.048 MHz PDM
- * per mic -> 16 kHz PCM). */
-#define AS_PDM_HALF_BYTES 5120U
+/* PDM half-buffer: 2560 bytes = 1280 bytes (10240 PDM bits) per microphone
+ * at x64 decimation = 160 PCM samples (exactly 10 ms: CK1 = 2.048 MHz,
+ * per-mic bit rate = CK1/2 = 1.024 Mbps -> 16 kHz PCM). */
+#define AS_PDM_HALF_BYTES 2560U
 #define AS_PDM_BUF_BYTES (2U * AS_PDM_HALF_BYTES)
 
 /* PCM frames per DMA half-buffer (~10 ms) */
