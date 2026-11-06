@@ -169,7 +169,7 @@ static uint8_t s_skip_blocks;      /* mic warm-up blocks to drop after stream st
 static VM3011_Dev_t *s_vm;      /* mic handle for the DOUT re-arm (main owns) */
 static uint32_t s_awake_until;  /* HAL_GetTick deadline; 0 = session closed   */
 static uint8_t s_cmd_mode;      /* 0 = 等唤醒词；1 = 已唤醒（命令窗口内）     */
-static uint8_t s_kws_enabled = 1U;  /* 1 = KWS 唤醒识别默认开；0 = 录音调试模式 */
+static uint8_t s_kws_enabled = 0U;  /* 0 = 录音调试模式（默认）；1 = KWS 唤醒识别 */
 static uint32_t s_hold_awake_until; /* debug hold-awake deadline (CLI alive)   */
 static uint8_t s_usb_stopped;        /* USB disconnected for STOP2 (restarted by UsbMsc_Poll) */
 

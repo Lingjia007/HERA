@@ -1,12 +1,13 @@
 /**
  ******************************************************************************
  * @file shell_cli.c
- * @brief USART1 命令行：ls/rm/rmall/df/rec/stop/ym/info/help（FAT on W25Q80）。
- *        单字节中断接收 -> 行缓冲 -> 主循环解析。
+ * @brief USART1 命令行（cmd 风格）：回显、退格、↑/↓ 历史、Ctrl+C 放弃行、
+ *        Ctrl+U 清行；命令执行后仅打印 "> " 提示符（menu 才刷菜单）。
+ *        文件命令：ls/rmall/df 同时覆盖 W25Q80("0:") 与 SD 卡（挂载时），
+ *        录音文件统一在各卷 AUDIO_REC/ 子目录；rm/ym 裸文件名默认指向
+ *        录音卷，也可带 "1:" 前缀显式指定。
  *        KEY(PC12) 与 `rec` 命令等效（按键翻转录音）。
- *        USB U 盘默认不枚举（开机即 KWS 唤醒识别），`usb on|off` 切换；
- *        挂载期间固件端禁写（rm/rec 拒绝），读命令照常；
- *        rmall 例外：自动断开 USB 拿回写权限，删完重新枚举。
+ *        USB U 盘挂载期间 flash 卷禁写（rm flash 文件拒绝），读命令照常。
  ******************************************************************************
  */
 #include "shell_cli.h"
@@ -14,6 +15,7 @@
 #include "ymodem_tx.h"
 #include "usb_msc.h"
 #include "audio_app.h"
+#include "sd_diskio.h"
 #include "usart.h"
 #include "ff.h"
 #include <stdio.h>
@@ -21,16 +23,26 @@
 #include <stdlib.h>
 
 #define CLI_LINE_MAX 64
+#define CLI_HIST_MAX 8
 
 static uint8_t s_rx;
 static char s_line[CLI_LINE_MAX];
 static volatile uint16_t s_len;
 static volatile uint8_t s_line_rdy;
 static uint8_t s_menu_pending; /* '3'/'4' = 下一行输入是文件名 */
+static uint8_t s_esc;          /* ANSI 转义序列状态机: 0 无 / 1 ESC / 2 ESC[ */
+static char s_hist[CLI_HIST_MAX][CLI_LINE_MAX];
+static uint8_t s_hist_cnt;
+static uint8_t s_hist_pos;     /* 浏览位置，= cnt 表示回到空行 */
 
 static void arm_rx(void)
 {
     (void)HAL_UART_Receive_IT(&huart1, &s_rx, 1U);
+}
+
+static void tx_str(const char *s, uint16_t n)
+{
+    (void)HAL_UART_Transmit(&huart1, (uint8_t *)s, n, 10U);
 }
 
 /* F407 风格控制菜单（数字+回车，或直接输文本命令） */
@@ -45,7 +57,7 @@ static void print_menu(void)
     printf(" 9 rm ALL files\r\n");
     if (UsbMsc_Mounted())
     {
-        printf("usb U-DISK mounted (MCU readonly)\r\n");
+        printf("usb U-DISK mounted, luns: flash + sd (MCU readonly)\r\n");
     }
     else if (UsbMsc_Enabled())
     {
@@ -53,9 +65,18 @@ static void print_menu(void)
     }
     else
     {
-        printf("usb U-DISK off (kws mode, cmd: usb on)\r\n");
+        printf("usb U-DISK off (cmd: usb on)\r\n");
     }
-    printf("digit+Enter, or cmd: help ls rm rmall df rec stop ym kws sleep usb\r\n");
+    if (g_sd_mounted != 0U)
+    {
+        printf("sd %s mounted, record -> %s\r\n", SDPath, WavRecorder_GetVolume());
+    }
+    else
+    {
+        printf("sd not mounted, record -> %s (flash)\r\n", WavRecorder_GetVolume());
+    }
+    printf("digit+Enter, cmd: help ls rm rmall df rec stop ym kws sleep usb\r\n");
+    printf("up/down history, backspace edit, Ctrl+U clear, Ctrl+C cancel\r\n");
     printf("> ");
 }
 
@@ -64,6 +85,9 @@ void Shell_CLI_Init(void)
     s_len = 0;
     s_line_rdy = 0;
     s_menu_pending = 0;
+    s_esc = 0;
+    s_hist_cnt = 0;
+    s_hist_pos = 0;
     /* USART1 RX 中断（向量在 main.c USER CODE 4），优先级低于音频 DMA */
     HAL_NVIC_SetPriority(USART1_IRQn, 5, 0);
     HAL_NVIC_EnableIRQ(USART1_IRQn);
@@ -84,6 +108,81 @@ void Shell_CLI_Resume(void)
     arm_rx();
 }
 
+/* ---- 行编辑辅助（RX 中断上下文） ---------------------------------------- */
+
+/* 擦掉终端上已回显的当前行 */
+static void line_erase(void)
+{
+    while (s_len != 0U)
+    {
+        s_len--;
+        tx_str("\b \b", 3U);
+    }
+}
+
+/* 历史浏览后回显新行内容（line_erase 已清空 s_len） */
+static void hist_show(void)
+{
+    uint16_t n;
+
+    if (s_hist_pos < s_hist_cnt)
+    {
+        n = (uint16_t)strlen(s_hist[s_hist_pos]);
+        if (n > CLI_LINE_MAX - 1U)
+        {
+            n = CLI_LINE_MAX - 1U;
+        }
+        memcpy(s_line, s_hist[s_hist_pos], n);
+        s_len = n;
+        tx_str(s_line, n);
+    }
+}
+
+static void hist_nav(int8_t dir) /* -1 = up, +1 = down */
+{
+    if (dir < 0)
+    {
+        if (s_hist_pos != 0U)
+        {
+            s_hist_pos--;
+            line_erase();
+            hist_show();
+        }
+    }
+    else
+    {
+        if (s_hist_pos < s_hist_cnt)
+        {
+            s_hist_pos++;
+            line_erase();
+            hist_show();
+        }
+    }
+}
+
+/* 非空行入历史（去重、滚动），浏览位置复位 */
+static void hist_commit(void)
+{
+    s_line[s_len] = '\0';
+    if (s_len != 0U)
+    {
+        if (s_hist_cnt == 0U || strcmp(s_hist[s_hist_cnt - 1U], s_line) != 0)
+        {
+            if (s_hist_cnt < CLI_HIST_MAX)
+            {
+                (void)strcpy(s_hist[s_hist_cnt], s_line);
+                s_hist_cnt++;
+            }
+            else
+            {
+                memmove(s_hist[0], s_hist[1], (CLI_HIST_MAX - 1U) * CLI_LINE_MAX);
+                (void)strcpy(s_hist[CLI_HIST_MAX - 1U], s_line);
+            }
+        }
+    }
+    s_hist_pos = s_hist_cnt;
+}
+
 /* 单字节接收回调（弱符号覆盖） */
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
@@ -94,60 +193,126 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
     AudioApp_HoldAwake(300000U); /* 串口活动续期保活，STOP2 被否决 */
     (void)HAL_UART_Receive_IT(&huart1, &s_rx, 1U);
 
-    if (s_rx == (uint8_t)'\r' || s_rx == (uint8_t)'\n')
-    {
-        if (s_len != 0U)
-        {
-            s_line[s_len] = '\0';
-            s_line_rdy = 1U; /* 不再接收新字节，行处理完后重新武装 */
-        }
-        return;
-    }
     if (s_line_rdy)
     {
         return; /* 上一行未处理，丢弃溢出输入 */
+    }
+
+    /* ANSI 转义序列（方向键 Up/Down）: ESC [ A / ESC [ B */
+    if (s_esc == 2U)
+    {
+        s_esc = 0U;
+        if (s_rx == (uint8_t)'A')
+        {
+            hist_nav(-1);
+        }
+        else if (s_rx == (uint8_t)'B')
+        {
+            hist_nav(1);
+        }
+        return;
+    }
+    if (s_esc == 1U)
+    {
+        s_esc = (s_rx == (uint8_t)'[') ? 2U : 0U;
+        return;
+    }
+    if (s_rx == 0x1BU)
+    {
+        s_esc = 1U;
+        return;
+    }
+
+    if (s_rx == (uint8_t)'\r' || s_rx == (uint8_t)'\n')
+    {
+        hist_commit();
+        s_line[s_len] = '\0';
+        s_len = 0; /* 行已提交：清空编辑缓冲，下一行从 0 开始收集 */
+        s_line_rdy = 1U; /* 空行也提交：Process 只回显 CRLF + 新提示符 */
+        return;
+    }
+    if (s_rx == 0x03U) /* Ctrl+C：放弃当前行 */
+    {
+        s_len = 0;
+        s_esc = 0U;
+        s_line[0] = '\0';
+        tx_str("^C", 2U);
+        s_line_rdy = 1U; /* 提交空行 -> Process 刷新提示符 */
+        return;
+    }
+    if (s_rx == 0x15U) /* Ctrl+U：清空当前行 */
+    {
+        line_erase();
+        return;
     }
     if (s_rx == 0x08U || s_rx == 0x7FU) /* 退格 */
     {
         if (s_len != 0U)
         {
             s_len--;
-            (void)HAL_UART_Transmit(&huart1, (uint8_t *)"\b \b", 3U, 10U);
+            tx_str("\b \b", 3U);
         }
         return;
     }
-    if (s_len < CLI_LINE_MAX - 1U)
+    if (s_rx >= 0x20U && s_rx < 0x7FU) /* 可打印字符才入行并回显 */
     {
-        s_line[s_len++] = (char)s_rx;
-        (void)HAL_UART_Transmit(&huart1, &s_rx, 1U, 10U); /* 回显 */
+        if (s_len < CLI_LINE_MAX - 1U)
+        {
+            s_line[s_len++] = (char)s_rx;
+            tx_str((const char *)&s_rx, 1U);
+        }
+        else
+        {
+            tx_str("\a", 1U); /* 行满响铃 */
+        }
     }
 }
+
+/* ---- 命令实现 ------------------------------------------------------------- */
 
 static void cmd_help(void)
 {
     printf("menu             show the menu\r\n"
-           "ls               list files\r\n"
-           "rm <file>        delete file (blocked while usb mounted)\r\n"
-           "rmall            delete ALL files (blocked while usb mounted)\r\n"
-           "df               fs usage\r\n"
+           "ls               list files (flash + sd)\r\n"
+           "rm <file>        delete file (bare name = record volume)\r\n"
+           "rmall            delete ALL files on flash + sd\r\n"
+           "df               fs usage (flash + sd)\r\n"
            "rec              toggle recording (KEY/PC12 same)\r\n"
            "stop             stop recording\r\n"
            "ym <file>        send file via YMODEM (backup of usb)\r\n"
            "kws on|off       toggle speech recognition\r\n"
            "sleep            enter STOP2 now (KEY/sound wakes)\r\n"
-           "usb on|off       mount/unmount u-disk (default off)\r\n"
+           "usb on|off       mount/unmount u-disk\r\n"
            "info             system info\r\n");
 }
 
-static void cmd_ls(void)
+/* 录音文件统一在 "<卷>:AUDIO_REC/" 下：裸名 -> 录音卷，
+ * 'N:NAME' -> N 卷。返回 buf 便于直接传给 f_unlink/YmodemTx_Send。 */
+static const char *rec_path(const char *name, char *buf, size_t n)
+{
+    if (name[1] == ':')
+    {
+        (void)snprintf(buf, n, "%c:%s/%s", name[0], WAV_REC_DIR, name + 2);
+    }
+    else
+    {
+        (void)snprintf(buf, n, "%s%s/%s", WavRecorder_GetVolume(), WAV_REC_DIR, name);
+    }
+    return buf;
+}
+
+static void list_volume(const char *vol, const char *tag)
 {
     DIR d;
     FILINFO info;
+    char path[24];
     uint32_t cnt = 0;
 
-    if (f_opendir(&d, "0:") != FR_OK)
+    (void)snprintf(path, sizeof(path), "%s" WAV_REC_DIR, vol);
+    printf("---- %s (%s) ----\r\n", path, tag);
+    if (f_opendir(&d, path) != FR_OK)
     {
-        printf("fs not mounted\r\n");
+        printf("no " WAV_REC_DIR " dir (no recordings yet)\r\n");
         return;
     }
     while (f_readdir(&d, &info) == FR_OK && info.fname[0] != '\0')
@@ -162,39 +327,70 @@ static void cmd_ls(void)
     printf("%lu file(s)\r\n", (unsigned long)cnt);
 }
 
+static void cmd_ls(void)
+{
+    list_volume("0:", "flash/usb");
+    if (g_sd_mounted != 0U)
+    {
+        list_volume(SDPath, "sd card");
+    }
+}
+
 static void cmd_rm(char *name)
 {
-    char path[80];
+    char path[96];
 
     if (name == NULL)
     {
-        printf("usage: rm <file>\r\n");
+        printf("usage: rm <file>   (in " WAV_REC_DIR ", bare = record vol, or '1:NAME')\r\n");
         return;
     }
     if (UsbMsc_Mounted())
     {
-        printf("usb mounted (readonly) - eject disk first\r\n");
+        printf("usb mounted (readonly, both luns) - eject disk first\r\n");
         return;
     }
-    (void)snprintf(path, sizeof(path), "0:%s", name);
+    (void)rec_path(name, path, sizeof(path));
     FRESULT e = f_unlink(path);
-    printf("rm %s: %s\r\n", name, (e == FR_OK) ? "ok" : "failed");
+    printf("rm %s: %s\r\n", path, (e == FR_OK) ? "ok" : "failed");
+}
+
+static uint32_t purge_volume(const char *vol)
+{
+    DIR d;
+    FILINFO info;
+    char dir[24];
+    char path[96];
+    uint32_t cnt = 0;
+
+    (void)snprintf(dir, sizeof(dir), "%s" WAV_REC_DIR, vol);
+    if (f_opendir(&d, dir) != FR_OK)
+    {
+        return 0U;
+    }
+    while (f_readdir(&d, &info) == FR_OK && info.fname[0] != '\0')
+    {
+        if (!(info.fattrib & AM_DIR))
+        {
+            (void)snprintf(path, sizeof(path), "%s/%s", dir, info.fname);
+            if (f_unlink(path) == FR_OK)
+            {
+                cnt++;
+            }
+            else
+            {
+                printf("rm %s: failed\r\n", path);
+            }
+        }
+    }
+    (void)f_closedir(&d);
+    return cnt;
 }
 
 static void cmd_rmall(void)
 {
-    DIR d;
-    FILINFO info;
-    uint32_t cnt = 0;
-    uint32_t fail = 0;
     uint8_t usb_was = 0;
-
-    if (f_opendir(&d, "0:") != FR_OK)
-    {
-        printf("fs not mounted\r\n");
-        return;
-    }
-    (void)f_closedir(&d);
+    uint32_t cnt;
 
     if (WavRecorder_active())
     {
@@ -209,47 +405,42 @@ static void cmd_rmall(void)
         UsbMsc_Disconnect();
         usb_was = 1U;
     }
-    while (f_readdir(&d, &info) == FR_OK && info.fname[0] != '\0')
+    printf("purge flash 0:" WAV_REC_DIR "\r\n");
+    cnt = purge_volume("0:");
+    if (g_sd_mounted != 0U)
     {
-        if (!(info.fattrib & AM_DIR))
-        {
-            char path[80];
-
-            (void)snprintf(path, sizeof(path), "0:%s", info.fname);
-            if (f_unlink(path) == FR_OK)
-            {
-                cnt++;
-            }
-            else
-            {
-                printf("rm %s: failed\r\n", info.fname);
-                fail++;
-            }
-        }
+        printf("purge sd %s" WAV_REC_DIR "\r\n", SDPath);
+        cnt += purge_volume(SDPath);
     }
-    (void)f_closedir(&d);
-    printf("rm all: %lu removed, %lu failed\r\n",
-           (unsigned long)cnt, (unsigned long)fail);
+    printf("rm all: %lu removed\r\n", (unsigned long)cnt);
     if (usb_was != 0U)
     {
         UsbMsc_Restart(); /* PC 重新枚举，看到清空后的盘 */
     }
 }
 
-static void cmd_df(void)
+static void df_volume(const char *vol, const char *tag)
 {
     FATFS *fs = NULL;
     DWORD fre = 0;
 
-    if (f_getfree("0:", &fre, &fs) != FR_OK || fs == NULL)
+    if (f_getfree(vol, &fre, &fs) != FR_OK || fs == NULL)
     {
-        printf("fs stat failed\r\n");
+        printf("%s %s: not mounted\r\n", tag, vol);
         return;
     }
-    /* 1MB 卷：总簇 = 2048 扇区 / 每簇扇区数 */
-    printf("fs: %lu/%lu KB free\r\n",
+    printf("%s %s: %lu/%lu KB free\r\n", tag, vol,
            (unsigned long)(fre * (fs->csize / 2U)),
            (unsigned long)((fs->n_fatent - 2U) * (fs->csize / 2U)));
+}
+
+static void cmd_df(void)
+{
+    df_volume("0:", "flash");
+    if (g_sd_mounted != 0U)
+    {
+        df_volume(SDPath, "sd");
+    }
 }
 
 static void cmd_rec(void)
@@ -286,15 +477,25 @@ static void cmd_info(void)
 {
     printf("mcu: STM32WB55, pcm: %u Hz mono S16\r\n", 16000U);
     printf("flash: W25Q80 1MB, fs: FAT12 512B sector\r\n");
+    printf("record -> %s" WAV_REC_DIR "/ (%s)\r\n", WavRecorder_GetVolume(),
+           WavRecorder_OnFlash() ? "flash" : "sd card");
+    if (g_sd_mounted != 0U)
+    {
+        printf("sd: mounted '%s'\r\n", SDPath);
+    }
+    else
+    {
+        printf("sd: not mounted\r\n");
+    }
     printf("kws: %s, key: PC12 toggle record\r\n",
            (AudioApp_GetKwsEnabled() != 0U) ? "on" : "off");
     if (UsbMsc_Mounted())
     {
-        printf("usb: U-disk mounted (MCU readonly)\r\n");
+        printf("usb: U-disk mounted, luns: flash + sd (MCU readonly)\r\n");
     }
     else
     {
-        printf("usb: %s\r\n", UsbMsc_Enabled() ? "on (waiting pc)" : "off (kws mode)");
+        printf("usb: %s\r\n", UsbMsc_Enabled() ? "on (waiting pc)" : "off");
     }
 }
 
@@ -323,14 +524,15 @@ void Shell_CLI_Process(void)
         {
             if (pend == '3')
             {
-                (void)YmodemTx_Send(s_line);
+                char path[96];
+                (void)YmodemTx_Send(rec_path(s_line, path, sizeof(path)));
             }
             else
             {
                 cmd_rm(s_line);
             }
         }
-        print_menu();
+        printf("> ");
         return;
     }
 
@@ -340,7 +542,7 @@ void Shell_CLI_Process(void)
 
     if (cmd == NULL)
     {
-        /* 空行 */
+        /* 空行：仅刷新提示符 */
     }
     else if (strlen(cmd) == 1U && cmd[0] >= '1' && cmd[0] <= '9')
     {
@@ -358,7 +560,7 @@ void Shell_CLI_Process(void)
             s_menu_pending = (uint8_t)cmd[0];
             printf("%s - enter file name: ",
                    (cmd[0] == '3') ? "ymodem" : "rm");
-            return; /* 等文件名行，不重印菜单 */
+            return; /* 等文件名行，不刷提示符 */
         case '5':
             cmd_df();
             break;
@@ -415,11 +617,12 @@ void Shell_CLI_Process(void)
     {
         if (arg == NULL)
         {
-            printf("usage: ym <file>\r\n");
+            printf("usage: ym <file>   (in " WAV_REC_DIR ", bare = record vol, or '1:NAME')\r\n");
         }
         else
         {
-            (void)YmodemTx_Send(arg);
+            char path[96];
+            (void)YmodemTx_Send(rec_path(arg, path, sizeof(path)));
         }
     }
     else if (strcmp(cmd, "kws") == 0)
@@ -453,5 +656,5 @@ void Shell_CLI_Process(void)
     {
         printf("unknown: %s (try 'help')\r\n", cmd);
     }
-    print_menu();
+    printf("> ");
 }

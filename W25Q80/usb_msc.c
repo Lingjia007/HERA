@@ -10,12 +10,12 @@
 #include "wav_recorder.h"
 #include <stdio.h>
 
-static volatile uint8_t s_need_start; /* STOP2 唤醒后需重启 USB 枚举 */
+static volatile uint8_t s_need_start = 1U; /* 开机先拉 DP 上拉；STOP2 唤醒后需重启 USB 枚举 */
 static uint8_t s_prev_mounted;
 static uint8_t s_prev_state;  /* dev_state 诊断 */
 static uint8_t s_stopped;     /* 固件主动断开中（Restart 后、Start 前） */
-static uint8_t s_enabled;     /* U 盘功能开关（默认关：开机即 KWS 唤醒识别，
-                               * CLI `usb on` 后才允许枚举/自动重连） */
+static uint8_t s_enabled = 1U; /* U 盘功能开关（默认开：开机即录音调试模式，
+                               * 首次 Poll 枚举挂载；CLI `usb off` 可关闭） */
 
 extern USBD_HandleTypeDef hUsbDeviceFS; /* usb_device.c */
 
@@ -70,11 +70,21 @@ void UsbMsc_Restart(void)
     s_need_start = 1U;
 }
 
+/* main.c：PC 写过 U 盘后重挂双卷，刷新 MCU 侧 FatFs 缓存 */
+extern void FS_RefreshMounts(void);
+
 void UsbMsc_Disconnect(void)
 {
     (void)USBD_Stop(&hUsbDeviceFS);
     s_stopped = 1U;
     /* 不置 s_need_start：录音独占期间保持断开，停止后由 Restart 重连 */
+    /* PC 会话可能写过盘（flash/SD 任一 LUN）：重挂双卷防止脏 FAT。
+     * 录音进行中跳过（会拆掉活动 FIL 的卷）；录音路径是先断开后
+     * f_open，不经过这里的活动 FIL。 */
+    if (WavRecorder_active() == 0U)
+    {
+        FS_RefreshMounts();
+    }
 }
 
 void UsbMsc_Poll(void)
@@ -101,7 +111,8 @@ void UsbMsc_Poll(void)
     mounted = UsbMsc_Mounted();
     if (mounted != 0U && s_prev_mounted == 0U)
     {
-        /* 挂载沿：录音中则强制停止（挂载期间固件端不得写 FS） */
+        /* 挂载沿：任何卷的录音都强制停止——PC 挂载期间对 flash/SD 都是
+         * 裸块访问，固件端并发写会撞坏文件系统 */
         if (WavRecorder_active())
         {
             printf("[USB] mounted -> stop recording (readonly for MCU)\r\n");

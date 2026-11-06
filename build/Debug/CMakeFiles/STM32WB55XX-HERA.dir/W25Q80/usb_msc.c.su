@@ -2,6 +2,6 @@ D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/W25Q80/usb_msc.c:22:9:UsbMsc_M
 D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/W25Q80/usb_msc.c:39:9:UsbMsc_Enabled	0	static
 D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/W25Q80/usb_msc.c:62:6:UsbMsc_Restart	8	static
 D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/W25Q80/usb_msc.c:29:6:UsbMsc_NotifySleep	0	static
-D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/W25Q80/usb_msc.c:73:6:UsbMsc_Disconnect	8	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/W25Q80/usb_msc.c:76:6:UsbMsc_Disconnect	8	static
 D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/W25Q80/usb_msc.c:44:6:UsbMsc_SetEnabled	0	static
-D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/W25Q80/usb_msc.c:80:6:UsbMsc_Poll	16	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/W25Q80/usb_msc.c:90:6:UsbMsc_Poll	16	static

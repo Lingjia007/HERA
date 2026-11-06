@@ -67,7 +67,7 @@ static VM3011_Dev_t s_vm;
 static volatile uint8_t s_zpl_evt; /* 1 = ZPL (PA0) edge pending; also the STOP2 wake flag */
 static volatile uint8_t s_key_evt; /* 1 = KEY (PC12) falling edge pending */
 static uint8_t s_sd_attached;      /* 1 = SD IO 绑定成功（SPI2 可用） */
-static uint8_t s_sd_mounted;       /* 1 = SD 卡已初始化（可含挂载） */
+uint8_t g_sd_mounted;              /* 1 = SD 卷已挂载可用（录音优先目标） */
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -88,6 +88,7 @@ void PeriphCommonClock_Config(void);
  *  - resp 含 01        -> 卡在应答：通信链路通，重跑即可
  *  - MISO(PB14) 静态恒 LOW -> D0 对地短路或被别的器件拉死
  *  - MISO(PB14) 静态浮空(读数不稳) 且 resp 全 FF -> D0 断线（最常见） */
+#if SD_TEST_ENABLE
 static void SD_Debug_Cmd0(void)
 {
   uint8_t frame[6] = {0x40U, 0x00U, 0x00U, 0x00U, 0x00U, 0x95U};
@@ -121,12 +122,18 @@ static void SD_Debug_Cmd0(void)
     printf("[SD] diag: R1=0x01 received - card is alive!\r\n");
   }
 }
+#endif /* SD_TEST_ENABLE */
 
 /* 打印 SD 卡目录树（递归，ASCII tree 风格）。
  * depth 限嵌套层数、count 限总条目数防串口刷屏。 */
 #define SD_TREE_MAX_DEPTH    5U
 #define SD_TREE_MAX_ENTRIES  500U
 
+/* ---- SD 卡测试开关：0 = 关闭（上电/插卡不再跑读写测试、不挂载 SD 卷），
+ * SPI2 与 SD IO attach 仍保留；1 = 恢复测试 ---- */
+#define SD_TEST_ENABLE 0
+
+#if SD_TEST_ENABLE
 static void SD_Tree_Print(const char *path, const char *prefix,
                           uint32_t depth, uint32_t *count)
 {
@@ -312,6 +319,78 @@ static void SD_Test_Run(void)
     printf("[SD] tree end (%u entries)\r\n", (unsigned)count);
   }
 }
+#endif /* SD_TEST_ENABLE */
+
+/* SD 卷挂载（生产路径，非读写测试）：初始化卡 + f_mount，成功置 g_sd_mounted。
+ * 注意不能用 IsPresent 做前置检测：它依赖 info.initialized，上电首次握手
+ * 前恒为 0，会误报无卡。无卡/无文件系统返回 0；不自动格式化（PC 格式化
+ * 保数据）。quiet=1 时不打印失败信息（周期重试场景防刷屏）。 */
+static uint8_t SD_AutoMount(uint8_t quiet)
+{
+  int r;
+  FRESULT fr;
+
+  r = SD_Init_Card(&g_sd_card);
+  if (r <= 0)
+  {
+    if (quiet == 0U)
+    {
+      printf("[SD] init FAILED ret=%d (-1 err/-2 timeout/-5 no card)\r\n", r);
+    }
+    return 0U;
+  }
+  fr = f_mount(&SDFatFs, SDPath, 1U);
+  if (fr == FR_NO_FILESYSTEM)
+  {
+    if (quiet == 0U)
+    {
+      printf("[SD] no FAT filesystem - format it on PC first\r\n");
+    }
+    return 0U;
+  }
+  if (fr != FR_OK)
+  {
+    if (quiet == 0U)
+    {
+      printf("[SD] f_mount FAILED (%d)\r\n", (int)fr);
+    }
+    return 0U;
+  }
+  g_sd_mounted = 1U;
+  printf("[SD] volume '%s' mounted (record target)\r\n", SDPath);
+  {
+    char lb[16];
+    /* SDPath 形如 "1:/"（带斜杠），卷标串只取盘符 "1:"，否则 '/' 会被
+     * 写进卷标，Explorer 显示成 "/HERA_SD" */
+    (void)snprintf(lb, sizeof(lb), "%c:HERA_SD", SDPath[0]);
+    if (UsbMsc_Mounted() == 0U) /* U 盘挂载期禁写（PC 裸块访问中） */
+    {
+      (void)f_setlabel(lb); /* 盘符卷标；已一致时无写入 */
+    }
+  }
+  return 1U;
+}
+
+/* 卸载并重挂双卷（flash "0:" + SD）：PC 经 U 盘写过盘后，MCU 侧 FatFs 的
+ * FAT/目录缓存已过期，直接写会分配到错误簇。UsbMsc_Disconnect 后调用。
+ * 录音进行中不得调用（会拆掉活动 FIL 的卷）。 */
+void FS_RefreshMounts(void)
+{
+  if (g_sd_mounted != 0U)
+  {
+    (void)f_mount(NULL, SDPath, 0U);
+    if (f_mount(&SDFatFs, SDPath, 1U) != FR_OK)
+    {
+      printf("[SD] remount failed after usb session\r\n");
+      g_sd_mounted = 0U;
+    }
+  }
+  (void)f_mount(NULL, USERPath, 0U);
+  if (f_mount(&USERFatFs, USERPath, 1U) != FR_OK)
+  {
+    printf("[FAT] remount failed after usb session\r\n");
+  }
+}
 /* USER CODE END 0 */
 
 /**
@@ -404,19 +483,20 @@ int main(void)
         fr = f_mkfs("0:", FM_FAT | FM_SFD, 0U, mkfs_work, sizeof(mkfs_work));
         if (fr == FR_OK)
         {
-          /* USB U 盘默认不枚举（KWS 默认模式），PC 侧 `usb on` 挂载时
-           * 自然读到全新 FAT，无需重新枚举。 */
+          /* U 盘默认枚举（录音调试模式），首次 UsbMsc_Poll 时 PC 挂载
+           * 读到全新 FAT，无需重新枚举。 */
           fr = f_mount(&USERFatFs, "0:", 1U);
         }
       }
       if (fr == FR_OK)
       {
         printf("[FAT] mounted - usb U-disk + cli share this volume\r\n");
-        WavRecorder_Init();
+        /* 盘符卷标（Explorer 里区分两块 U 盘）；已一致时 FatFs 内部无写入 */
+        (void)f_setlabel("0:HERA_FLASH");
       }
       else
       {
-        printf("[FAT] mount/mkfs failed (%d) - recording disabled\r\n", (int)fr);
+        printf("[FAT] mount/mkfs failed (%d) - flash fs unavailable\r\n", (int)fr);
       }
     }
     Shell_CLI_Init();
@@ -526,7 +606,8 @@ int main(void)
     s_sd_hal.cs_port = SPI2_NSS_GPIO_Port;
     s_sd_hal.cs_pin = SPI2_NSS_Pin;
     s_sd_hal.low_prescaler = SPI_BAUDRATEPRESCALER_256; /* 64M/256=250 kHz <400 kHz */
-    s_sd_hal.high_prescaler = SPI_BAUDRATEPRESCALER_8;  /* 64M/8=8 MHz */
+    s_sd_hal.high_prescaler = SPI_BAUDRATEPRESCALER_4;  /* 64M/4=16 MHz（SD SPI 模式上限 25MHz；
+                                                           CRC 错误自动降速重试兜底） */
 
     r = SD_STM32_HAL_Attach(&g_sd_card, &s_sd_hal);
     printf("[SD] SPI2 attach ret=%d (0=OK)\r\n", r);
@@ -540,7 +621,7 @@ int main(void)
       else
       {
         printf("[SD] FatFs volume '%s' linked (W25Q80 stays '0:')\r\n", SDPath);
-        SD_Test_Run();
+        (void)SD_AutoMount(0U);
       }
     }
     else
@@ -548,6 +629,9 @@ int main(void)
       printf("[SD] attach FAILED - check SPI2 config (soft NSS, no CRC, mode0)\r\n");
     }
   }
+
+  /* 录音卷：SD 已挂载则优先 SD，否则回退 W25Q80 "0:" */
+  WavRecorder_Init((g_sd_mounted != 0U) ? SDPath : "0:");
   /* USER CODE END 2 */
 
   while(LL_HSEM_1StepLock(HSEM, CFG_HW_CLK48_CONFIG_SEMID));
@@ -602,28 +686,80 @@ int main(void)
     AudioApp_Process();
 #endif /* ---- 原业务屏蔽结束 ---- */
 
-    /* SD 卡插拔监测（500 ms 轮询）：拔卡卸载卷，插卡自动重新初始化+测试 */
+    /* SD 卡插拔监测（500 ms 轮询）：插卡自动挂载并切换为录音目标卷；
+     * 拔卡先停录音再卸载卷，录音卷回退 W25Q80。
+     * IsPresent 依赖 info.initialized：上电无卡时从未握手成功，只能
+     * 静默周期重试；初始化过才用 IsPresent 沿检测插拔。
+     * U 盘挂载期间（PC 对 LUN1 裸块访问）暂停 IsPresent 探测：它与
+     * USB ISR 的读写撞锁会让 PC 收到 SCSI 错误，盘符延迟数十秒出现。
+     * 拔卡/格式化等变化在会话结束（断开/拔线）后由恢复的首轮轮询补账。 */
     if (s_sd_attached != 0U)
     {
       static uint32_t s_last_poll;
+      static uint8_t s_present_prev;
+      static uint8_t s_usb_paused_prev;
       uint32_t now = HAL_GetTick();
       if ((uint32_t)(now - s_last_poll) >= 500U)
       {
-        int present;
         s_last_poll = now;
-        present = SD_Card_IsPresent_Card(&g_sd_card);
-        if (present == 0 && s_sd_mounted != 0U)
+        if (g_sd_mounted != 0U)
         {
-          printf("[SD] card removed\r\n");
-          (void)f_mount(NULL, SDPath, 0U);
-          s_sd_mounted = 0U;
-          /* 不做 SD_DeInit_Card：保持 SPI2 就绪，插卡后 SD_Init_Card
-           * 内部 set_speed(LOW) 会按需重初始化外设。 */
+          if (UsbMsc_Mounted() == 0U &&
+              SD_Card_IsPresent_Card(&g_sd_card) == 0)
+          {
+            printf("[SD] card removed\r\n");
+            if (!WavRecorder_OnFlash())
+            {
+              if (WavRecorder_active() != 0U)
+              {
+                printf("[REC] sd removed -> stop\r\n");
+                (void)WavRecorder_stop();
+              }
+              (void)WavRecorder_SetVolume("0:");
+            }
+            (void)f_mount(NULL, SDPath, 0U);
+            g_sd_mounted = 0U;
+            s_present_prev = 0U;
+            /* 不做 SD_DeInit_Card：保持 SPI2 就绪，插卡后 SD_Init_Card
+             * 内部 set_speed(LOW) 会按需重初始化外设。 */
+          }
         }
-        else if (present != 0 && s_sd_mounted == 0U)
+        else if (g_sd_card.info.initialized != 0U)
         {
-          printf("[SD] card inserted\r\n");
-          SD_Test_Run();
+          uint8_t usb_busy = (uint8_t)(UsbMsc_Mounted() != 0U);
+
+          if (usb_busy == 0U)
+          {
+            if (s_usb_paused_prev != 0U)
+            {
+              /* 会话刚结束：强制一次挂载尝试（PC 可能已在会话中格式化） */
+              s_present_prev = 0U;
+            }
+            {
+              uint8_t present = (uint8_t)SD_Card_IsPresent_Card(&g_sd_card);
+
+              if (present != 0U && s_present_prev == 0U)
+              {
+                printf("[SD] card inserted\r\n");
+                if (SD_AutoMount(0U) != 0U && WavRecorder_active() == 0U)
+                {
+                  (void)WavRecorder_SetVolume(SDPath);
+                }
+              }
+              s_present_prev = present;
+            }
+          }
+          s_usb_paused_prev = usb_busy;
+        }
+        else
+        {
+          /* 上电起就无卡（从未握手成功）：静默重试握手，成功即挂载并
+           * 切换录音卷。U 盘会话期间也照常重试：此时 LUN1 的 IsReady
+           * 因 initialized=0 直接失败，PC 不会对它发读写，无竞争。 */
+          if (SD_AutoMount(1U) != 0U && WavRecorder_active() == 0U)
+          {
+            (void)WavRecorder_SetVolume(SDPath);
+          }
         }
       }
     }

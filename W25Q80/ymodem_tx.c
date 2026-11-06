@@ -10,6 +10,7 @@
  */
 #include "ymodem_tx.h"
 #include "shell_cli.h"
+#include "wav_recorder.h"
 #include "usart.h"
 #include "ff.h"
 #include <stdio.h>
@@ -125,14 +126,14 @@ int YmodemTx_Send(const char *path)
     {
         return -4;
     }
-    /* CLI 传入的是裸文件名，补 FAT 卷前缀 */
-    if (path[0] == '0' && path[1] == ':')
+    /* CLI 传入裸文件名（补录音卷前缀）或自带卷前缀（"0:"/"1:"） */
+    if (path[0] >= '0' && path[0] <= '9' && path[1] == ':')
     {
         (void)snprintf(fatpath, sizeof(fatpath), "%s", path);
     }
     else
     {
-        (void)snprintf(fatpath, sizeof(fatpath), "0:%s", path);
+        (void)snprintf(fatpath, sizeof(fatpath), "%s%s", WavRecorder_GetVolume(), path);
     }
 
     if (f_open(&f, fatpath, FA_READ) != FR_OK)

@@ -1,7 +1,8 @@
-D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/USB_Device/App/usbd_storage_if.c:191:8:STORAGE_GetCapacity_FS	0	static
-D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/USB_Device/App/usbd_storage_if.c:217:8:STORAGE_IsWriteProtected_FS	0	static
-D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/USB_Device/App/usbd_storage_if.c:258:8:STORAGE_GetMaxLun_FS	0	static
-D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/USB_Device/App/usbd_storage_if.c:241:8:STORAGE_Write_FS	8	static
-D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/USB_Device/App/usbd_storage_if.c:229:8:STORAGE_Read_FS	8	static
-D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/USB_Device/App/usbd_storage_if.c:177:8:STORAGE_Init_FS	8	static
-D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/USB_Device/App/usbd_storage_if.c:205:8:STORAGE_IsReady_FS	8	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/USB_Device/App/usbd_storage_if.c:258:8:STORAGE_GetCapacity_FS	0	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/USB_Device/App/usbd_storage_if.c:303:8:STORAGE_IsWriteProtected_FS	0	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/USB_Device/App/usbd_storage_if.c:360:8:STORAGE_GetMaxLun_FS	0	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/USB_Device/App/usbd_storage_if.c:85:13:lun1_trace	48	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/USB_Device/App/usbd_storage_if.c:238:8:STORAGE_Init_FS	8	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/USB_Device/App/usbd_storage_if.c:335:8:STORAGE_Write_FS	16	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/USB_Device/App/usbd_storage_if.c:315:8:STORAGE_Read_FS	16	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/USB_Device/App/usbd_storage_if.c:282:8:STORAGE_IsReady_FS	8	static
