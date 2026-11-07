@@ -1,0 +1,5 @@
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/stm32-mw-fatfs/source/ff_gen_drv.c:40:9:FATFS_LinkDriverEx	12	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/stm32-mw-fatfs/source/ff_gen_drv.c:69:9:FATFS_LinkDriver	0	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/stm32-mw-fatfs/source/ff_gen_drv.c:81:9:FATFS_UnLinkDriverEx	0	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/stm32-mw-fatfs/source/ff_gen_drv.c:107:9:FATFS_UnLinkDriver	0	static
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/stm32-mw-fatfs/source/ff_gen_drv.c:117:9:FATFS_GetAttachedDriversNbr	0	static

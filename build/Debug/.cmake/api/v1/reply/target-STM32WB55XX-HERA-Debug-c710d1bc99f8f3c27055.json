@@ -36,7 +36,7 @@
 			{
 				"command" : 1,
 				"file" : 0,
-				"line" : 171,
+				"line" : 194,
 				"parent" : 0
 			},
 			{
@@ -45,25 +45,25 @@
 			{
 				"command" : 2,
 				"file" : 1,
-				"line" : 353,
+				"line" : 336,
 				"parent" : 3
 			},
 			{
 				"command" : 2,
 				"file" : 0,
-				"line" : 161,
+				"line" : 183,
 				"parent" : 0
 			},
 			{
 				"command" : 3,
 				"file" : 0,
-				"line" : 128,
+				"line" : 150,
 				"parent" : 0
 			},
 			{
 				"command" : 4,
 				"file" : 1,
-				"line" : 347,
+				"line" : 330,
 				"parent" : 3
 			},
 			{
@@ -75,7 +75,7 @@
 			{
 				"command" : 5,
 				"file" : 0,
-				"line" : 151,
+				"line" : 173,
 				"parent" : 0
 			}
 		]
@@ -200,14 +200,6 @@
 				},
 				{
 					"backtrace" : 4,
-					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../FATFS/Target"
-				},
-				{
-					"backtrace" : 4,
-					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../FATFS/App"
-				},
-				{
-					"backtrace" : 4,
 					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../STM32_WPAN/App"
 				},
 				{
@@ -276,10 +268,6 @@
 				},
 				{
 					"backtrace" : 4,
-					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../Middlewares/Third_Party/FatFs/src"
-				},
-				{
-					"backtrace" : 4,
 					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../Middlewares/ST/STM32_WPAN"
 				},
 				{
@@ -341,6 +329,10 @@
 				{
 					"backtrace" : 4,
 					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../Drivers/CMSIS/Include"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/stm32-mw-fatfs/source"
 				}
 			],
 			"language" : "C",
@@ -381,8 +373,8 @@
 				24,
 				25,
 				26,
-				27,
 				28,
+				29,
 				30,
 				31,
 				32,
@@ -390,8 +382,8 @@
 				34,
 				35,
 				36,
-				37,
-				38,
+				46,
+				47,
 				48,
 				49,
 				50,
@@ -407,10 +399,7 @@
 				60,
 				61,
 				62,
-				63,
-				64,
-				65,
-				66
+				63
 			]
 		},
 		{
@@ -531,14 +520,6 @@
 				},
 				{
 					"backtrace" : 4,
-					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../FATFS/Target"
-				},
-				{
-					"backtrace" : 4,
-					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../FATFS/App"
-				},
-				{
-					"backtrace" : 4,
 					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../STM32_WPAN/App"
 				},
 				{
@@ -607,10 +588,6 @@
 				},
 				{
 					"backtrace" : 4,
-					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../Middlewares/Third_Party/FatFs/src"
-				},
-				{
-					"backtrace" : 4,
 					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../Middlewares/ST/STM32_WPAN"
 				},
 				{
@@ -672,12 +649,16 @@
 				{
 					"backtrace" : 4,
 					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../Drivers/CMSIS/Include"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/stm32-mw-fatfs/source"
 				}
 			],
 			"language" : "ASM",
 			"sourceIndexes" : 
 			[
-				29
+				27
 			]
 		},
 		{
@@ -802,14 +783,6 @@
 				},
 				{
 					"backtrace" : 4,
-					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../FATFS/Target"
-				},
-				{
-					"backtrace" : 4,
-					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../FATFS/App"
-				},
-				{
-					"backtrace" : 4,
 					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../STM32_WPAN/App"
 				},
 				{
@@ -878,10 +851,6 @@
 				},
 				{
 					"backtrace" : 4,
-					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../Middlewares/Third_Party/FatFs/src"
-				},
-				{
-					"backtrace" : 4,
 					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../Middlewares/ST/STM32_WPAN"
 				},
 				{
@@ -943,6 +912,10 @@
 				{
 					"backtrace" : 4,
 					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../Drivers/CMSIS/Include"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/stm32-mw-fatfs/source"
 				}
 			],
 			"language" : "C",
@@ -956,24 +929,20 @@
 			},
 			"sourceIndexes" : 
 			[
+				37,
+				38,
 				39,
 				40,
 				41,
 				42,
 				43,
 				44,
-				45,
-				46,
-				47
+				45
 			]
 		}
 	],
 	"dependencies" : 
 	[
-		{
-			"backtrace" : 5,
-			"id" : "tflm_runtime::@6890427a1f51a3e7e1df"
-		},
 		{
 			"backtrace" : 4,
 			"id" : "USB_Device_Library::@768a070a0fe75716b479"
@@ -984,19 +953,23 @@
 		},
 		{
 			"backtrace" : 4,
+			"id" : "STM32_WPAN::@768a070a0fe75716b479"
+		},
+		{
+			"backtrace" : 5,
+			"id" : "tflm_runtime::@6890427a1f51a3e7e1df"
+		},
+		{
+			"backtrace" : 5,
+			"id" : "FatFs::@6890427a1f51a3e7e1df"
+		},
+		{
+			"backtrace" : 4,
 			"id" : "STM32_Drivers::@768a070a0fe75716b479"
 		},
 		{
 			"backtrace" : 4,
 			"id" : "Utilities::@768a070a0fe75716b479"
-		},
-		{
-			"backtrace" : 4,
-			"id" : "STM32_WPAN::@768a070a0fe75716b479"
-		},
-		{
-			"backtrace" : 4,
-			"id" : "FatFs::@768a070a0fe75716b479"
 		}
 	],
 	"id" : "STM32WB55XX-HERA::@6890427a1f51a3e7e1df",
@@ -1075,8 +1048,8 @@
 				24,
 				25,
 				26,
-				27,
 				28,
+				29,
 				30,
 				31,
 				32,
@@ -1110,23 +1083,23 @@
 				60,
 				61,
 				62,
-				63,
-				64,
-				65,
-				66
+				63
 			]
 		},
 		{
 			"name" : "",
 			"sourceIndexes" : 
 			[
-				29
+				27
 			]
 		},
 		{
 			"name" : "Object Libraries",
 			"sourceIndexes" : 
 			[
+				64,
+				65,
+				66,
 				67,
 				68,
 				69,
@@ -1299,10 +1272,7 @@
 				236,
 				237,
 				238,
-				239,
-				240,
-				241,
-				242
+				239
 			]
 		}
 	],
@@ -1330,18 +1300,6 @@
 			"backtrace" : 7,
 			"compileGroupIndex" : 0,
 			"path" : "STM32_WPAN/App/custom_app.c",
-			"sourceGroupIndex" : 0
-		},
-		{
-			"backtrace" : 7,
-			"compileGroupIndex" : 0,
-			"path" : "FATFS/App/app_fatfs.c",
-			"sourceGroupIndex" : 0
-		},
-		{
-			"backtrace" : 7,
-			"compileGroupIndex" : 0,
-			"path" : "FATFS/Target/user_diskio.c",
 			"sourceGroupIndex" : 0
 		},
 		{
@@ -1594,12 +1552,6 @@
 			"backtrace" : 8,
 			"compileGroupIndex" : 2,
 			"path" : "MicroSD/sd_diskio.c",
-			"sourceGroupIndex" : 0
-		},
-		{
-			"backtrace" : 8,
-			"compileGroupIndex" : 0,
-			"path" : "MicroSD/ffunicode.c",
 			"sourceGroupIndex" : 0
 		},
 		{
@@ -2743,27 +2695,27 @@
 			"sourceGroupIndex" : 2
 		},
 		{
-			"backtrace" : 4,
+			"backtrace" : 5,
 			"isGenerated" : true,
-			"path" : "build/Debug/cmake/stm32cubemx/CMakeFiles/FatFs.dir/__/__/Middlewares/Third_Party/FatFs/src/diskio.c.obj",
+			"path" : "build/Debug/CMakeFiles/FatFs.dir/stm32-mw-fatfs/source/ff.c.obj",
 			"sourceGroupIndex" : 2
 		},
 		{
-			"backtrace" : 4,
+			"backtrace" : 5,
 			"isGenerated" : true,
-			"path" : "build/Debug/cmake/stm32cubemx/CMakeFiles/FatFs.dir/__/__/Middlewares/Third_Party/FatFs/src/ff.c.obj",
+			"path" : "build/Debug/CMakeFiles/FatFs.dir/stm32-mw-fatfs/source/ffunicode.c.obj",
 			"sourceGroupIndex" : 2
 		},
 		{
-			"backtrace" : 4,
+			"backtrace" : 5,
 			"isGenerated" : true,
-			"path" : "build/Debug/cmake/stm32cubemx/CMakeFiles/FatFs.dir/__/__/Middlewares/Third_Party/FatFs/src/ff_gen_drv.c.obj",
+			"path" : "build/Debug/CMakeFiles/FatFs.dir/stm32-mw-fatfs/source/ff_gen_drv.c.obj",
 			"sourceGroupIndex" : 2
 		},
 		{
-			"backtrace" : 4,
+			"backtrace" : 5,
 			"isGenerated" : true,
-			"path" : "build/Debug/cmake/stm32cubemx/CMakeFiles/FatFs.dir/__/__/Middlewares/Third_Party/FatFs/src/option/syscall.c.obj",
+			"path" : "build/Debug/CMakeFiles/FatFs.dir/stm32-mw-fatfs/source/diskio.c.obj",
 			"sourceGroupIndex" : 2
 		}
 	],

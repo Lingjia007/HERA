@@ -29,37 +29,37 @@
 			{
 				"command" : 0,
 				"file" : 0,
-				"line" : 107,
+				"line" : 106,
 				"parent" : 0
 			},
 			{
 				"command" : 1,
 				"file" : 0,
-				"line" : 115,
+				"line" : 114,
 				"parent" : 0
 			},
 			{
 				"command" : 2,
 				"file" : 0,
-				"line" : 114,
+				"line" : 113,
 				"parent" : 0
 			},
 			{
 				"command" : 3,
 				"file" : 0,
-				"line" : 119,
+				"line" : 118,
 				"parent" : 0
 			},
 			{
 				"command" : 4,
 				"file" : 0,
-				"line" : 108,
+				"line" : 107,
 				"parent" : 0
 			},
 			{
 				"command" : 3,
 				"file" : 0,
-				"line" : 124,
+				"line" : 123,
 				"parent" : 0
 			}
 		]
@@ -152,14 +152,6 @@
 				},
 				{
 					"backtrace" : 2,
-					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../FATFS/Target"
-				},
-				{
-					"backtrace" : 2,
-					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../FATFS/App"
-				},
-				{
-					"backtrace" : 2,
 					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../STM32_WPAN/App"
 				},
 				{
@@ -225,10 +217,6 @@
 				{
 					"backtrace" : 2,
 					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../Utilities/lpm/tiny_lpm"
-				},
-				{
-					"backtrace" : 2,
-					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../Middlewares/Third_Party/FatFs/src"
 				},
 				{
 					"backtrace" : 2,
@@ -534,14 +522,6 @@
 				},
 				{
 					"backtrace" : 2,
-					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../FATFS/Target"
-				},
-				{
-					"backtrace" : 2,
-					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../FATFS/App"
-				},
-				{
-					"backtrace" : 2,
 					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../STM32_WPAN/App"
 				},
 				{
@@ -607,10 +587,6 @@
 				{
 					"backtrace" : 2,
 					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../Utilities/lpm/tiny_lpm"
-				},
-				{
-					"backtrace" : 2,
-					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../Middlewares/Third_Party/FatFs/src"
 				},
 				{
 					"backtrace" : 2,

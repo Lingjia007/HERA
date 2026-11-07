@@ -63,7 +63,6 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     MicroSD/SD_reader.c
     MicroSD/sd_stm32_hal.c
     MicroSD/sd_diskio.c
-    MicroSD/ffunicode.c
     Drivers/CMSIS/DSP/Source/TransformFunctions/arm_rfft_init_q15.c
     Drivers/CMSIS/DSP/Source/TransformFunctions/arm_rfft_q15.c
     Drivers/CMSIS/DSP/Source/TransformFunctions/arm_cfft_init_q15.c
@@ -124,6 +123,29 @@ set_source_files_properties(${TFLM_CORE_SOURCES}
 set_source_files_properties(X-CUBE-AI/App/kws_opt_kernels.cc
     PROPERTIES COMPILE_OPTIONS "-O3")
 
+# ---- FatFs (stm32-mw-fatfs, R0.15) ------------------------------------------
+# 取代已弃用的 CubeMX 生成 FatFs（FATFS/ + Middlewares/Third_Party/FatFs）。
+# ffconf.h 在 MicroSD/（见下方 include 路径），ffunicode.c 由中间件提供。
+set(FATFS_MW_DIR ${CMAKE_CURRENT_SOURCE_DIR}/stm32-mw-fatfs/source)
+add_library(FatFs OBJECT
+    ${FATFS_MW_DIR}/ff.c
+    ${FATFS_MW_DIR}/ffunicode.c
+    ${FATFS_MW_DIR}/ff_gen_drv.c
+    ${FATFS_MW_DIR}/diskio.c
+)
+target_link_libraries(FatFs PUBLIC stm32cubemx)
+target_include_directories(FatFs PUBLIC
+    ${FATFS_MW_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/MicroSD # ffconf.h
+)
+# FLASH 紧张：FatFs 用 -Os 覆盖 Debug 的 -Og
+set_source_files_properties(
+    ${FATFS_MW_DIR}/ff.c
+    ${FATFS_MW_DIR}/ffunicode.c
+    ${FATFS_MW_DIR}/ff_gen_drv.c
+    ${FATFS_MW_DIR}/diskio.c
+    PROPERTIES COMPILE_OPTIONS "-Os")
+
 # Add include paths
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined include paths
@@ -161,6 +183,7 @@ set_source_files_properties(
 target_link_libraries(${CMAKE_PROJECT_NAME}
     stm32cubemx
     tflm_runtime
+    FatFs
 
     # Add user defined libraries
     # PDM2PCM decimation filter (hard-float toolchain)

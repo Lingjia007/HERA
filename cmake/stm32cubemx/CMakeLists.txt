@@ -23,8 +23,6 @@ set(MX_Defines_Syms
 # STM32CubeMX generated include paths
 set(MX_Include_Dirs
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Inc
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../FATFS/Target
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../FATFS/App
     ${CMAKE_CURRENT_SOURCE_DIR}/../../STM32_WPAN/App
     ${CMAKE_CURRENT_SOURCE_DIR}/../../USB_Device/App
     ${CMAKE_CURRENT_SOURCE_DIR}/../../USB_Device/Target
@@ -42,7 +40,6 @@ set(MX_Include_Dirs
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Drivers/STM32WBxx_HAL_Driver/Inc
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Drivers/STM32WBxx_HAL_Driver/Inc/Legacy
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Utilities/lpm/tiny_lpm
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/Third_Party/FatFs/src
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/ST/STM32_WPAN
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/ST/STM32_WPAN/interface/patterns/ble_thread
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/ST/STM32_WPAN/interface/patterns/ble_thread/tl
@@ -67,8 +64,6 @@ set(MX_Application_Src
     ${CMAKE_CURRENT_SOURCE_DIR}/../../STM32_WPAN/App/app_ble.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../STM32_WPAN/App/custom_stm.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../STM32_WPAN/App/custom_app.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../FATFS/App/app_fatfs.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../FATFS/Target/user_diskio.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../USB_Device/App/usb_device.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../USB_Device/App/usbd_desc.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../USB_Device/App/usbd_storage_if.c
@@ -282,12 +277,6 @@ set(STM32_WPAN_Src
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/ST/STM32_WPAN/interface/patterns/ble_thread/tl/shci_tl_if.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/ST/STM32_WPAN/ble/svc/Src/svc_ctl.c
 )
-set(FatFs_Src
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/Third_Party/FatFs/src/diskio.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/Third_Party/FatFs/src/ff.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/Third_Party/FatFs/src/ff_gen_drv.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/Third_Party/FatFs/src/option/syscall.c
-)
 
 # Link directories setup
 set(MX_LINK_DIRS
@@ -301,7 +290,6 @@ set(MX_LINK_LIBS
 	tensorflow
 	Utilities
 	STM32_WPAN
-	FatFs
 	
 )
 # Interface library for includes and symbols
@@ -337,11 +325,6 @@ target_link_libraries(Utilities PUBLIC stm32cubemx)
 add_library(STM32_WPAN OBJECT)
 target_sources(STM32_WPAN PRIVATE ${STM32_WPAN_Src})
 target_link_libraries(STM32_WPAN PUBLIC stm32cubemx)
-
-# Create FatFs static library
-add_library(FatFs OBJECT)
-target_sources(FatFs PRIVATE ${FatFs_Src})
-target_link_libraries(FatFs PUBLIC stm32cubemx)
 
 # Add STM32CubeMX generated application sources to the project
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE ${MX_Application_Src})

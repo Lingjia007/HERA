@@ -368,19 +368,19 @@
 			{
 				"command" : 0,
 				"file" : 0,
-				"line" : 327,
+				"line" : 315,
 				"parent" : 0
 			},
 			{
 				"command" : 1,
 				"file" : 0,
-				"line" : 329,
+				"line" : 317,
 				"parent" : 0
 			},
 			{
 				"command" : 2,
 				"file" : 0,
-				"line" : 328,
+				"line" : 316,
 				"parent" : 0
 			}
 		]
@@ -465,14 +465,6 @@
 				},
 				{
 					"backtrace" : 2,
-					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../FATFS/Target"
-				},
-				{
-					"backtrace" : 2,
-					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../FATFS/App"
-				},
-				{
-					"backtrace" : 2,
 					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../STM32_WPAN/App"
 				},
 				{
@@ -538,10 +530,6 @@
 				{
 					"backtrace" : 2,
 					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../Utilities/lpm/tiny_lpm"
-				},
-				{
-					"backtrace" : 2,
-					"path" : "D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/stm32cubemx/../../Middlewares/Third_Party/FatFs/src"
 				},
 				{
 					"backtrace" : 2,

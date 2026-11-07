@@ -18,9 +18,15 @@
 #include <stdint.h>
 #include "stm32wbxx_hal.h"
 #include "platform_w25q80_stm32_impl.h"
+#include "ff_gen_drv.h"
 
 #define W25DISK_SECTOR_SIZE 512U
 #define W25DISK_SECTOR_COUNT (W25Q80_TOTAL_SIZE / W25DISK_SECTOR_SIZE) /* 2048 */
+
+/* ---- FatFs (stm32-mw-fatfs R0.15) flash 卷（w25_disk.c 胶水层定义） ---- */
+extern const Diskio_drvTypeDef USER_Driver; /* W25Q80 磁盘驱动，卷 "0:" */
+extern char USERPath[4];                    /* 逻辑卷路径，FATFS_LinkDriver 填充 */
+extern FATFS USERFatFs;                     /* flash 卷文件系统对象 */
 
 /* 只记录 SPI 参数（不访问硬件），可在外设 Init 前调用。
  * W25Disk 内部持有 w25q80_stm32_t 实例，首次 IO 时 lazy init。 */

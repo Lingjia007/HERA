@@ -19,7 +19,6 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "dma.h"
-#include "app_fatfs.h"
 #include "i2c.h"
 #include "ipcc.h"
 #include "rf.h"
@@ -438,9 +437,6 @@ int main(void)
   MX_USART1_UART_Init();
   MX_I2C1_Init();
   MX_SPI1_Init();
-  if (MX_FATFS_Init() != APP_OK) {
-    Error_Handler();
-  }
   MX_USB_Device_Init();
   MX_SPI2_Init();
   MX_RF_Init();
@@ -474,13 +470,23 @@ int main(void)
              (unsigned long)SPI_FLASH_GET_BLOCK_SIZE(&fl->base),
              SPI_FLASH_GET_PAGE_SIZE(&fl->base));
 
-      /* ---- FAT 挂载：首次上电/旧 littlefs 数据则自动格式化 FAT12 ---- */
+      /* ---- FAT 挂载：W25Q80 注册为逻辑卷 "0:"（stm32-mw-fatfs R0.15） ---- */
+      if (FATFS_LinkDriver(&USER_Driver, USERPath) != 0U)
+      {
+        printf("[FAT] FATFS_LinkDriver FAILED\r\n");
+      }
+      else
+      {
       fr = f_mount(&USERFatFs, "0:", 1U);
       if (fr == FR_NO_FILESYSTEM)
       {
         static uint8_t mkfs_work[512];
+        MKFS_PARM mkfs_parm; /* R0.15：格式参数改走结构体 */
+
         printf("[FAT] no filesystem -> formatting FAT12 (wipes flash)...\r\n");
-        fr = f_mkfs("0:", FM_FAT | FM_SFD, 0U, mkfs_work, sizeof(mkfs_work));
+        memset(&mkfs_parm, 0, sizeof(mkfs_parm));
+        mkfs_parm.fmt = FM_FAT | FM_SFD;
+        fr = f_mkfs("0:", &mkfs_parm, mkfs_work, sizeof(mkfs_work));
         if (fr == FR_OK)
         {
           /* U 盘默认枚举（录音调试模式），首次 UsbMsc_Poll 时 PC 挂载
@@ -497,6 +503,7 @@ int main(void)
       else
       {
         printf("[FAT] mount/mkfs failed (%d) - flash fs unavailable\r\n", (int)fr);
+      }
       }
     }
     Shell_CLI_Init();

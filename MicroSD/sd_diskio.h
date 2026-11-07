@@ -16,7 +16,7 @@ extern FATFS SDFatFs;
 /* 1 = SD 卷已挂载可用（main.c 插拔/挂载逻辑维护） */
 extern uint8_t g_sd_mounted;
 
-/* ff_gen_drv 磁盘驱动：SD SPI（SD_reader） -> FatFs R0.12c */
+/* ff_gen_drv 磁盘驱动：SD SPI（SD_reader） -> FatFs R0.15 (stm32-mw-fatfs) */
 extern Diskio_drvTypeDef SD_Driver;
 
 #ifdef __cplusplus

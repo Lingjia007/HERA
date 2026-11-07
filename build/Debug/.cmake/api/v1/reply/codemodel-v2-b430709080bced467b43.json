@@ -19,6 +19,7 @@
 					"source" : ".",
 					"targetIndexes" : 
 					[
+						0,
 						1,
 						7
 					]
@@ -35,7 +36,6 @@
 					"source" : "cmake/stm32cubemx",
 					"targetIndexes" : 
 					[
-						0,
 						2,
 						3,
 						4,
@@ -70,58 +70,58 @@
 			"targets" : 
 			[
 				{
-					"directoryIndex" : 1,
-					"id" : "FatFs::@768a070a0fe75716b479",
-					"jsonFile" : "target-FatFs-Debug-7c56a813e3ca790961df.json",
+					"directoryIndex" : 0,
+					"id" : "FatFs::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-FatFs-Debug-b98086b0196107b309bc.json",
 					"name" : "FatFs",
 					"projectIndex" : 0
 				},
 				{
 					"directoryIndex" : 0,
 					"id" : "STM32WB55XX-HERA::@6890427a1f51a3e7e1df",
-					"jsonFile" : "target-STM32WB55XX-HERA-Debug-0837b0c53ac639100982.json",
+					"jsonFile" : "target-STM32WB55XX-HERA-Debug-c710d1bc99f8f3c27055.json",
 					"name" : "STM32WB55XX-HERA",
 					"projectIndex" : 0
 				},
 				{
 					"directoryIndex" : 1,
 					"id" : "STM32_Drivers::@768a070a0fe75716b479",
-					"jsonFile" : "target-STM32_Drivers-Debug-7e22e48b29fb0886a604.json",
+					"jsonFile" : "target-STM32_Drivers-Debug-22d93670f71bdb5f4801.json",
 					"name" : "STM32_Drivers",
 					"projectIndex" : 0
 				},
 				{
 					"directoryIndex" : 1,
 					"id" : "STM32_WPAN::@768a070a0fe75716b479",
-					"jsonFile" : "target-STM32_WPAN-Debug-1203146c9f2b80eecda2.json",
+					"jsonFile" : "target-STM32_WPAN-Debug-c86ff28081007a7b0b31.json",
 					"name" : "STM32_WPAN",
 					"projectIndex" : 0
 				},
 				{
 					"directoryIndex" : 1,
 					"id" : "USB_Device_Library::@768a070a0fe75716b479",
-					"jsonFile" : "target-USB_Device_Library-Debug-f5ebca8d5e4f8b0e75ad.json",
+					"jsonFile" : "target-USB_Device_Library-Debug-ddaafee56fc74360b467.json",
 					"name" : "USB_Device_Library",
 					"projectIndex" : 0
 				},
 				{
 					"directoryIndex" : 1,
 					"id" : "Utilities::@768a070a0fe75716b479",
-					"jsonFile" : "target-Utilities-Debug-b505a7560adca310ef57.json",
+					"jsonFile" : "target-Utilities-Debug-5966e876fb76fc624613.json",
 					"name" : "Utilities",
 					"projectIndex" : 0
 				},
 				{
 					"directoryIndex" : 1,
 					"id" : "tensorflow::@768a070a0fe75716b479",
-					"jsonFile" : "target-tensorflow-Debug-fa357f58354dbb74672c.json",
+					"jsonFile" : "target-tensorflow-Debug-fa4f9aa890725c7180cb.json",
 					"name" : "tensorflow",
 					"projectIndex" : 0
 				},
 				{
 					"directoryIndex" : 0,
 					"id" : "tflm_runtime::@6890427a1f51a3e7e1df",
-					"jsonFile" : "target-tflm_runtime-Debug-bedb38be163c02840a23.json",
+					"jsonFile" : "target-tflm_runtime-Debug-81e03cde6517fe0fa918.json",
 					"name" : "tflm_runtime",
 					"projectIndex" : 0
 				}

@@ -12,6 +12,7 @@
  ******************************************************************************
  */
 #include "w25_disk.h"
+#include "ff_gen_drv.h" /* FatFs R0.15 磁盘驱动类型（USER_Driver 胶水层） */
 #include <string.h>
 
 static w25q80_stm32_t s_flash;
@@ -235,3 +236,73 @@ int32_t W25Disk_Write(const uint8_t *buf, uint32_t lba, uint32_t nblocks)
     spi_guard_exit(guard);
     return 0;
 }
+
+/* ---- FatFs (stm32-mw-fatfs R0.15) 磁盘驱动胶水层 ------------------------
+ * 取代已移除的 CubeMX FATFS/Target/user_diskio.c：W25Q80 512B 块层 ->
+ * ff_gen_drv Diskio_drvTypeDef，逻辑卷 "0:"（USERPath 由 FATFS_LinkDriver
+ * 填充）。read/write/ioctl 直通块层，CTRL_SYNC 触发脏 cache 落盘。 */
+char USERPath[4] = {0}; /* FatFs 逻辑卷路径，如 "0:" */
+FATFS USERFatFs;        /* flash 卷文件系统对象 */
+
+static DSTATUS user_initialize(BYTE pdrv)
+{
+    (void)pdrv;
+    return (W25Disk_Ready() != 0U) ? 0 : STA_NOINIT;
+}
+
+static DSTATUS user_status(BYTE pdrv)
+{
+    (void)pdrv;
+    return (W25Disk_Ready() != 0U) ? 0 : STA_NOINIT;
+}
+
+static DRESULT user_read(BYTE pdrv, BYTE *buff, LBA_t sector, UINT count)
+{
+    (void)pdrv;
+    if (buff == NULL || count == 0U)
+    {
+        return RES_PARERR;
+    }
+    return (W25Disk_Read(buff, (uint32_t)sector, count) == 0) ? RES_OK : RES_ERROR;
+}
+
+static DRESULT user_write(BYTE pdrv, const BYTE *buff, LBA_t sector, UINT count)
+{
+    (void)pdrv;
+    if (buff == NULL || count == 0U)
+    {
+        return RES_PARERR;
+    }
+    return (W25Disk_Write(buff, (uint32_t)sector, count) == 0) ? RES_OK : RES_ERROR;
+}
+
+static DRESULT user_ioctl(BYTE pdrv, BYTE cmd, void *buff)
+{
+    (void)pdrv;
+
+    switch (cmd)
+    {
+    case CTRL_SYNC: /* f_sync/f_close：落盘脏 cache */
+        return (W25Disk_Flush() == 0) ? RES_OK : RES_ERROR;
+    case GET_SECTOR_COUNT:
+        *(LBA_t *)buff = W25DISK_SECTOR_COUNT;
+        return RES_OK;
+    case GET_SECTOR_SIZE:
+        *(WORD *)buff = W25DISK_SECTOR_SIZE;
+        return RES_OK;
+    case GET_BLOCK_SIZE: /* 擦除块大小（扇区计）：4KB/512B = 8 */
+        *(DWORD *)buff = W25Q80_SECTOR_SIZE / W25DISK_SECTOR_SIZE;
+        return RES_OK;
+    default:
+        return RES_PARERR;
+    }
+}
+
+const Diskio_drvTypeDef USER_Driver =
+{
+    user_initialize,
+    user_status,
+    user_read,
+    user_write,
+    user_ioctl,
+};
