@@ -169,7 +169,10 @@ static uint8_t s_skip_blocks;      /* mic warm-up blocks to drop after stream st
 static VM3011_Dev_t *s_vm;      /* mic handle for the DOUT re-arm (main owns) */
 static uint32_t s_awake_until;  /* HAL_GetTick deadline; 0 = session closed   */
 static uint8_t s_cmd_mode;      /* 0 = 等唤醒词；1 = 已唤醒（命令窗口内）     */
-static uint8_t s_kws_enabled = 0U;  /* 0 = 录音调试模式（默认）；1 = KWS 唤醒识别 */
+static uint8_t s_kws_enabled = 1U;  /* 1 = KWS 默认开启（ZPL 唤醒识别）；录音期间
+                                       * 由 WavRecorder_active() 数据通路自动旁路
+                                       * VAD/推理（见 AudioApp_Process），录音停
+                                       * 止后无需手动恢复。0 可经 CLI 强制关闭。 */
 static uint32_t s_hold_awake_until; /* debug hold-awake deadline (CLI alive)   */
 static uint8_t s_usb_stopped;        /* USB disconnected for STOP2 (restarted by UsbMsc_Poll) */
 
@@ -607,9 +610,15 @@ void AudioApp_Process(void)
 
       /* No fresh audio: in the ZPL architecture, close the session once the
        * window expired and the VAD is fully closed (hangover tail included
-       * in the window via the refresh below). Recording keeps the session. */
+       * in the window via the refresh below). Recording keeps the session,
+       * and so does a mounted U-disk: zpl_sleep() would disconnect the USB
+       * (STOP2 has no USB clock), and the wake/re-enumerate cycle would keep
+       * unmounting the disk on PC side - veto STOP2 and keep listening
+       * instead (AudioApp_Process's open-session branch already vetoes
+       * STOP2). PC eject unmounts -> next quiet window closes normally. */
 #if AUDIO_ZPL_WAKE
       if (s_phase == PH_IDLE && !audio_vad_active() && !WavRecorder_active() &&
+          UsbMsc_Mounted() == 0U &&
           (int32_t)(now - s_awake_until) >= 0)
         zpl_sleep();
 #endif
