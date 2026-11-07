@@ -6,6 +6,8 @@
  *        文件命令：ls/rmall/df 同时覆盖 W25Q80("0:") 与 SD 卡（挂载时），
  *        录音文件统一在各卷 AUDIO_REC/ 子目录；rm/ym 裸文件名默认指向
  *        录音卷，也可带 "1:" 前缀显式指定。
+ *        flactest <file>：miniflac 解码速度基准（读 SD/flash 上的 FLAC
+ *        全速解码并统计，验证实时性；blocksize 上限 4608/2ch）。
  *        KEY(PC12) 与 `rec` 命令等效（按键翻转录音）。
  *        USB U 盘挂载期间 flash 卷禁写（rm flash 文件拒绝），读命令照常。
  ******************************************************************************
@@ -18,6 +20,7 @@
 #include "sd_diskio.h"
 #include "usart.h"
 #include "ff.h"
+#include "miniflac.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -75,7 +78,7 @@ static void print_menu(void)
     {
         printf("sd not mounted, record -> %s (flash)\r\n", WavRecorder_GetVolume());
     }
-    printf("digit+Enter, cmd: help ls rm rmall df rec stop ym kws sleep usb\r\n");
+    printf("digit+Enter, cmd: help ls rm rmall df flactest rec stop ym kws sleep usb\r\n");
     printf("up/down history, backspace edit, Ctrl+U clear, Ctrl+C cancel\r\n");
     printf("> ");
 }
@@ -277,6 +280,7 @@ static void cmd_help(void)
            "rm <file>        delete file (bare name = record volume)\r\n"
            "rmall            delete ALL files on flash + sd\r\n"
            "df               fs usage (flash + sd)\r\n"
+           "flactest <file>  flac decode speed benchmark\r\n"
            "rec              toggle recording (KEY/PC12 same)\r\n"
            "stop             stop recording\r\n"
            "ym <file>        send file via YMODEM (backup of usb)\r\n"
@@ -499,6 +503,372 @@ static void cmd_info(void)
     }
 }
 
+/* ---- flactest: FLAC 解码速度基准（miniflac） -----------------------------
+ * 读 SD/flash 上的 .flac 全速解码（只统计不落盘），验证 MCU 能否实时解码。
+ * miniflac 无内部大缓冲：残差直接解码进调用方输出缓冲（平面 PCM，逐声道
+ * 一条 blocksize*4B），故 RAM 上限由这里的静态缓冲决定；超过 blocksize
+ * 上限的文件在帧头解析后拒绝，防缓冲溢出。 */
+#define FLAC_IN_BUF  16384U /* SD -> miniflac 读入缓冲 */
+#define FLAC_MAX_BS  4608U  /* blocksize 上限（flac 默认编码 <=4608） */
+#define FLAC_MAX_CH  2U     /* 立体声 */
+
+static miniflac_t s_flac;                              /* 解码器状态机 ~0.5KB */
+static int32_t s_flac_pcm[FLAC_MAX_CH][FLAC_MAX_BS];   /* 平面 PCM 输出 36KB */
+static uint8_t s_flac_in[FLAC_IN_BUF];                 /* 输入 16KB */
+
+/* SD(SPI2) 与 USB MSC LUN1 共享总线：主循环读卡期间禁 USB_LP 防竞态，
+ * USB 硬件对主机 NAK 挂起、使能后无损续传（同 w25_disk.c 的 spi_guard） */
+static uint8_t flac_sd_lock(void)
+{
+    if (__get_IPSR() == 0U) /* thread mode = 主循环 */
+    {
+        HAL_NVIC_DisableIRQ(USB_LP_IRQn);
+        return 1U;
+    }
+    return 0U;
+}
+
+static void flac_sd_unlock(uint8_t lock)
+{
+    if (lock != 0U)
+    {
+        HAL_NVIC_EnableIRQ(USB_LP_IRQn);
+    }
+}
+
+/* DWT 周期计数器：Cortex-M4 自带，64MHz 下分辨率 15.6ns；
+ * 每次调用前后取差值累计（单次差值 < 67s 回绕周期，安全） */
+static void flac_dwt_start(void)
+{
+    CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+    DWT->CYCCNT = 0U;
+    DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
+}
+
+/* 失步/解码失败取证：失败偏移 = 已读总量 - 缓冲内未消费量。打印现场
+ * 16 字节后回卷重读同位置对比——两次内容不同 = 读路径瞬时损坏；
+ * 相同且非法 = 卡上数据就是坏的（或当初拷贝就坏了）。 */
+static void flac_dump_evidence(FIL *f, const uint8_t *buf, uint32_t in_pos,
+                               uint32_t in_len, uint64_t bytes_in)
+{
+    uint32_t off = (uint32_t)(bytes_in - (uint64_t)(in_len - in_pos));
+    uint8_t again[16];
+    UINT rd = 0U, i;
+    FRESULT fr;
+
+    printf("[FLAC] fail offset %lu (0x%lX)\r\n",
+           (unsigned long)off, (unsigned long)off);
+    printf("[FLAC] in-buffer:");
+    for (i = 0U; (i < 16U) && ((in_pos + i) < in_len); i++)
+    {
+        printf(" %02X", buf[in_pos + i]);
+    }
+    printf("\r\n");
+    {
+        uint8_t lock = flac_sd_lock();
+        fr = f_lseek(f, off);
+        if (fr == FR_OK)
+        {
+            fr = f_read(f, again, sizeof(again), &rd);
+        }
+        flac_sd_unlock(lock);
+    }
+    if ((fr == FR_OK) && (rd > 0U))
+    {
+        printf("[FLAC] re-read    :");
+        for (i = 0U; i < rd; i++)
+        {
+            printf(" %02X", again[i]);
+        }
+        printf("\r\n");
+    }
+    else
+    {
+        printf("[FLAC] re-read FAILED (%d)\r\n", (int)fr);
+    }
+}
+
+/* 续喂输入：把未消费数据搬到缓冲头并续读 SD。返回 FR_OK / 读错误；
+ * 文件读完时 *rd_eof 置 1（缓冲内剩余仍可用）。读卡耗时计入 *cyc_rd。 */
+static FRESULT flac_feed(FIL *f, uint32_t *in_pos, uint32_t *in_len,
+                         uint64_t *bytes_in, uint32_t *rd_eof,
+                         uint64_t *cyc_rd)
+{
+    FRESULT fr;
+    UINT rd = 0U;
+    uint32_t c0, c1;
+
+    if (*in_pos > 0U)
+    {
+        if (*in_pos < *in_len)
+        {
+            memmove(s_flac_in, &s_flac_in[*in_pos], *in_len - *in_pos);
+        }
+        *in_len -= *in_pos;
+        *in_pos = 0U;
+    }
+    if (*in_len < FLAC_IN_BUF)
+    {
+        uint8_t lock = flac_sd_lock();
+        c0 = DWT->CYCCNT;
+        fr = f_read(f, &s_flac_in[*in_len], (UINT)(FLAC_IN_BUF - *in_len), &rd);
+        c1 = DWT->CYCCNT;
+        flac_sd_unlock(lock);
+        *cyc_rd += c1 - c0;
+        if (fr != FR_OK)
+        {
+            return fr;
+        }
+        if (rd == 0U)
+        {
+            *rd_eof = 1U;
+        }
+        else
+        {
+            *in_len += rd;
+            *bytes_in += rd;
+        }
+    }
+    return FR_OK;
+}
+
+static void cmd_flactest(char *arg)
+{
+    char path[96];
+    FIL f;
+    FRESULT fr;
+    MINIFLAC_RESULT r;
+    uint32_t used, c0, c1;
+    uint32_t in_len = 0U, in_pos = 0U, eof = 0U, need_feed = 1U, trunc = 0U;
+    uint32_t frames = 0U, bs_max = 0U;
+    uint64_t bytes_in = 0, samples_total = 0;
+    uint64_t cyc_dec = 0, cyc_rd = 0;
+    uint32_t sample_rate = 0U, t0_ms, t1_ms, clk_khz;
+    uint8_t channels = 0U, bps = 0U;
+    int32_t *pcm[FLAC_MAX_CH];
+    uint64_t dec_ms, rd_ms, audio_ms = 0, rt100 = 0, kbps = 0;
+
+    if (arg == NULL)
+    {
+        printf("usage: flactest <file>   (e.g. 1:/music/001.flac)\r\n");
+        return;
+    }
+    if (arg[1] == ':')
+    {
+        (void)snprintf(path, sizeof(path), "%s", arg);
+    }
+    else if (g_sd_mounted != 0U) /* 裸名默认 SD 卷根 */
+    {
+        (void)snprintf(path, sizeof(path), "%s%s", SDPath, arg);
+    }
+    else
+    {
+        (void)snprintf(path, sizeof(path), "0:%s", arg);
+    }
+    if (WavRecorder_active()) /* FatFs 非重入，先停录音 */
+    {
+        printf("[FLAC] recording -> stop first\r\n");
+        (void)WavRecorder_stop();
+    }
+
+    printf("[FLAC] miniflac %s, open %s\r\n", miniflac_version_string(), path);
+    {
+        uint8_t lock = flac_sd_lock();
+        fr = f_open(&f, path, FA_READ);
+        flac_sd_unlock(lock);
+    }
+    if (fr != FR_OK)
+    {
+        printf("[FLAC] f_open FAILED (%d)\r\n", (int)fr);
+        return;
+    }
+
+    pcm[0] = s_flac_pcm[0];
+    pcm[1] = s_flac_pcm[1];
+    miniflac_init(&s_flac, MINIFLAC_CONTAINER_UNKNOWN);
+    flac_dwt_start();
+    t0_ms = HAL_GetTick();
+
+    for (;;)
+    {
+        if (need_feed != 0U)
+        {
+            fr = flac_feed(&f, &in_pos, &in_len, &bytes_in, &eof, &cyc_rd);
+            if (fr != FR_OK)
+            {
+                printf("[FLAC] f_read FAILED (%d)\r\n", (int)fr);
+                goto done;
+            }
+            need_feed = 0U;
+        }
+        if (in_pos >= in_len && eof != 0U)
+        {
+            break; /* 输入耗尽 */
+        }
+
+        used = 0U; /* 空数据路径不写 out_length，必须预置 */
+        c0 = DWT->CYCCNT;
+        r = miniflac_sync(&s_flac, &s_flac_in[in_pos], in_len - in_pos, &used);
+        c1 = DWT->CYCCNT;
+        cyc_dec += c1 - c0;
+        in_pos += used;
+
+        if (r == MINIFLAC_CONTINUE)
+        {
+            if (eof != 0U)
+            {
+                break;
+            }
+            need_feed = 1U;
+            continue;
+        }
+        if (r < 0)
+        {
+            flac_dump_evidence(&f, s_flac_in, in_pos, in_len, bytes_in);
+            printf("[FLAC] sync FAILED r=%d at frame %lu (not a flac/ogg stream?)\r\n",
+                   (int)r, (unsigned long)frames);
+            goto done;
+        }
+        if (miniflac_is_frame(&s_flac) != 0U)
+        {
+            uint16_t bs = miniflac_frame_block_size(&s_flac);
+            uint8_t ch = miniflac_frame_channels(&s_flac);
+
+            /* 帧头已解析：解码前校验输出缓冲容量，防溢出 */
+            if ((uint32_t)bs > FLAC_MAX_BS)
+            {
+                printf("[FLAC] blocksize %lu > %lu cap"
+                       " (re-encode: flac --blocksize=4608)\r\n",
+                       (unsigned long)bs, (unsigned long)FLAC_MAX_BS);
+                goto done;
+            }
+            if ((uint32_t)ch > FLAC_MAX_CH)
+            {
+                printf("[FLAC] %u channels > %u unsupported\r\n",
+                       (unsigned int)ch, (unsigned int)FLAC_MAX_CH);
+                goto done;
+            }
+            if ((uint32_t)bs > bs_max)
+            {
+                bs_max = bs;
+            }
+
+            /* 续帧内循环：decode 返回 CONTINUE 后必须续喂并再调 decode。
+             * 不能回外层走 sync —— sync 对"帧内未完成"状态会以
+             * samples=NULL 解码后丢弃整帧（不计数），导致帧数被低估。 */
+            for (;;)
+            {
+                used = 0U;
+                c0 = DWT->CYCCNT;
+                r = miniflac_decode(&s_flac, &s_flac_in[in_pos], in_len - in_pos,
+                                    &used, pcm);
+                c1 = DWT->CYCCNT;
+                cyc_dec += c1 - c0;
+                in_pos += used;
+
+                if (r == MINIFLAC_OK)
+                {
+                    break;
+                }
+                if (r < 0)
+                {
+                    flac_dump_evidence(&f, s_flac_in, in_pos, in_len, bytes_in);
+                    printf("[FLAC] decode FAILED r=%d at frame %lu"
+                           " (corrupt stream?)\r\n", (int)r,
+                           (unsigned long)frames);
+                    goto done;
+                }
+                /* CONTINUE：输入耗尽即文件在帧中间结束 -> 截断 */
+                if ((in_pos >= in_len) && (eof != 0U))
+                {
+                    printf("[FLAC] EOF mid-frame: truncated tail dropped\r\n");
+                    trunc = 1U;
+                    break;
+                }
+                fr = flac_feed(&f, &in_pos, &in_len, &bytes_in, &eof, &cyc_rd);
+                if (fr != FR_OK)
+                {
+                    printf("[FLAC] f_read FAILED (%d)\r\n", (int)fr);
+                    goto done;
+                }
+            }
+            if (trunc != 0U)
+            {
+                break; /* 跳出外层，保留已有统计 */
+            }
+
+            frames++;
+            samples_total += bs;
+            sample_rate = miniflac_frame_sample_rate(&s_flac);
+            channels = ch;
+            bps = miniflac_frame_bps(&s_flac);
+            if (frames == 1U)
+            {
+                printf("[FLAC] stream: %lu Hz, %u ch, %u bit\r\n",
+                       (unsigned long)sample_rate, (unsigned int)channels,
+                       (unsigned int)bps);
+            }
+            else if ((frames % 200U) == 0U)
+            {
+                printf("[FLAC] %lu frames...\r\n", (unsigned long)frames);
+            }
+        }
+        /* metadata 块：sync 已流过，直接进入下一轮 */
+    }
+
+    t1_ms = HAL_GetTick();
+    clk_khz = SystemCoreClock / 1000U;
+    dec_ms = cyc_dec / clk_khz;
+    rd_ms = cyc_rd / clk_khz;
+
+    printf("[FLAC] ---- done ----\r\n");
+    printf("[FLAC] input %lu B, %lu frames, blocksize max %lu\r\n",
+           (unsigned long)bytes_in, (unsigned long)frames,
+           (unsigned long)bs_max);
+    if (sample_rate != 0U)
+    {
+        audio_ms = samples_total * 1000U / sample_rate;
+    }
+    if (sample_rate != 0U && dec_ms != 0U)
+    {
+        rt100 = audio_ms * 100U / dec_ms;
+        printf("[FLAC] audio %lu.%02lu s @ %lu Hz %uch%ubit\r\n",
+               (unsigned long)(audio_ms / 1000U),
+               (unsigned long)((audio_ms % 1000U) / 10U),
+               (unsigned long)sample_rate, (unsigned int)channels,
+               (unsigned int)bps);
+        printf("[FLAC] decode %lu.%03lu s -> realtime x%lu.%02lu (%s)\r\n",
+               (unsigned long)(dec_ms / 1000U),
+               (unsigned long)(dec_ms % 1000U),
+               (unsigned long)(rt100 / 100U), (unsigned long)(rt100 % 100U),
+               (rt100 >= 100U) ? "OK" : "TOO SLOW");
+    }
+    else
+    {
+        printf("[FLAC] no audio decoded (empty/metadata-only file?)\r\n");
+    }
+    if (rd_ms != 0U)
+    {
+        kbps = bytes_in * 1000U / 1024U / rd_ms;
+        printf("[FLAC] sd read %lu.%03lu s, %lu KB/s\r\n",
+               (unsigned long)(rd_ms / 1000U), (unsigned long)(rd_ms % 1000U),
+               (unsigned long)kbps);
+    }
+    printf("[FLAC] wall %lu ms (tick)\r\n", (unsigned long)(t1_ms - t0_ms));
+    printf("[FLAC] mem: miniflac %lu B + pcm %lu B + in %lu B = %lu B\r\n",
+           (unsigned long)miniflac_size(),
+           (unsigned long)sizeof(s_flac_pcm),
+           (unsigned long)sizeof(s_flac_in),
+           (unsigned long)(miniflac_size() + sizeof(s_flac_pcm) + sizeof(s_flac_in)));
+
+done:
+    {
+        uint8_t lock = flac_sd_lock();
+        (void)f_close(&f);
+        flac_sd_unlock(lock);
+    }
+}
+
 void Shell_CLI_Process(void)
 {
     char *cmd, *arg;
@@ -604,6 +974,10 @@ void Shell_CLI_Process(void)
     else if (strcmp(cmd, "df") == 0)
     {
         cmd_df();
+    }
+    else if (strcmp(cmd, "flactest") == 0)
+    {
+        cmd_flactest(arg);
     }
     else if (strcmp(cmd, "rec") == 0)
     {

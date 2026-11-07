@@ -43,9 +43,9 @@ extern "C"
    * session (stop stream, clear DOUT, allow STOP2) when it goes quiet. */
   void AudioApp_Process(void);
 
-  /* KWS/VAD 开关（默认开启）。关闭时音频流照常排空缓冲，
-   * 但不做 VAD 捕获/推理，ZPL 事件也不再打开会话。
-   * 录音期间无需手动关闭：WavRecorder_active() 时 AudioApp_Process
+  /* KWS/VAD 开关（默认关闭：录音调试期，CLI `kws on` 开启）。关闭时音频流照常
+   * 排空缓冲，但不做 VAD 捕获/推理，ZPL 事件也不再打开会话。
+   * 开启时录音期间无需手动关闭：WavRecorder_active() 时 AudioApp_Process
    * 把每块音频直接喂录音器并旁路 VAD/推理，录音结束自动恢复。 */
   void AudioApp_SetKwsEnabled(uint8_t en);
   uint8_t AudioApp_GetKwsEnabled(void);

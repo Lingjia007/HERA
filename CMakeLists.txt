@@ -146,6 +146,18 @@ set_source_files_properties(
     ${FATFS_MW_DIR}/diskio.c
     PROPERTIES COMPILE_OPTIONS "-Os")
 
+# ---- miniflac (单文件 FLAC 解码器, 0BSD) ------------------------------------
+# 上游 stb 风格单头分发：miniflac.c 仅 #define MINIFLAC_IMPLEMENTATION。
+# 内存模型：无内部大缓冲，残差直接解码进调用方输出缓冲（flactest 提供
+# 2ch x 4608 x 4B 静态缓冲）；RAM 上限由调用方决定，见 W25Q80/shell_cli.c。
+add_library(Flac OBJECT Audio/Flac/miniflac.c)
+target_link_libraries(Flac PUBLIC stm32cubemx)
+target_include_directories(Flac PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/Audio/Flac)
+# 解码热点（LPC/Rice 回码）对优化等级敏感：-O2 比 -Os 快 15~25%，
+# FLASH 占用仅 +数 KB（54% -> ~55%），速度优先
+set_source_files_properties(Audio/Flac/miniflac.c
+    PROPERTIES COMPILE_OPTIONS "-O2")
+
 # Add include paths
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined include paths
@@ -184,6 +196,7 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
     stm32cubemx
     tflm_runtime
     FatFs
+    Flac
 
     # Add user defined libraries
     # PDM2PCM decimation filter (hard-float toolchain)

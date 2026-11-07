@@ -1,6 +1,7 @@
 D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/build/Debug/CMakeFiles/STM32WB55XX-HERA.dir
 D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/build/Debug/CMakeFiles/tflm_runtime.dir
 D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/build/Debug/CMakeFiles/FatFs.dir
+D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/build/Debug/CMakeFiles/Flac.dir
 D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/build/Debug/CMakeFiles/edit_cache.dir
 D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/build/Debug/CMakeFiles/rebuild_cache.dir
 D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/build/Debug/cmake/stm32cubemx/CMakeFiles/STM32_Drivers.dir

@@ -123,8 +123,8 @@ CMAKE_FIND_PACKAGE_REDIRECTS_DIR:STATIC=D:/edgedownload/STM32WB55XX-HERA/STM32WB
 //Install path prefix, prepended onto install directories.
 CMAKE_INSTALL_PREFIX:PATH=C:/Program Files (x86)/STM32WB55XX-HERA
 
-//No help, variable specified on the command line.
-CMAKE_MAKE_PROGRAM:UNINITIALIZED=ninja
+//Program used to build from build.ninja files.
+CMAKE_MAKE_PROGRAM:FILEPATH=C:/Tools/ninja.exe
 
 //Flags used by the linker during the creation of modules during
 // all build types.
@@ -220,7 +220,7 @@ CMAKE_STRIP:FILEPATH=C:/Tools/arm-gnu-toolchain-15.2.rel1-mingw-w64-i686-arm-non
 //Path to a program.
 CMAKE_TAPI:FILEPATH=CMAKE_TAPI-NOTFOUND
 
-//No help, variable specified on the command line.
+//The CMake toolchain file
 CMAKE_TOOLCHAIN_FILE:FILEPATH=D:/edgedownload/STM32WB55XX-HERA/STM32WB55XX-HERA/cmake/gcc-arm-none-eabi.cmake
 
 //If this value is on, makefiles will be generated without the

@@ -74,6 +74,16 @@ rule C_COMPILER__FatFs_unscanned_Debug
 
 
 #############################################
+# Rule for compiling C files.
+
+rule C_COMPILER__Flac_unscanned_Debug
+  depfile = $DEP_FILE
+  deps = gcc
+  command = ${LAUNCHER}${CODE_CHECK}C:\Tools\arm-gnu-toolchain-15.2.rel1-mingw-w64-i686-arm-none-eabi\bin\arm-none-eabi-gcc.exe $DEFINES $INCLUDES $FLAGS -MD -MT $out -MF $DEP_FILE -o $out -c $in
+  description = Building C object $out
+
+
+#############################################
 # Rule for running custom commands.
 
 rule CUSTOM_COMMAND
@@ -152,7 +162,7 @@ rule CLEAN_ADDITIONAL
 # Rule for cleaning all built files.
 
 rule CLEAN
-  command = ninja $FILE_ARG -t clean $TARGETS
+  command = C:\Tools\ninja.exe $FILE_ARG -t clean $TARGETS
   description = Cleaning all built files...
 
 
@@ -160,6 +170,6 @@ rule CLEAN
 # Rule for printing all primary targets available.
 
 rule HELP
-  command = ninja -t targets
+  command = C:\Tools\ninja.exe -t targets
   description = All primary targets available:
 
